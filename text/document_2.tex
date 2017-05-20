@@ -1,0 +1,245 @@
+\documentclass[11pt]{article}
+
+\usepackage{amsmath}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{tikz}
+\usepackage{hyperref}
+\usepackage{float}
+\hypersetup{
+	colorlinks,
+	citecolor=black,
+	filecolor=black,
+	linkcolor=black,
+	urlcolor=black
+}
+\usetikzlibrary{shapes,arrows}
+\selectlanguage{polish}
+
+\author{Aleksander Sas}
+\title{Szkic artykułu}
+\frenchspacing
+
+\DeclareMathOperator*{\argmax}{\arg\max}   % rbp
+
+\newcounter{BlockCounter}
+
+\newcommand{\labelBlock}[1]{%
+	\smash{\raisebox{15pt}{\refstepcounter{BlockCounter}\hypertarget{#1}{}\label{#1}}}%
+	(\theBlockCounter)%
+}
+
+\newcommand{\refBlock}[1]{%
+	\hyperref[#1]{\ref*{#1}}% (see p. 18 of the hyperref manual)
+}
+
+\begin{document}
+
+% Define block styles
+\tikzstyle{ArmBlok} = [rectangle, draw, fill=blue!20, text width=10em, text centered, rounded corners, minimum height=4em]
+\tikzstyle{ArmBlok2} = [rectangle, draw, fill=blue!20, text width=10em, text centered, rounded corners, minimum height=4em, node distance=5cm]
+\tikzstyle{hmm}=[circle,thick,draw=gray!75,fill=gray!20,minimum size=6mm]
+\tikzstyle{model} = [ellipse, draw, fill=blue!20, text width=6em, text centered, rounded corners, minimum height=4em, node distance=5cm]
+\tikzstyle{block} = [rectangle, draw, fill=blue!20, text width=5em, text centered, rounded corners, minimum height=4em]
+\tikzstyle{line} = [draw, -latex']
+\tikzstyle{data} = [draw, ellipse,fill=red!20, node distance=2cm,minimum height=2em]
+
+
+	
+\maketitle
+\tableofcontents
+
+\section{Wprowadzenie - opis problemu}
+
+\section{Omówienie istniejących podejść}
+Tutaj znajdzie się krótki spis książek i publikacji dotyczących podobnych zagadnień.
+                       
+\section {Historia rozwoju technik rozpoznawania mowy i ich zastosowań}
+
+\section{Proces automatycznego rozpoznawania mowy (ARM) }
+
+	\begin{figure}[H]
+		\centering
+		\begin{tikzpicture}[node distance = 2cm, auto]
+		% Place nodes
+		\node [data] (etap0) {Mowa};
+		\node [ArmBlok,  below of=etap0] (etap1) {\labelBlock{zbieranie_sygnalu} sygnału akustycznego};
+		\node [ArmBlok,  below of=etap1] (etap2) {\labelBlock{ekstrakcja_cech} Ekstrakcja cech};
+		\node [ArmBlok,  below of=etap2] (etap3) {\labelBlock{klasyfikator} Klasyfikacja stanów};
+		\node [ArmBlok,  below of=etap3] (etap4) {\labelBlock{lancuch_markova} Wyszukiwanie najlepszej ścieżki w modelu Markova};
+		\node [ArmBlok2, right of=etap3] (etap5) {\labelBlock{n_gramy} Estymacja prawdopowobieństw słów};
+		\node [model,    right of=etap2] (model_jezykowy) {Model językowy};
+		\node [model,    left  of=etap2] (model_akustyczny) {\labelBlock{model_akustyczny} Model językowy};
+		\node [data,     below of=etap4] (etap6) {Rozpoznanie};
+		\node [model,   right  of=etap6] (slownik) {\labelBlock{slownik} Słownik};
+		
+		\path [line] (etap0) -- (etap1);
+		\path [line] (etap1) -- (etap2);
+		\path [line] (etap2) -- (etap3);
+		\path [line] (etap3) -- (etap4);
+		\path [line] (etap5) |- (etap4);
+		\path [line] (etap4) -- (etap6);
+		\path [line, dashed] (model_jezykowy) -- (etap5);
+		\path [line, dashed] (slownik) |- (etap4);
+		\path [line, dashed] (model_akustyczny) |- (etap3);
+		\path [line, dashed] (model_akustyczny) |- (etap4);
+		
+		
+		\end{tikzpicture}
+		\label{fig:ARM_schemat}
+		\caption{Etapy automatycznego rozpoznawania mowy}
+	\end{figure}
+
+	\textit{Automatyczne rozpoznawanie mowy} możemy formalnie zdefiniować, jako znajdowanie ciągu słów $\hat{W}$ nad pewnym alfabetem $\Sigma$, o maksymalnym prawdopodobieństwie, pod warunkiem obserwacji $O$.
+	
+	\begin{equation}
+		\hat{W}=\argmax_{W \in \Sigma^{*}}{P(W \mid O)}
+		\label{equation:ASR_definicja1}
+	\end{equation}
+	
+	Niestety wyliczanie formuły \ref{equation:ASR_definicja1} okazuję się niemożliwe do wykonania, ale korzystając ze wzory Bayesa możemy dojść do postaci \ref{equation:ASR_definicja2}, która jest już wygoda do obliczenia.
+	
+	\begin{equation}
+		\hat{W}=\argmax_{W \in \Sigma^{*}}{P(W \mid O)} = \argmax_{W \in \Sigma^{*}}{\frac{P(O \mid W)P(W)}{P(O)}} = \argmax_{W \in \Sigma^{*}}{P(O \mid W)P(W)}
+		\label{equation:ASR_definicja2}
+	\end{equation}
+	
+	Ostatnie przejście wynika, z faktu, że $P(O)$ się nie zmienia.
+	Implementując formułę \ref{equation:ASR_definicja2} możemy wydzielić 5 kluczowych etapów, są one zilustrowane na rysunku \ref{fig:ARM_schemat}. Opis poszczególnych etapów znajduje się w kolejnych podrozdziałach.
+	\\
+	Pierwszy etap, określony jako \textit{Zbieranie sygnału akustycznego} (blok \refBlock{zbieranie_sygnalu} na rysunku \ref{fig:ARM_schemat} ), jest realizowany sprzętowo poprzez peryferyjne urządzenia. Obejmuje analogowe przetwarzanie sygnału, cyfryzację oraz opcjonalny post-processing wykonywany przez kartę dźwiękową. Na tym etapie ważne jest, aby dostroić poziom dźwięku, tak aby uniknąć przesterowań, dobrać częstotliwość próbkowania i zakres częstotliwości. Niepoprawna konfiguracja tego etapu, może skutkować zakłóceniami oraz wycięciem cech, które mogą być istotne na kolejnym etapie, a w konsekwencji obniżeniem skuteczności rozpoznawania. W niniejszej pracy wykorzystany był gotowy, powszechnie dostępny korpus nagrań (patrz rozdział \ref{sec:opis_danych}), dlatego nie będę się skupiał na tym etapie.
+
+	\subsection{ Fony }
+	
+		\begin{figure}[H]
+			\centering
+			\begin{tikzpicture}[node distance=1.7cm]
+			
+			\begin{scope}
+			\node [hmm] (hmm1) {$s_1$};
+			\node [hmm, right of=hmm1] (hmm2) {$s_2$};
+			\node [hmm, right of=hmm2] (hmm3) {$s_2$};
+			
+			\draw[thick,->,shorten >=1pt] (hmm1) to [out=0,in=180] (hmm2);
+			\draw[thick,->,shorten >=1pt] (hmm2) to [out=0,in=180] (hmm3);
+			
+			\draw[thick,->] (hmm1.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm2.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm3.70) arc (-60:245:4mm);
+			
+			\draw[thick,<-,shorten <=1pt] (hmm1) -- +(180:1cm);
+			\draw[thick,->,shorten <=1pt] (hmm3) -- +(0:1cm);
+			\end{scope}
+			
+			\end{tikzpicture}
+			\label{fig:fon_hmm}
+			\caption{Reprezentacja fonów}
+			
+		\end{figure}
+
+		Fony są podstawową koncepcją przy modelowaniu dźwięków w mowie, będącą rozszerzeniem pojęcia głoski. Typowo rozróżniają dźwięczne i bezdźwięczne warianty głosek oraz wprowadzają nowe dźwięki, takie jak przykładowo cisza. Poniżej znajduje się lista zamodelowanych fonów: <<?>> w wykorzystanych modelach akustycznych. Słowa, które mają być rozpoznawane przez system muszą mieć przypisaną transkrypcję na fony. Lista słów wraz z transkrypcją znajduje się w \textit{słowniku}, blok \refBlock{slownik} na rysunku \ref{fig:ARM_schemat}.
+		\\
+		Lingwistyka <<?>>
+		\\
+		Parametry modelujące wszystkie rozpoznawane fony są częścią \textit{modelu akustycznego}, blok \refBlock{model_akustyczny} na rysunku \ref{fig:ARM_schemat}. 
+
+	\subsection{ Modelowanie fonów, modele kontekstowe i bezkontekstrowe }
+		
+		Przy modelowaniu fonów wyróżnia się trzy fazy:
+		\begin{itemize}
+			\item początkową, podczas której aparat mowy zmienia swój kształt
+			\item środkową, podczas której aparat mowy jest już w ustabilizowanej pozycji
+			\item końcową, podczas której aparat mowy przechodzi do układu dla kolejnego fonu, ale dźwięk jaki wydaje jest jeszcze bliższy aktualnemu fonowi. 
+		\end{itemize}
+		Uwzględniając powyższe spostrzeżenia, wszystkie fony modeluje się za pomocą trzech stanów, tak jak na rysunku \ref{fig:fon_hmm}. Ze stanu można przejść jedynie do następnego stanu lub powrócić do samego siebie. Dzięki przejściu zwrotnemu możliwe jest modelowanie dźwięków o różnej długości. 
+		\\
+		Rozwinięciem fonów są \textbf{tri-fony}. W języku polskim niektóre głoski różnie się wymawia w zależności od kontekstu, czyli fonów stojących obok. Przykładowo, inaczej brzmi głoska \textbf{w} w słowie \textbf{wersja}, gdzie jest dźwięczna, a inaczej w zwrocie \textbf{w pracy}, gdzie jest bezdźwięczna i bardziej przypomina głoskę \textbf{f}.
+		
+	\subsection{ Rozpoznawanie }
+		Ten rozdział ma na pokazać, jak wcześniej opisane elementy składają się na działający system do rozpoznawani.
+	\subsection{ Ekstrakcja cech }
+	Tutaj omówić cechy MFCC i MFSC i krótko wspomnieć o innych np PLP, RASTA-PLP.
+	
+
+\section {Rozpoznawanie mowy z zastosowaniem ukrytych modeli markowa}
+    \subsection{Ukryte modele Markova - teoretyczne podstawy teoria}
+	   \subsubsection{Modele Markova}
+	   \subsubsection{Algorytmy Viterbiego}
+	   \subsubsection{Algorytm Bauma-Welcha}
+	   \subsubsection{Estymacja parametrów rozkładu normalnego}
+	
+    \subsection{Modelowanie fonetyki z wykorzystaniem HMM }
+       \subsubsection{ Modele bezkontekstowe i kontekstowe}
+       \subsubsection{ Metody redukcji liczby stanów modeli kontekstowych }	
+
+\section{N-gramowy model językowy}
+Dosłownie kilka słów o n-gramach i wygładzaniu (to nie jest temat tej pracy)
+    \subsection{ Rodzaje modeli językowych }
+      Omówienie modeli stochastycznych, gramatycznych, moodeli językowych wykorzystujących sieci głębokiego uczenia (krótko)
+    \subsection{ Estymacja parametrów modelu językowego na podstawie korpusu tekstów }
+    \subsection{ Metody wygładzania stochastycznych modeli językowych }
+
+
+\section{Rozpoznawanie mowy z wykorzystaniem sieci neuronowych}
+	\subsection{Sieć jako estymator prawdopodobieństw \textit{aposteriori} stanów }
+	\subsection{Sieć jako generator cech dla procesu rozpoznawania }
+	\subsection{Zastosowanie sieci DNN w ARM}
+	\subsection{Zastosowanie sieci konwolucyjnych w ARM}
+	\subsection{Skuteczność ARM przy zastosowaniu sieci neuronowych}
+	
+	Ten rozdział ma na pokazać, jak wcześniej opisane elementy składają się na działający system do rozpoznawani.
+
+\section{ Zastosowanie modelowania fonemów z ograniczonym kontekstem w ASR }	
+    Tutaj na wstępie należy uzasadnić dlaczego zdecydowano się na wykorzystanie sieci konwolucyjnej (powołania na literwturę, zapotkane problemy obliczeniowe itp.)
+	\subsection{ Problemy wynikające z zastosowania kontekstowych modeli fonemów }
+	\subsection{ Definicja modelu z ograniczonym kontekstem }
+	\subsection{ Uczenie sieci NN estymującej prawdopodobieństwa stanów dla modeli z ograniczonym kontekstem }
+		\subsubsection{ Redukowanie liczby stanów fizycznych w modelu }
+		\subsubsection{ Wiązanie stanów logicznych ze stanami zisycznymi }
+		\subsubsection{ Przygotowanie danych treningowych }
+		\subsubsection{ Półautomatyczna weryfikacja poprawności danych treningowych }
+		\subsubsection{ Wyznaczanie prawdopodobieństwa stanów apriori }
+		\subsubsection{ Architektura konwolucyjnej sieci neuronowej }
+		\subsubsection{ Kompletny algorytm przygotowania danych i uczenia sieci CNN }
+		\subsubsection{ Znaczenie optymalizacji metaparametrów sieci/uczenia dla końcowej skuteczności ARM }	
+	\subsection{ Teza pracy }
+
+\section{ Wykorzystane technologie i biblioteki }
+	\subsection{ Komponenty do budowy modeli akustycznych i językowych z pakietu HTK }
+	\subsection{ Dekoder ARM Julius }
+	\subsection{ Theano }
+	\subsection{ Architektura systemu do eksperymentowania z wykorzystaniem sieci CNN }
+		
+\section{Opis danych}
+	\label{sec:opis_danych}
+
+	W celu przetestowania proponowanych metod wykorzystano studyjny korpus Clarin\footnote{http://mowa.clarin-pl.eu/korpusy/}. Składa się on z 56 godzin polskich nagrań o różnej tematyce, nagranych przez 554 różnych mówców. Każdy mówca nagrał 20 lub 30 wypowiedzi o długości od 6 do 22 sekund. Korpus nie jest zbalansowany pod względem płci. Wypowiedzi mają przypisane transkrypcje, jednak znajduje się w wiele błędów i artefaktów, takich jak zająknięcia (4. wypowiedz 191. mówcy), seplenienie (200. mówca) czy błędne odczytanie tekstu (18. wypowiedz 294. mówcy) skutkujące różnicą pomiędzy transkrypcja a faktycznie wypowiedzianymi słowami. Artefakty utrudniają lub wręcz uniemożliwiają wykorzystanie niektórych nagrań do uczenia modelu akustycznego. Dźwięk został nagrany z próbkowaniem 16 kHz i jakością 16 bitów na próbkę, a następnie zapisany w niekompresowanym formacie wav. Wypowiedzi zaczynają się i kończą ciszą. 
+\\
+W fazie wstępnego przetwarzania danych, nagrania zostały poddane następującym procesom:
+\begin{itemize}
+	\item automatyczne wyrównanie poziomu nagrań to stałego poziomu -6dB (1/2 maksymalnego możliwego do osiągnięcia poziomu) dla najgłośniejszych miejsc całego nagrania
+	\item odrzucenie fragmentów ciszy/szumów tła o długości przekraczającej 0.7 sek,
+	\item odrzucenie tych nagrań dla których faktycznie wypowiedziana fraza w znaczący sposób różniła się od frazy zadeklarowanej w dostarczonej transkrypcji.
+\end{itemize}
+W celu odrzucenia nagrań o niepoprawnej transkrypcji, przepuszczono je przez system do rozpoznawania mowy. Nagrania, których transkrypcje różniła się znacząco od wyniku rozpoznawania zostały odrzucone.
+
+\section{Eksperymenty}
+    Należy tutaj jasno określić cel przeprowadzanych badań i go uzasadnić. Uzasadnić potrrzebę dobrania optymalnych parametrów dekodowania, osobno dla GMM-HMM i CNN-HMM. Każdy z podpunktów musi kończyć się krótką analizą zaprezentowanych wyników oraz próbą ich uzasadnienia.
+	\subsection{ Środowisko sprzętowo-programisytyczne }
+	\subsection{ Optymalizacja parametrów procesu dekodowania }
+	\subsection{ Wpływ sposobu wyznaczania cech na skuteczność rozpoznawania }
+	Tutaj należy porównać skuteczność rozpoznawania dla cech MFCC i MFSC dla GMM-HMM i CNN-HMM oraz uzasadnić otrzymamy wynik (dla GMM lepsze MFCC, dla CNN lepsze MFSC)
+	\subsection{Wpływ liczby fizycznych stanów na skuteczność rozpoznawania }
+	Należy tutaj przetestować równocześnie (dla tych samych danych) model GMM-HMM i CNN-HMM, dla neutralnych parametrów lmp/lmp2 i dla parametrów optymalizowanych na zbiorze walidacyjnym
+	\subsection{ Wpływ głębokości/architektury sieci na skuteczność rozpoznawania }
+	\subsection{ Wpływ szerokości kontekstu na skuteczność rozpoznawania }
+	\subsection{ Porównanie efektywności czasowej modeli GMM i CNN }
+
+\section{ Podsumowanie }
+  Tej sekcji zwykle nie dzieli się już na podsekcje Zqamieścić tutaj ocenę uzyskanych wyników, praktycznego znaczenia uzyskanych wyników, napotkane problemy, możliwe dalsze prace rozwojowe
+   
+\section{Bibliografia}
+
+\end{document}
