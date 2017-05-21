@@ -22,6 +22,8 @@
 \title{Szkic artykułu}
 \frenchspacing
 
+\newtheorem{mydef}{Definicja}
+
 \DeclareMathOperator*{\argmax}{\arg\max}   % rbp
 
 \newcounter{BlockCounter}
@@ -86,13 +88,12 @@ Tutaj znajdzie się krótki spis książek i publikacji dotyczących podobnych z
 		\path [line, dashed] (model_akustyczny) |- (etap3);
 		\path [line, dashed] (model_akustyczny) |- (etap4);
 		
-		
 		\end{tikzpicture}
-		\label{fig:ARM_schemat}
 		\caption{Etapy automatycznego rozpoznawania mowy}
+		\label{fig:ARM_schemat}
 	\end{figure}
 
-	\textit{Automatyczne rozpoznawanie mowy} możemy formalnie zdefiniować, jako znajdowanie ciągu słów $\hat{W}$ nad pewnym alfabetem $\Sigma$, o maksymalnym prawdopodobieństwie, pod warunkiem obserwacji $O$.
+	\textbf{Automatyczne rozpoznawanie mowy} możemy formalnie zdefiniować, jako znajdowanie ciągu słów $\hat{W}$ nad pewnym alfabetem $\Sigma$, o maksymalnym prawdopodobieństwie, pod warunkiem obserwacji $O$.
 	
 	\begin{equation}
 		\hat{W}=\argmax_{W \in \Sigma^{*}}{P(W \mid O)}
@@ -134,16 +135,16 @@ Tutaj znajdzie się krótki spis książek i publikacji dotyczących podobnych z
 			\end{scope}
 			
 			\end{tikzpicture}
-			\label{fig:fon_hmm}
 			\caption{Reprezentacja fonów}
+			\label{fig:fon_hmm}
 			
 		\end{figure}
 
-		Fony są podstawową koncepcją przy modelowaniu dźwięków w mowie, będącą rozszerzeniem pojęcia głoski. Typowo rozróżniają dźwięczne i bezdźwięczne warianty głosek oraz wprowadzają nowe dźwięki, takie jak przykładowo cisza. Poniżej znajduje się lista zamodelowanych fonów: <<?>> w wykorzystanych modelach akustycznych. Słowa, które mają być rozpoznawane przez system muszą mieć przypisaną transkrypcję na fony. Lista słów wraz z transkrypcją znajduje się w \textit{słowniku}, blok \refBlock{slownik} na rysunku \ref{fig:ARM_schemat}.
+		Fony są podstawową koncepcją przy modelowaniu dźwięków w mowie, będącą rozszerzeniem pojęcia głoski. Typowo rozróżniają dźwięczne i bezdźwięczne warianty głosek oraz wprowadzają nowe dźwięki, takie jak przykładowo \textit{cisza}. Poniżej znajduje się lista zamodelowanych fonów: <<???>> w wykorzystanych modelach akustycznych. Słowa, które mają być rozpoznawane przez system muszą mieć przypisaną transkrypcję na fony. Lista słów wraz z transkrypcją znajduje się w \textit{słowniku} (blok \refBlock{slownik} na rysunku \ref{fig:ARM_schemat}).
 		\\
 		Lingwistyka <<?>>
 		\\
-		Parametry modelujące wszystkie rozpoznawane fony są częścią \textit{modelu akustycznego}, blok \refBlock{model_akustyczny} na rysunku \ref{fig:ARM_schemat}. 
+		Parametry modelujące wszystkie rozpoznawane fony są częścią \textit{modelu akustycznego} (blok \refBlock{model_akustyczny} na rysunku \ref{fig:ARM_schemat}). 
 
 	\subsection{ Modelowanie fonów, modele kontekstowe i bezkontekstrowe }
 		
@@ -153,9 +154,21 @@ Tutaj znajdzie się krótki spis książek i publikacji dotyczących podobnych z
 			\item środkową, podczas której aparat mowy jest już w ustabilizowanej pozycji
 			\item końcową, podczas której aparat mowy przechodzi do układu dla kolejnego fonu, ale dźwięk jaki wydaje jest jeszcze bliższy aktualnemu fonowi. 
 		\end{itemize}
-		Uwzględniając powyższe spostrzeżenia, wszystkie fony modeluje się za pomocą trzech stanów, tak jak na rysunku \ref{fig:fon_hmm}. Ze stanu można przejść jedynie do następnego stanu lub powrócić do samego siebie. Dzięki przejściu zwrotnemu możliwe jest modelowanie dźwięków o różnej długości. 
+		Uwzględniając powyższe spostrzeżenia, wszystkie fony modeluje się za pomocą trzech stanów, tak jak na rysunku \ref{fig:fon_hmm}. Ze stanu można przejść jedynie do następnego stanu lub powrócić do samego siebie. Dzięki przejściu zwrotnemu, możliwe jest modelowanie dźwięków o różnej długości. 
 		\\
-		Rozwinięciem fonów są \textbf{tri-fony}. W języku polskim niektóre głoski różnie się wymawia w zależności od kontekstu, czyli fonów stojących obok. Przykładowo, inaczej brzmi głoska \textbf{w} w słowie \textbf{wersja}, gdzie jest dźwięczna, a inaczej w zwrocie \textbf{w pracy}, gdzie jest bezdźwięczna i bardziej przypomina głoskę \textbf{f}.
+		Rozwinięciem fonów są \textbf{tri-fony}, uwzględniają one lewy i prawy kontekst poprzez dodanie informacji o fonach stojących obok. Typowo tri-fony zapisuje się zgodnie z notacją na rysunku \ref{fig:tri-fony_notacja}, gdzie \textit{a} jest poprzednim fonem, \textit{b} aktualnym, natomiast \textit{c} następnym. 
+		
+		\begin{figure}[H]
+			\begin{center}
+			{a-b+c}
+			\end{center}
+			\caption{Konwencja zapisu tri-fonów}
+			\label{fig:tri-fony_notacja}
+		\end{figure}
+	
+		W języku polskim niektóre głoski różnie się wymawia w zależności od kontekstu, czyli fonów stojących obok. Przykładowo, inaczej brzmi głoska \textit{w} w słowie \textit{wersja}, gdzie jest dźwięczna, a inaczej w zwrocie \textit{w pracy}, gdzie jest bezdźwięczna i bardziej przypomina głoskę \textit{f}.
+		\\
+		Należy zauważyć, że korzystając z \textit{tri-fonów} zamiast \textit{uni-fonów} wprowadzamy dodatkową informację, zarówno do modelu językowego, jak i do modelu akustycznego, ale jednocześnie znacznie zwiększamy liczbę parametrów do estymacji i czas działania silnika rozpoznającego. W modelu \textit{tri-fonowym} występuje $O(n^3)$ tri-fonów, gdzie $n$ to liczba fonów w modelu uni-fonowym.  
 		
 	\subsection{ Rozpoznawanie }
 		Ten rozdział ma na pokazać, jak wcześniej opisane elementy składają się na działający system do rozpoznawani.
@@ -164,7 +177,24 @@ Tutaj znajdzie się krótki spis książek i publikacji dotyczących podobnych z
 	
 
 \section {Rozpoznawanie mowy z zastosowaniem ukrytych modeli markowa}
-    \subsection{Ukryte modele Markova - teoretyczne podstawy teoria}
+    \subsection{Ukryte modele Markova - teoretyczne podstawy}
+    
+	    \textbf{Ukryte modele Markova} to automat, który przechodzi pomiędzy stanami z pewnym prawdopodobieństwem $p1$ i wraz z każdym przejściem emituje obserwację z prawdopodobieństwem $p2$. 
+	    
+	    \begin{align*}
+		    \mathbf{Q}=\{q_1, q_2,\ldots,q_n\} & &&  \text{Zbiór stanów automatu} \\
+	 	    \mathbf{O}=\{o_1, o_2,\ldots,o_k\} & &&  \text{Zbiór obserwacji} \\
+	 	    \mathbf{A} =
+	 	    \left| \begin{array}{ccc}
+		 	    a_{1,1} & \ldots & a_{1,n} \\
+		 	    \vdots  & \ddots & \vdots\\
+		 	    a_{n,1} & \ldots & a_{n,n}
+	 	    \end{array} \right|
+	 	    & &&  \text{Macierz przejścia pomiędzy stanami} \\
+	    \end{align*}
+	    
+    	
+	    	
 	   \subsubsection{Modele Markova}
 	   \subsubsection{Algorytmy Viterbiego}
 	   \subsubsection{Algorytm Bauma-Welcha}
