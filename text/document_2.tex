@@ -23,16 +23,12 @@
 \frenchspacing
 
 \newtheorem{mydef}{Definicja}
-
 \DeclareMathOperator*{\argmax}{\arg\max}   % rbp
-
 \newcounter{BlockCounter}
-
 \newcommand{\labelBlock}[1]{%
 	\smash{\raisebox{15pt}{\refstepcounter{BlockCounter}\hypertarget{#1}{}\label{#1}}}%
 	(\theBlockCounter)%
 }
-
 \newcommand{\refBlock}[1]{%
 	\hyperref[#1]{\ref*{#1}}% (see p. 18 of the hyperref manual)
 }
@@ -48,15 +44,27 @@
 \tikzstyle{line} = [draw, -latex']
 \tikzstyle{data} = [draw, ellipse,fill=red!20, node distance=2cm,minimum height=2em]
 
-
-	
 \maketitle
 \tableofcontents
 
 \section{Wprowadzenie - opis problemu}
-
+	\textbf{Automatyczne rozpoznawanie mowy}, w skrócie \textbf{ARM}, polega na rozpoznaniu i zapisaniu nagranych słów. Jest to coraz częściej i powszechniej stosowana technologia, która znajduje szerokie zastosowanie w motoryzacji, urządzeniach mobilnych, administracji państwowej i medycznej. Są szczególnie przydatne przy sporządzani opisów tekstowych i protokołowaniu wszelkiego rodzaju obrad. Systemy do rozpoznawanie mowy działają na dwa sposoby
+	\begin{itemize}
+		\item offline, w którym system wczytuje zbiór nagrań dźwiękowych i dla każdego z nich generuje transkrypcję
+		\item online, w którym system na bieżąco rejestruję dźwięk i wypisuje transkrypcję.
+	\end{itemize}
+	Oba tryby wymagają możliwie najlepszej skuteczności rozpoznawania, jednak tryb online jest bardziej wymagający, gdyż dodatkowo wymaga szybkiego działania. Rozpoznawanie w trybie online powinno się odbywać w czasie zbliżony do rzeczywistego, w przeciwnym przypadku. 
+	\\
+	Rozwój kart graficznych i pojawienie się technologii CUDA zaowocowało w ostatnim dziesięcioleciu szybkim rozwojem sieci neuronowych, które w wielu problemach klasyfikacji radzą sobie znacznie lepiej niż wcześniej stosowanie algorytmy. Coraz więcej badaczy próbuje też stosować sieci neuronowe w celu poprawy jakości systemów rozpoznających mowę. Można spotkać wiele różnych konfiguracji, zarówno łączących konwencjonalne systemy, jaki i autonomiczne sieci rekurencyjne.
+	\\
+	Celem niniejszej pracy magisterskiej jest przetestowanie możliwości wykorzystania sieci neuronowych w procesie rozpoznawania mowy. Duży nacisk położony jest na możliwość rozpoznawanie trifonów, co jest moim rozwinięciem podejścia spotykanego w wielu publikacjach. W pracy zbadano wpływ liczby rozpoznawanych trifonów na skuteczność rozpoznawania mowy.
+	
 \section{Omówienie istniejących podejść}
-Tutaj znajdzie się krótki spis książek i publikacji dotyczących podobnych zagadnień.
+	Klasyczne podejście do rozpoznawania mowy zostało, opierające się na wykorzystaniu ukrytych modli markowa oraz wielowymiarowych mikstur gaussowskich, zostało opisane w \cite{book1}. 
+	\\
+	Autorzy \cite{article1} wykorzystali konwolucyjne sieci neuronowe oraz bramki LSTM. W tym podejściu wyjście sieci jest traktowane, jako wejście do modelu Markova. 
+	
+	Tutaj znajdzie się krótki spis książek i publikacji dotyczących podobnych zagadnień.
                        
 \section {Historia rozwoju technik rozpoznawania mowy i ich zastosowań}
 
@@ -179,8 +187,13 @@ Tutaj znajdzie się krótki spis książek i publikacji dotyczących podobnych z
 \section {Rozpoznawanie mowy z zastosowaniem ukrytych modeli markowa}
     \subsection{Ukryte modele Markova - teoretyczne podstawy}
     
-	    \textbf{Ukryte modele Markova} to automat, który przechodzi pomiędzy stanami z pewnym prawdopodobieństwem $p1$ i wraz z każdym przejściem emituje obserwację z prawdopodobieństwem $p2$. 
+	    \textbf{Ukryte modele Markova}, w skrócie \textbf{HMM}, to automat, który przechodzi pomiędzy stanami z pewnym prawdopodobieństwem $p1$ i wraz z każdym przejściem, emituje obserwację z prawdopodobieństwem $p2$. Formalnie HMM można zdefiniować jako krotkę \ref{equation:HMM_def}.
 	    
+	    \begin{equation}
+		    HMM = (Q, O, A, B, q_0, q_F)
+		    \label{equation:HMM_def}
+	    \end{equation}
+	    gdzie
 	    \begin{align*}
 		    \mathbf{Q}=\{q_1, q_2,\ldots,q_n\} & &&  \text{Zbiór stanów automatu} \\
 	 	    \mathbf{O}=\{o_1, o_2,\ldots,o_k\} & &&  \text{Zbiór obserwacji} \\
@@ -191,6 +204,9 @@ Tutaj znajdzie się krótki spis książek i publikacji dotyczących podobnych z
 		 	    a_{n,1} & \ldots & a_{n,n}
 	 	    \end{array} \right|
 	 	    & &&  \text{Macierz przejścia pomiędzy stanami} \\
+	 	    \mathbf{B}=\{B_1(o),\ldots,B_n(o)\},o \in O & && \text{zbiór rozkłądów prawdopodobieństwa emisji} \\ 
+													 	& && \text{obsetwacji \textit{o} w stanie \textit{i}} \\
+		 	\mathbf{q_0, q_F}				  & && \text{stany początkowy i końcowy}
 	    \end{align*}
 	    
     	
@@ -256,6 +272,23 @@ W fazie wstępnego przetwarzania danych, nagrania zostały poddane następujący
 W celu odrzucenia nagrań o niepoprawnej transkrypcji, przepuszczono je przez system do rozpoznawania mowy. Nagrania, których transkrypcje różniła się znacząco od wyniku rozpoznawania zostały odrzucone.
 
 \section{Eksperymenty}
+
+
+	\begin{tabular}{|l|c|c|c|c|} \hline
+		
+		nazwa modelu         & \vtop{\hbox{\strut Min liczba}\hbox{\strut obserwacji}} &
+		Próg poprawy & \vtop{\hbox{\strut Liczba}\hbox{\strut stanów /modeli}}& Wynik CLARIN \\ \hline
+		
+		MODEL\_CL\_SUPERPURE & 100   & 350 & 4192 / 41309 & 81.58 \\
+		MODEL\_CL\_25000     & 25000 & 350 & 304 / 8074   & 76.90 \\
+		MODEL\_CL\_33000     & 33000 & -   & 231          &   -   \\
+		MODEL\_CL\_37000     & 27000 & -   & 214 / 7775   & 74.97 \\
+		???????              &   -   & -   & 147          &   -   \\
+		???????              &   -   & -   & 122          &   -   \\
+		\hline
+	\end{tabular}
+	\\
+	\\
     Należy tutaj jasno określić cel przeprowadzanych badań i go uzasadnić. Uzasadnić potrrzebę dobrania optymalnych parametrów dekodowania, osobno dla GMM-HMM i CNN-HMM. Każdy z podpunktów musi kończyć się krótką analizą zaprezentowanych wyników oraz próbą ich uzasadnienia.
 	\subsection{ Środowisko sprzętowo-programisytyczne }
 	\subsection{ Optymalizacja parametrów procesu dekodowania }
@@ -270,6 +303,8 @@ W celu odrzucenia nagrań o niepoprawnej transkrypcji, przepuszczono je przez sy
 \section{ Podsumowanie }
   Tej sekcji zwykle nie dzieli się już na podsekcje Zqamieścić tutaj ocenę uzyskanych wyników, praktycznego znaczenia uzyskanych wyników, napotkane problemy, możliwe dalsze prace rozwojowe
    
-\section{Bibliografia}
-
+   
+	\nocite{*}
+	\bibliographystyle{plain}
+	\bibliography{bibliografia}
 \end{document}
