@@ -8,6 +8,8 @@
 \usepackage{tikz}
 \usepackage{hyperref}
 \usepackage{float}
+\usepackage{changepage}
+\usepackage{multirow}
 \hypersetup{
 	colorlinks,
 	citecolor=black,
@@ -48,25 +50,23 @@
 \tableofcontents
 
 \section{Wprowadzenie - opis problemu}
-	\textbf{Automatyczne rozpoznawanie mowy}, w skrócie \textbf{ARM}, polega na rozpoznaniu i zapisaniu nagranych słów. Jest to coraz częściej i powszechniej stosowana technologia, która znajduje szerokie zastosowanie w motoryzacji, urządzeniach mobilnych, administracji państwowej i medycznej. Są szczególnie przydatne przy sporządzani opisów tekstowych i protokołowaniu wszelkiego rodzaju obrad. Systemy do rozpoznawanie mowy działają na dwa sposoby
+	\textbf{Automatyczne rozpoznawanie mowy}, w skrócie \textbf{ARM}, polega na rozpoznaniu i zapisaniu nagranych słów. Jest to coraz częściej i powszechniej stosowana technologia, która znajduje szerokie zastosowanie w motoryzacji, urządzeniach mobilnych, administracji państwowej i medycznej. Jest szczególnie przydatna przy sporządzani opisów, tekstowych i protokołowaniu wszelkiego rodzaju obrad. Systemy do rozpoznawanie mowy działają na dwa sposoby
 	\begin{itemize}
 		\item offline, w którym system wczytuje zbiór nagrań dźwiękowych i dla każdego z nich generuje transkrypcję
 		\item online, w którym system na bieżąco rejestruję dźwięk i wypisuje transkrypcję.
 	\end{itemize}
-	Oba tryby wymagają możliwie najlepszej skuteczności rozpoznawania, jednak tryb online jest bardziej wymagający, gdyż dodatkowo wymaga szybkiego działania. Rozpoznawanie w trybie online powinno się odbywać w czasie zbliżony do rzeczywistego, w przeciwnym przypadku. 
+	Oba tryby wymagają możliwie najlepszej skuteczności rozpoznawania, jednak tryb online jest bardziej wymagający, gdyż dodatkowo wymaga szybkiego działania. Rozpoznawanie w trybie online powinno się odbywać w czasie zbliżony do rzeczywistego. 
 	\\
-	Rozwój kart graficznych i pojawienie się technologii CUDA zaowocowało w ostatnim dziesięcioleciu szybkim rozwojem sieci neuronowych, które w wielu problemach klasyfikacji radzą sobie znacznie lepiej niż wcześniej stosowanie algorytmy. Coraz więcej badaczy próbuje też stosować sieci neuronowe w celu poprawy jakości systemów rozpoznających mowę. Można spotkać wiele różnych konfiguracji, zarówno łączących konwencjonalne systemy, jaki i autonomiczne sieci rekurencyjne.
+	Rozwój kart graficznych i pojawienie się technologii CUDA zaowocowało w ostatnim dziesięcioleciu szybkim rozwojem sieci neuronowych, które w wielu problemach klasyfikacji radzą sobie znacznie lepiej niż wcześniej stosowanie algorytmy. Coraz więcej badaczy próbuje stosować sieci neuronowe w celu poprawy jakości systemów rozpoznających mowę. Można spotkać wiele różnych konfiguracji, zarówno łączących konwencjonalne systemy, jaki i autonomiczne sieci rekurencyjne.
 	\\
-	Celem niniejszej pracy magisterskiej jest przetestowanie możliwości wykorzystania sieci neuronowych w procesie rozpoznawania mowy. Duży nacisk położony jest na możliwość rozpoznawanie trifonów, co jest moim rozwinięciem podejścia spotykanego w wielu publikacjach. W pracy zbadano wpływ liczby rozpoznawanych trifonów na skuteczność rozpoznawania mowy.
+	Celem niniejszej pracy magisterskiej jest przetestowanie możliwości wykorzystania sieci neuronowych w procesie rozpoznawania mowy. Duży nacisk położony jest na możliwość rozpoznawanie trifonów z ograniczonym kontekstem, co jest moim rozwinięciem podejścia spotykanego w wielu publikacjach. W pracy zbadano wpływ liczby rozpoznawanych trifonów na skuteczność rozpoznawania mowy.
 	
 \section{Omówienie istniejących podejść}
-	Klasyczne podejście do rozpoznawania mowy zostało, opierające się na wykorzystaniu ukrytych modli markowa oraz wielowymiarowych mikstur gaussowskich, zostało opisane w \cite{book1}. 
+	Klasyczne podejście do rozpoznawania mowy, opierające się na wykorzystaniu ukrytych modli markowa oraz wielowymiarowych mikstur gaussowskich, zostało opisane w \cite{book1}. 
 	\\
-	Autorzy \cite{article1} wykorzystali konwolucyjne sieci neuronowe oraz bramki LSTM. W tym podejściu wyjście sieci jest traktowane, jako wejście do modelu Markova. 
+	Autorzy \cite{article1} wykorzystali konwolucyjne sieci neuronowe oraz bramki LSTM do modelowania fonów. W tym podejściu, wyjście sieci rozpoznającej wszystkie trifony jest traktowane, jako wejście do modelu Markova. 
 	
 	Tutaj znajdzie się krótki spis książek i publikacji dotyczących podobnych zagadnień.
-                       
-\section {Historia rozwoju technik rozpoznawania mowy i ich zastosowań}
 
 \section{Proces automatycznego rozpoznawania mowy (ARM) }
 
@@ -274,21 +274,121 @@ W celu odrzucenia nagrań o niepoprawnej transkrypcji, przepuszczono je przez sy
 \section{Eksperymenty}
 
 
+	\begin{figure}
 	\begin{tabular}{|l|c|c|c|c|} \hline
 		
-		nazwa modelu         & \vtop{\hbox{\strut Min liczba}\hbox{\strut obserwacji}} &
-		Próg poprawy & \vtop{\hbox{\strut Liczba}\hbox{\strut stanów /modeli}}& Wynik CLARIN \\ \hline
+		Nazwa modelu & \vtop{\hbox{\strut Min liczba}\hbox{\strut obserwacji}} &
+		\vtop{\hbox{\strut Próg}\hbox{\strut poprawy}}& \vtop{\hbox{\strut Liczba}\hbox{\strut stanów /modeli}}& Skuteczność \\ \hline
 		
 		MODEL\_CL\_SUPERPURE & 100   & 350 & 4192 / 41309 & 81.58 \\
 		MODEL\_CL\_25000     & 25000 & 350 & 304 / 8074   & 76.90 \\
-		MODEL\_CL\_33000     & 33000 & -   & 231          &   -   \\
-		MODEL\_CL\_37000     & 27000 & -   & 214 / 7775   & 74.97 \\
-		???????              &   -   & -   & 147          &   -   \\
-		???????              &   -   & -   & 122          &   -   \\
+		MODEL\_CL\_33000     & 33000 & 350 & 231          &   -   \\
+		MODEL\_CL\_37000     & 37000 & 350 & 214 / 7775   & 74.97 \\
+		???????              &   -   & 350 & 147          &   -   \\
+		???????              &   -   & 350 & 122          &   -   \\
+		MODEL\_UNIFONOWY     &  N/A  & N/A &     N/A      & 71.86 \\
 		\hline
 	\end{tabular}
-	\\
-	\\
+	\caption{\label{tab:text0}Wytrenowane modele akustyczne}
+	\end{figure}
+
+	 \begin{figure}
+	 \begin{adjustwidth}{-1cm}{}
+	\begin{tabular}{|c|c|c|c|c|c|c|} \hline
+		
+		Nazwa modelu & Liczba wyjść & Kontekst & \vtop{\hbox{\strut Parametry}\hbox{\strut pierwszego}\hbox{\strut przejścia}}  & 
+		\vtop{\hbox{\strut Parametry}\hbox{\strut drugiego}\hbox{\strut przejścia}} & \vtop{\hbox{\strut Skuteczność}\hbox{\strut corr}} & \vtop{\hbox{\strut Skuteczność}\hbox{\strut acc}} \\
+		\hline
+		\multirow{7}{*}{Model 240424} &
+		\multirow{7}{*}{-}            &
+		\multirow{7}{*}{5}            & 13 -8 & 13 -9 & 84.88 & 81.09 \\	
+									  &&& \textbf{12 -7} & \textbf{15 -9} & \textbf{85.47} & \textbf{81.55}\\
+									  &&& 12 -7 & 12 -7 & 85.31 & 81.32 \\
+									  &&& 11 -7 & 11 -7 & 85.16 & 81.03 \\
+									  &&& 10 -7 & 10 -7 & 84.98 & 80.72 \\
+									  &&& 7 -8  & 7 -8  & 82.8  & 78.19 \\
+									  &&& 5 -8  & 5 -8  & 78.98 & 73.37 \\
+		\hline
+		\multirow{8}{*}{Model 268154} &
+		\multirow{7}{*}{122}            &
+		\multirow{8}{*}{5}          & \textbf{13 -8} & \textbf{13 -9} & \textbf{85.56} & \textbf{81.69} \\
+									  &&& 12 -7 & 15 -9 & 86.92 & 81.48 \\
+									  &&& 12 -7 & 12 -7 & 85.71 & 81.61 \\
+									  &&& 11 -7 & 11 -7 & 85.72 & 81.50 \\
+									  &&& 10 -7 & 10 -7 & 85.57 & 81.23 \\
+									  &&& 7 -8  & 7 -8  & 83.24 & 78.47 \\
+									  &&& 5 -8  & 5 -8  & 79.62 & 73.9  \\
+									  &&& 18 -7 & 16 -12& 82.33 & 79.04 \\
+		\hline					
+		\multirow{7}{*}{Model 268151} &	
+		\multirow{7}{*}{214}            &	  
+		\multirow{7}{*}{5}          & 13 -8 & 13 -9 & 85.19 & 81.44 \\
+									  &&& \textbf{12 -7} & \textbf{15 -9} & \textbf{88.58} & \textbf{83.39} \\
+									  &&& 12 -7.5 & 15 -9.5&  88.44 & 83.33 \\
+									  &&& 12 -7 16& -9.5   & 88.78  & 83.04 \\
+									  &&& 12 -7 12& -7  & 84.98 & 81.09 \\ 
+									  &&& 11 -7 11& -7  & 84.54 & 80.61 \\
+									  &&& 18 -7 16& -12 & 82.88 & 79.76 \\
+		\hline					
+		\multirow{5}{*}{Model 268148} &	
+		\multirow{7}{*}{304}            &	  
+		\multirow{5}{*}{5} & 13 -8 & 13 -9 & 64.85 & 54.30 \\
+									  &&& \textbf{12 -7} & \textbf{15 -9} & \textbf{71.22} & \textbf{57.42} \\
+									  &&& 12 -7 & 12 -7 & 64.07 & 52.58 \\
+									  &&& 7 -8  & 7 -8  & 54.39 & 39.58 \\
+									  &&& 18 -7 & 16 -12& 62.64 & 55.14 \\
+		\hline
+		
+	\end{tabular}
+	\caption{\label{tab:text1}Wyniki cz.1}
+	\end{adjustwidth}
+	\end{figure}
+
+	\begin{figure}
+	\begin{adjustwidth}{-3.8cm}{}
+	\begin{tabular}{|c|c|c|c|c|c|c|} \hline
+		Nazwa modelu & Liczba wyjść & Kontekst & \vtop{\hbox{\strut Parametry}\hbox{\strut pierwszego}\hbox{\strut przejścia}}  & 
+		\vtop{\hbox{\strut Parametry}\hbox{\strut drugiego}\hbox{\strut przejścia}} & \vtop{\hbox{\strut Skuteczność}\hbox{\strut corr}} & \vtop{\hbox{\strut Skuteczność}\hbox{\strut acc}} \\
+		\hline
+		\multirow{9}{*}{Model 268159} &
+		\multirow{7}{*}{231}            &
+		\multirow{9}{*}{5}          & 18 -7 & 16 -12 & 83.43 & 79.90 \\
+		&&& 12 -7 & 15 -9  & 89.25 & 83.37 \\
+		&&& 12 -7 & 15 -9  & 89.11 & 83.40 \\
+		&&& \textbf{12 -10}& \textbf{15 -10} & \textbf{88.80} & \textbf{83.48} \\
+		&&& 13 -10& 15 -10 & 88.10 & 83.37 \\
+		&&& 7 -8  & 7 -8   & 79.79 & 74.63 \\
+		&&& 12 -7 & 12 -7  & 85.22 & 80.68 \\
+		&&& 13 -11& 15 -11 & 87.92 & 83.34 \\
+		&&& 14 -12& 15 -12 & 86.24 & 82.19 \\
+		\hline
+		\multirow{7}{*}{Model 268158} &
+		\multirow{7}{*}{147}            &
+		\multirow{7}{*}{5}          & 18 -7 & 16 -12 & 82.88 & 79.64 \\
+		&&& 12 -7 & 15 -9  & 88.56 & 83.18 \\
+		&&& \textbf{12 -10}& \textbf{15 -10} & \textbf{88.17} & \textbf{83.24} \\
+		&&& 7 -8  & 7 -8   & 73.31 & 78.59 \\
+		&&& 11 -10& 11 -10 & 84.95 & 81.12 \\
+		&&& 11 -9 & 11 -9  & 85.32 & 81.32 \\
+		&&& 12 -9 & 12 -9  & 85.51 & 81.55 \\
+		\hline
+		MODEL\_CL\_33000, rectify        & 231 & 5 & 12 -10 & 15 -10 & 88.84 & 83.50 \\
+		\hline
+		MODEL\_CL\_33000, leaky\_rectify & 231 & 5 & 12 -10 & 15 -10 & 89.19 & 83.89 \\
+		\hline
+		MODEL\_CL\_33000, leaky\_rectify & 231 & 7 & 12 -10 & 15 -10 & 88.95 & 83.56 \\
+		\hline
+		MODEL\_CL\_33000, leaky\_rectify & 231 & 9 & 12 -10 & 15 -10 & 88.90 & 83.49 \\
+		\hline
+		MODEL\_CL\_33000, leaky\_rectify & 231 & 2 & 12 -10 & 15 -10 & 89.24 & 83.64 \\
+		\hline
+		
+	\end{tabular}
+	\end{adjustwidth}
+	\caption{\label{tab:text2}Wyniki cz.2}
+	\end{figure}
+
+
     Należy tutaj jasno określić cel przeprowadzanych badań i go uzasadnić. Uzasadnić potrrzebę dobrania optymalnych parametrów dekodowania, osobno dla GMM-HMM i CNN-HMM. Każdy z podpunktów musi kończyć się krótką analizą zaprezentowanych wyników oraz próbą ich uzasadnienia.
 	\subsection{ Środowisko sprzętowo-programisytyczne }
 	\subsection{ Optymalizacja parametrów procesu dekodowania }
