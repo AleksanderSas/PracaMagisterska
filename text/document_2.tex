@@ -14,6 +14,7 @@
 \usepackage{pdflscape}
 \usepackage{multirow}
 \usepackage{tabularx}
+\usepackage{array}
 \hypersetup{
 	colorlinks,
 	citecolor=black,
@@ -28,6 +29,7 @@
 \title{Szkic artykułu}
 \frenchspacing
 
+\newcolumntype{K}[1]{>{\centering\arraybackslash}p{#1}}
 \newtheorem{mydef}{Definicja}
 \DeclareMathOperator*{\argmax}{\arg\max}   % rbp
 \newcounter{BlockCounter}
@@ -153,11 +155,25 @@
 			
 		\end{figure}
 
-		Fony są podstawową koncepcją przy modelowaniu dźwięków w mowie, będącą rozszerzeniem pojęcia głoski. Typowo rozróżniają dźwięczne i bezdźwięczne warianty głosek oraz wprowadzają nowe dźwięki, takie jak przykładowo \textit{cisza}. Poniżej znajduje się lista zamodelowanych fonów: <<???>> w wykorzystanych modelach akustycznych. Słowa, które mają być rozpoznawane przez system muszą mieć przypisaną transkrypcję na fony. Lista słów wraz z transkrypcją znajduje się w \textit{słowniku} (blok \refBlock{slownik} na rysunku \ref{fig:ARM_schemat}).
+		Fony są podstawową koncepcją przy modelowaniu dźwięków w mowie, będącą rozszerzeniem pojęcia głoski. Typowo rozróżniają dźwięczne i bezdźwięczne warianty głosek oraz wprowadzają nowe dźwięki, takie jak przykładowo \textit{cisza}. W tabeli \ref{tab:phone_list} znajduje się lista fonów zamodelowanych w wykorzystanych modelach akustycznych, łącznie jest ich 40. Słowa, które mają być rozpoznawane przez system muszą mieć przypisaną transkrypcję na fony. Lista słów wraz z transkrypcją znajduje się w \textit{słowniku} (blok \refBlock{slownik} na rysunku \ref{fig:ARM_schemat}).
 		\\
 		Lingwistyka <<?>>
 		\\
 		Parametry modelujące wszystkie rozpoznawane fony są częścią \textit{modelu akustycznego} (blok \refBlock{model_akustyczny} na rysunku \ref{fig:ARM_schemat}). 
+
+		\begin{figure}
+			\begin{tabular}{|K{1cm}K{1cm}K{1cm}K{1cm}K{1cm}K{1cm}K{1cm}K{1cm}|}
+				\hline
+				a  & o\~ & b & c & cz & ć & d & dz \\ 
+				dź & dż & e & e\~ & f & g & g\^ & h \\
+				i & j & k & k\^ & l & ł & m & n \\
+				nn & ń & o & p  & r & s & sz & ś \\
+				t & u & v & y & z & ź & ż & sil \\
+				\hline
+			\end{tabular}
+			\caption{\label{tab:phone_list}Lista modelowanych fonów}
+		\end{figure}
+ 
 
 	\subsection{ Modelowanie fonów, modele kontekstowe i bezkontekstrowe }
 		
@@ -179,7 +195,7 @@
 			\label{fig:tri-fony_notacja}
 		\end{figure}
 	
-		W języku polskim niektóre głoski różnie się wymawia w zależności od kontekstu, czyli fonów stojących obok. Przykładowo, inaczej brzmi głoska \textit{w} w słowie \textit{wersja}, gdzie jest dźwięczna, a inaczej w zwrocie \textit{w pracy}, gdzie jest bezdźwięczna i bardziej przypomina głoskę \textit{f}.
+		W języku polskim niektóre głoski różnie się wymawia w zależności od kontekstu, czyli fonów stojących obok. Przykładowo, inaczej brzmi głoska \textit{w} w słowie \textit{wersja}, gdzie jest dźwięczna, a inaczej w zwrocie \textit{w pracy}, gdzie jest bezdźwięczna i bardziej przypomina głoskę \textit{f}. Model tri-fonowy pozwala na uchwycenie takiej różnicy, dzięki czemu umożliwia osiągnięcie wyższej skuteczności niż model uni-fonowy.
 		\\
 		Należy zauważyć, że korzystając z \textit{tri-fonów} zamiast \textit{uni-fonów} wprowadzamy dodatkową informację, zarówno do modelu językowego, jak i do modelu akustycznego, ale jednocześnie znacznie zwiększamy liczbę parametrów do estymacji i czas działania silnika rozpoznającego. W modelu \textit{tri-fonowym} występuje $O(n^3)$ tri-fonów, gdzie $n$ to liczba fonów w modelu uni-fonowym.  
 		
@@ -191,7 +207,7 @@
 
 \section {Rozpoznawanie mowy z zastosowaniem ukrytych modeli markowa}
 	\label{sec:ASR_HMM}
-    \subsection{Ukryte modele Markova - teoretyczne podstawy}
+    \subsection{Ukryte modele Markova - definicja}
     
 	    \textbf{Ukryte modele Markova}, w skrócie \textbf{HMM}, to automat, który przechodzi pomiędzy stanami z pewnym prawdopodobieństwem $p1$ i wraz z każdym przejściem, emituje obserwację z prawdopodobieństwem $p2$. Formalnie HMM można zdefiniować jako krotkę \ref{equation:HMM_def}.
 	    
@@ -209,7 +225,8 @@
 		 	    \vdots  & \ddots & \vdots\\
 		 	    a_{n,1} & \ldots & a_{n,n}
 	 	    \end{array} \right|
-	 	    & &&  \text{Macierz przejścia pomiędzy stanami} \\
+												 	    & &&  \text{Macierz przejścia pomiędzy stanami} \\
+												 	    & && \\
 	 	    \mathbf{B}=\{B_1(o),\ldots,B_n(o)\},o \in O & && \text{zbiór rozkłądów prawdopodobieństwa emisji} \\ 
 													 	& && \text{obsetwacji \textit{o} w stanie \textit{i}} \\
 		 	\mathbf{q_0, q_F}				  & && \text{stany początkowy i końcowy}
@@ -219,6 +236,49 @@
 	    	
 	   \subsubsection{Modele Markova}
 	   \subsubsection{Algorytmy Viterbiego}
+		   Algorytmy Viterbiego sa dynamicznymi algorytmami do znajdowania najbardziej prawdopodobnej ścieżki w automacie oraz prawdopodobieństwa stanu $s_i$ po $t$ krokach. 
+		   
+		   \begin{itemize}
+			   	\item Aby znaleźć najbardziej prawdopodobną ścieżkę, należy skorzystać z równania \ref{equation:viterbi_path}.
+			   	\item Aby znaleźć prawdopodobieństwo stanu po $k$ krokach można wyznaczyć korzystając z równania \ref{equation:viterbi_node}.
+		   \end{itemize}
+	   
+		   \begin{equation}
+		   P_t^q=\max_{q \in Q} \bigg( P_{t-1}^q\cdot a_{q,w}\cdot b_q(o) \bigg)
+		   \label{equation:viterbi_path}
+		   \end{equation}
+		   
+		   \begin{equation}
+		   P_t^q=\sum_{q \in Q} \bigg( P_{t-1}^q\cdot a_{q,w}\cdot b_q(o) \bigg)
+		   \label{equation:viterbi_node}
+		   \end{equation}
+		   
+		   \begin{figure}[H]
+		   	\centering
+		   	\begin{tikzpicture}[node distance=1.7cm]
+		   	
+		   	\begin{scope}
+		   	\node [hmm] (hmm1) {$s_1$};
+		   	\node [hmm, below of=hmm1] (hmm2) {$s_2$};
+		   	\node [hmm, below of=hmm2] (hmm3) {$s_2$};
+		   	\node [hmm, below of=hmm3] (hmm4) {$s_2$};
+		   	\node [hmm, below of=hmm4] (hmm5) {$s_2$};
+		   	
+		   	\node [hmm, right = 3.5 cm of hmm3] (hmm6) {$s_2$};
+		   	
+		   	\draw [->] (hmm1) [out=0, in=140]  to (hmm6);
+		   	\draw [->] (hmm2) [out=0, in=160]  to (hmm6);
+		   	\draw [->] (hmm3) [out=0, in=180]  to (hmm6);
+		   	\draw [->] (hmm4) [out=0, in=200]  to (hmm6);
+		   	\draw [->] (hmm5) [out=0, in=220]  to (hmm6);
+		   	\end{scope}
+		   	
+		   	\end{tikzpicture}
+		   	\caption{Algorytmy Viterbiego}
+		   	\label{fig:viterbi}
+		   	
+		   \end{figure}
+		   
 	   \subsubsection{Algorytm Bauma-Welcha}
 	   \subsubsection{Estymacja parametrów rozkładu normalnego}
 	
