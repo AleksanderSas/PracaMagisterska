@@ -51,7 +51,7 @@ class LoaderMfsc:
             last = True
             if self.file_index != 100:
                 fileName = ("%s_0") % (self.file_base)
-                self.formated_inputs2, self.formated_outputs, featur_per_layer, out_vec_len, samples = trim(fileName, self.context, self.verbose)
+                self.formated_inputs2, self.formated_outputs, self.featur_per_layer, self.out_vec_len, self.currentSampleNumber = trim(fileName, self.context, self.verbose)
                 self.file_index = 100
                 print "one batch mode - loaded"
         else: 
@@ -60,15 +60,15 @@ class LoaderMfsc:
             if self.formated_outputs != None:
                 del self.formated_outputs
             fileName = ("%s_%d") % (self.file_base, self.file_index)
-            self.formated_inputs2, self.formated_outputs, featur_per_layer, out_vec_len, samples = trim(fileName, self.context, self.verbose)
+            self.formated_inputs2, self.formated_outputs, self.featur_per_layer, self.out_vec_len, self.currentSampleNumber = trim(fileName, self.context, self.verbose)
             self.file_index += 1
             if self.file_number == self.file_index:
                 last = True
                 self.file_index = 0
                 
         self.verbose = False
-        self.currentSampleNumber = samples
-        return self.formated_inputs2, self.formated_outputs, featur_per_layer, out_vec_len, samples, last
+        
+        return self.formated_inputs2, self.formated_outputs, self.featur_per_layer, self.out_vec_len, self.currentSampleNumber, last
         
     def printBatchInfo(self):
         if self.file_number == 1:
@@ -126,7 +126,7 @@ def read_data_bin_ctx(fileName, verbose):
 
         for i in range(0, phrase_no):
             inputs[i], outputs[i] = read_one(f, feature_per_frame)
-            if phrase_i == 300:
+            if phrase_i == 450:
                 print "loaded %d phrases from %d" % (i, phrase_no)
                 phrase_i = 0
             phrase_i += 1
@@ -173,7 +173,7 @@ def load_and_set_context(fileName, context, verbose):
     millis = int(round(time.time() * 1000))
     for i in range(0, phrase_no):
         offset = create_context(inputs[i], outputs[i], context, formated_inputs, formated_outputs, offset, feature_per_frame)
-        if phrase_counter == 300:
+        if phrase_counter == 450:
             print "formed %d phrases from %d" % (i, phrase_no)
             phrase_counter = 0
         phrase_counter += 1
