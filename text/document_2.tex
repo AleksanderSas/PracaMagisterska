@@ -6,10 +6,14 @@
 \usepackage[utf8]{inputenc}
 \usepackage{lmodern}
 \usepackage{tikz}
+\usetikzlibrary{positioning}
+\usetikzlibrary{arrows}
 \usepackage{hyperref}
 \usepackage{float}
 \usepackage{changepage}
+\usepackage{pdflscape}
 \usepackage{multirow}
+\usepackage{tabularx}
 \hypersetup{
 	colorlinks,
 	citecolor=black,
@@ -41,6 +45,7 @@
 \tikzstyle{ArmBlok} = [rectangle, draw, fill=blue!20, text width=10em, text centered, rounded corners, minimum height=4em]
 \tikzstyle{ArmBlok2} = [rectangle, draw, fill=blue!20, text width=10em, text centered, rounded corners, minimum height=4em, node distance=5cm]
 \tikzstyle{hmm}=[circle,thick,draw=gray!75,fill=gray!20,minimum size=6mm]
+\tikzstyle{hmm2}=[circle,thick,draw=gray!75,fill=gray!20,minimum size=10mm]
 \tikzstyle{model} = [ellipse, draw, fill=blue!20, text width=6em, text centered, rounded corners, minimum height=4em, node distance=5cm]
 \tikzstyle{block} = [rectangle, draw, fill=blue!20, text width=5em, text centered, rounded corners, minimum height=4em]
 \tikzstyle{line} = [draw, -latex']
@@ -185,6 +190,7 @@
 	
 
 \section {Rozpoznawanie mowy z zastosowaniem ukrytych modeli markowa}
+	\label{sec:ASR_HMM}
     \subsection{Ukryte modele Markova - teoretyczne podstawy}
     
 	    \textbf{Ukryte modele Markova}, w skrócie \textbf{HMM}, to automat, który przechodzi pomiędzy stanami z pewnym prawdopodobieństwem $p1$ i wraz z każdym przejściem, emituje obserwację z prawdopodobieństwem $p2$. Formalnie HMM można zdefiniować jako krotkę \ref{equation:HMM_def}.
@@ -229,6 +235,7 @@ Dosłownie kilka słów o n-gramach i wygładzaniu (to nie jest temat tej pracy)
 
 
 \section{Rozpoznawanie mowy z wykorzystaniem sieci neuronowych}
+	\label{sec:ASR_NN}
 	\subsection{Sieć jako estymator prawdopodobieństw \textit{aposteriori} stanów }
 	\subsection{Sieć jako generator cech dla procesu rozpoznawania }
 	\subsection{Zastosowanie sieci DNN w ARM}
@@ -238,9 +245,71 @@ Dosłownie kilka słów o n-gramach i wygładzaniu (to nie jest temat tej pracy)
 	Ten rozdział ma na pokazać, jak wcześniej opisane elementy składają się na działający system do rozpoznawani.
 
 \section{ Zastosowanie modelowania fonemów z ograniczonym kontekstem w ASR }	
-    Tutaj na wstępie należy uzasadnić dlaczego zdecydowano się na wykorzystanie sieci konwolucyjnej (powołania na literwturę, zapotkane problemy obliczeniowe itp.)
+	Wykorzystując ukryte modele Markova, tak jak opisano w rozdziale \ref{sec:ASR_HMM}, wymaga policzenia, dla każdej ramki, prawdopodobieństwa każdego ze zdefiniowanych fonemów. Wykorzystując tri-fony przy rozpoznawaniu mowy trzeba zdefiniować $O(\sigma^3)$ modeli. Jednak tylko niektóre z tri-fonów o wspólnym środkowym fonie różnią się w istotny sposób. Oczywiście wraz ze wzrostem liczby fonemów, rośnie liczba obliczeń, które trzeba wykonać, co ma negatywny wpływ na szybkość rozpoznawania. Ponadto, przy wykorzystaniu sieci neuronowych zgodnie z podejściem opisanym w rozdziale \ref{sec:ASR_NN} trzeba wytrenować więcej parametrów, co z kolei, w ogóle utrudnia lub wręcz uniemożliwia proces uczenia. Aby ograniczyć negatywny wpływ dużej liczby fonemów, zastosowano technikę opisaną w rozdziale \ref{sec:tri-fone_mapping}. Dzięki niej można było znacznie ograniczyć szerokość warstwy wyjściowej, które jest równa liczbie fizycznych fonemów.
+	
 	\subsection{ Problemy wynikające z zastosowania kontekstowych modeli fonemów }
 	\subsection{ Definicja modelu z ograniczonym kontekstem }
+		\label{sec:tri-fone_mapping}
+		Korzystając ze spostrzeżenia, że tylko niektóre tri-fony o wspólnym środkowym fonie istotnie się różnią, można zastosować mechanizm współdzielenia \textit{fizycznych modeli} przez wiele tri-fonów. Poprzez \textit{fizyczne tri-fony} będziemy tu rozumieć modele, które mają bezpośrednio zdefiniowane parametry, czyli przypisane stany modelu Markova oraz macierz przejścia pomiędzy nimi. Poprzez \textit{tri-fony wirtualne} będziemy rozumieć modele, które są zdefiniowane poprzez jakiś tri-fon fizyczny. Innymi słowy, istnieje mapowanie z tri-fonu wirtualnego na tri-fon fizyczny. Rysunek \ref{fig:virtual_phisical_tri-phones} pokazuje przykładowe mapowanie. Znajdujące się na nim tri-fony $d-b+d$, $k-l+m$ oraz $u-y+t$ sa fizyczne, natomiast $d-b+e$, $a-b+c$, $x-y+z$ oraz $d-y+t$ sa wirtualne. Ponadto fizyczne modele mogą współdzielić stany, przy czym drugi, środkowy stan jest zawsze współdzielony przez wszystkie tri-fony o takim samym środkowym fonie. Oba mechanizmy umożliwiają bardzo skuteczne ograniczenie liczby parametrów, które trzeba wyliczyć. W tabeli \ref{tab:acustic_models} umieszczono zestawienie modeli akustycznych wytrenowanych na potrzeby eksperymentu, w kolumnie \textit{Liczba stanów} wpisano liczbę stanów, do jakiej ograniczono modele tri-fonowe. \\
+		Poprzez \textit{Model z Ograniczonym Kontekstem} będziemy rozumieć akustyczny model tri-fonowy, w którym ograniczono liczbę stanów modelu Markova poprzez oba opisane powyżej mechanizmy.
+		
+		\begin{landscape}
+			\begin{figure}[H]
+			\centering
+			\begin{tikzpicture}[node distance=1.7cm]
+			
+			\begin{scope}
+						
+			\def\x{1.5}
+			\def\w{\x * 5}
+			\def\z{\x * 2}
+			\def\y{2.5}
+			\def\j{4.0}
+			
+			\node [hmm2] (p1) {d-b+e};
+			\node [hmm2, right = \x cm of p1] (p2) {a-b+c};
+			\node [hmm2, below = \y cm of p2] (p3) {c-b+d};
+			
+			\node [hmm2, right = \z cm of p3] (p4) {k-l+m};
+			
+			\node [hmm2, right = \w cm of p2] (p5) {x-y+z};
+			\node [hmm2, right = \x cm of p5] (p6) {w-y+t};
+			\node [hmm2, below = \y cm of p5] (p7) {u-y+t};
+			
+
+			\draw [->] (p1) [out=270, in=140] to  (p3);
+			\draw [->] (p2) [out=280, in=80] to  (p3);
+			
+			\draw [->] (p6) [out=270, in=40] to  (p7);
+			\draw [->] (p5) [out=260, in=100] to  (p7);
+			
+			\node [hmm, below = \j cm of p3] (s1) {s1};
+			\node [hmm, right = \x cm of s1] (s2) {s2};
+			\node [hmm, right = \x cm of s2] (s3) {s3};
+			\node [hmm, right = \x cm of s3] (s4) {s4};
+			\node [hmm, right = \x cm of s4] (s5) {s5};
+			
+			\draw [->] (p3) [out=240, in=100] to (s1);
+			\draw [->] (p3) [out=270, in=90]  to (s2);
+			\draw [->] (p3) [out=300, in=130] to (s5);
+			
+			\draw [->] (p4) [out=240, in=80]  to (s1);
+			\draw [->] (p4) [out=270, in=90]  to (s3);
+			\draw [->] (p4) [out=300, in=100] to (s5);
+			
+			\draw [->] (p7) [out=240, in=50]  to (s1);
+			\draw [->] (p7) [out=270, in=90]  to (s4);
+			\draw [->] (p7) [out=300, in=80] to (s5);
+			\end{scope}
+			
+			\end{tikzpicture}
+			\caption{Mapowanie tri-fonów wirtualnych na tri-fony fizyczne}
+			\label{fig:virtual_phisical_tri-phones}
+			
+		\end{figure}
+	\end{landscape}
+		
+		
 	\subsection{ Uczenie sieci NN estymującej prawdopodobieństwa stanów dla modeli z ograniczonym kontekstem }
 		\subsubsection{ Redukowanie liczby stanów fizycznych w modelu }
 		\subsubsection{ Wiązanie stanów logicznych ze stanami zisycznymi }
@@ -289,7 +358,7 @@ W celu odrzucenia nagrań o niepoprawnej transkrypcji, przepuszczono je przez sy
 		MODEL\_UNIFONOWY     &  N/A  & N/A &     N/A      & 71.86 \\
 		\hline
 	\end{tabular}
-	\caption{\label{tab:text0}Wytrenowane modele akustyczne}
+	\caption{\label{tab:acustic_models}Wytrenowane modele akustyczne}
 	\end{figure}
 
 	 \begin{figure}
