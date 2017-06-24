@@ -46,6 +46,7 @@
 % Define block styles
 \tikzstyle{ArmBlok} = [rectangle, draw, fill=blue!20, text width=10em, text centered, rounded corners, minimum height=4em]
 \tikzstyle{ArmBlok2} = [rectangle, draw, fill=blue!20, text width=10em, text centered, rounded corners, minimum height=4em, node distance=5cm]
+\tikzstyle{hmm0}=[circle,thick,draw=gray!50,fill=gray!13,minimum size=4mm]
 \tikzstyle{hmm}=[circle,thick,draw=gray!75,fill=gray!20,minimum size=6mm]
 \tikzstyle{hmm2}=[circle,thick,draw=gray!75,fill=gray!20,minimum size=10mm]
 \tikzstyle{model} = [ellipse, draw, fill=blue!20, text width=6em, text centered, rounded corners, minimum height=4em, node distance=5cm]
@@ -128,7 +129,7 @@
 	Pierwszy etap, określony jako \textit{Zbieranie sygnału akustycznego} (blok \refBlock{zbieranie_sygnalu} na rysunku \ref{fig:ARM_schemat} ), jest realizowany sprzętowo poprzez peryferyjne urządzenia. Obejmuje analogowe przetwarzanie sygnału, cyfryzację oraz opcjonalny post-processing wykonywany przez kartę dźwiękową. Na tym etapie ważne jest, aby dostroić poziom dźwięku, tak aby uniknąć przesterowań, dobrać częstotliwość próbkowania i zakres częstotliwości. Niepoprawna konfiguracja tego etapu, może skutkować zakłóceniami oraz wycięciem cech, które mogą być istotne na kolejnym etapie, a w konsekwencji obniżeniem skuteczności rozpoznawania. W niniejszej pracy wykorzystany był gotowy, powszechnie dostępny korpus nagrań (patrz rozdział \ref{sec:opis_danych}), dlatego nie będę się skupiał na tym etapie.
 
 	\subsection{ Fony }
-	
+	\label{sec:Phones}
 		\begin{figure}[H]
 			\centering
 			\begin{tikzpicture}[node distance=1.7cm]
@@ -202,6 +203,7 @@
 	\subsection{ Rozpoznawanie }
 		Ten rozdział ma na pokazać, jak wcześniej opisane elementy składają się na działający system do rozpoznawani.
 	\subsection{ Ekstrakcja cech }
+	\label{sec:Feature_vec}
 	Tutaj omówić cechy MFCC i MFSC i krótko wspomnieć o innych np PLP, RASTA-PLP.
 	
 
@@ -240,7 +242,7 @@
 		   
 		   \begin{itemize}
 			   	\item Aby znaleźć najbardziej prawdopodobną ścieżkę, należy skorzystać z równania \ref{equation:viterbi_path}.
-			   	\item Aby znaleźć prawdopodobieństwo stanu po $k$ krokach można wyznaczyć korzystając z równania \ref{equation:viterbi_node}.
+			   	\item Aby znaleźć prawdopodobieństwo stanu po $k$ krokach, należy skorzystać z równania \ref{equation:viterbi_node}.
 		   \end{itemize}
 	   
 		   \begin{equation}
@@ -259,18 +261,30 @@
 		   	
 		   	\begin{scope}
 		   	\node [hmm] (hmm1) {$s_1$};
+		   	\node[left] at (hmm1.west) {$P_{t-1}^{s1}$};
+		   	
 		   	\node [hmm, below of=hmm1] (hmm2) {$s_2$};
-		   	\node [hmm, below of=hmm2] (hmm3) {$s_2$};
-		   	\node [hmm, below of=hmm3] (hmm4) {$s_2$};
-		   	\node [hmm, below of=hmm4] (hmm5) {$s_2$};
+		   	\node[left] at (hmm2.west) {$P_{t-1}^{s2}$};
 		   	
-		   	\node [hmm, right = 3.5 cm of hmm3] (hmm6) {$s_2$};
+		   	\node [hmm, below of=hmm2] (hmm3) {$s_3$};
+		   	\node[left] at (hmm3.west) {$P_{t-1}^{s3}$};
 		   	
-		   	\draw [->] (hmm1) [out=0, in=140]  to (hmm6);
-		   	\draw [->] (hmm2) [out=0, in=160]  to (hmm6);
-		   	\draw [->] (hmm3) [out=0, in=180]  to (hmm6);
-		   	\draw [->] (hmm4) [out=0, in=200]  to (hmm6);
-		   	\draw [->] (hmm5) [out=0, in=220]  to (hmm6);
+		   	\node [hmm, below of=hmm3] (hmm4) {$s_4$};
+		   	\node[left] at (hmm4.west) {$P_{t-1}^{s4}$};
+		   	
+		   	\node [hmm, below of=hmm4] (hmm5) {$s_5$};
+		   	\node[left] at (hmm5.west) {$P_{t-1}^{s5}$};
+		   	
+		   	\node [hmm, right = 3.5 cm of hmm3] (hmm6) {$s_3$};
+		   	\node[right] at (hmm6.east) {$P_{t}^{s3}$};
+		   	
+		   	\draw [->] (hmm1) [out=0, in=140]  to node[midway,right,rotate=0] {$a_{s1,s3}$} (hmm6);
+		   	\draw [->] (hmm2) [out=0, in=160]  to node[midway,above,rotate=0] {$a_{s2,s3}$} (hmm6);
+		   	\draw [->] (hmm3) [out=0, in=180]  to node[midway,above,rotate=0] {$a_{s3,s3}$} (hmm6);
+		   	\draw [->] (hmm4) [out=0, in=200]  to node[midway,above,rotate=0] {$a_{s4,s3}$} (hmm6);
+		   	\draw [->] (hmm5) [out=0, in=220]  to node[midway,right,rotate=0] {$a_{s5,s3}$} (hmm6);
+		   	
+		   	
 		   	\end{scope}
 		   	
 		   	\end{tikzpicture}
@@ -283,6 +297,153 @@
 	   \subsubsection{Estymacja parametrów rozkładu normalnego}
 	
     \subsection{Modelowanie fonetyki z wykorzystaniem HMM }
+    W klasycznych systemach rozpoznających mowę, wykorzystujących ukryte modele Markova, zbiór stanów reprezentuje fony. Każdy fon ma trzy stany w HMM, tak jak opisano w rozdziale \ref{sec:Phones}. Zbiorem obserwacji są wektory cech wyznaczane zgodnie z opisem w rozdziale \ref{sec:Feature_vec}. Przejścia pomiędzy stanami jednego fonemu są zgodne z opisem z rozdziału \ref{sec:Phones}, natomiast przejścia pomiędzy różnymi fonami są tworzone na podstawie słownika (blok \refBlock{slownik} na rysunku \ref{fig:ARM_schemat}). Dla każdego słowa generowany jest ciąg stanów odpowiadający kolejnym fonemom, z których składa się słowo. 
+    
+    \begin{figure}[H]
+    	\centering
+		\begin{tabular}{|c|}
+			\hline
+			W = "jabłko" = \{j a p ł k o\} \\ 
+	
+			\begin{tikzpicture}[node distance=1.7cm]
+			
+				\begin{scope}
+				
+				\def\x{0.65}
+				\def\y{1.0}
+				\def\z{2.5}
+				
+				\node [hmm0] (hmm1) {};
+				\node [below] at (hmm1.south) {$j_1$};
+				
+				\node [hmm0, right = \x cm of hmm1] (hmm2) {};
+				\node [below] at (hmm2.south) {$j_2$};
+				
+				\node [hmm0, right = \x cm of hmm2] (hmm3) {};
+				\node [below] at (hmm3.south) {$j_3$};
+				
+				
+				\node [hmm0, right = \y cm of hmm3] (hmm4) {};
+				\node [below] at (hmm4.south) {$a_1$};
+				
+				\node [hmm0, right = \x cm of hmm4] (hmm5) {};
+				\node [below] at (hmm5.south) {$a_2$};
+				
+				\node [hmm0, right = \x cm of hmm5] (hmm6) {};
+				\node [below] at (hmm6.south) {$a_3$};
+				
+				
+				\node [hmm0, right = \y cm of hmm6] (hmm7) {};
+				\node [below] at (hmm7.south) {$p_1$};
+				
+				\node [hmm0, right = \x cm of hmm7] (hmm8) {};
+				\node [below] at (hmm8.south) {$p_2$};
+				
+				\node [hmm0, right = \x cm of hmm8] (hmm9) {};
+				\node [below] at (hmm9.south) {$p_3$};
+				
+				
+				
+				
+				\node [hmm0, below = \z cm of hmm9] (hmm10) {};
+				\node [below] at (hmm10.south) {$ł_1$};
+				
+				\node [hmm0, left = \x cm of hmm10] (hmm11) {};
+				\node [below] at (hmm11.south) {$ł_2$};
+				
+				\node [hmm0, left = \x cm of hmm11] (hmm12) {};
+				\node [below] at (hmm12.south) {$ł_3$};
+				
+				
+				\node [hmm0, left = \y cm of hmm12] (hmm13) {};
+				\node [below] at (hmm13.south) {$k_1$};
+				
+				\node [hmm0, left = \x cm of hmm13] (hmm14) {};
+				\node [below] at (hmm14.south) {$k_2$};
+				
+				\node [hmm0, left = \x cm of hmm14] (hmm15) {};
+				\node [below] at (hmm15.south) {$k_3$};
+				
+				
+				\node [hmm0, left = \y cm of hmm15] (hmm16) {};
+				\node [below] at (hmm16.south) {$o_1$};
+				
+				\node [hmm0, left = \x cm of hmm16] (hmm17) {};
+				\node [below] at (hmm17.south) {$o_2$};
+				
+				\node [hmm0, left = \x cm of hmm17] (hmm18) {};
+				\node [below] at (hmm18.south) {$o_3$};
+				
+				
+				
+				\draw[thick,->,shorten >=1pt] (hmm1) to [out=0,in=180] (hmm2);
+				\draw[thick,->,shorten >=1pt] (hmm2) to [out=0,in=180] (hmm3);
+				
+				\draw[thick,->,shorten >=1pt] (hmm3) to [out=0,in=180] (hmm4);
+				
+				\draw[thick,->,shorten >=1pt] (hmm4) to [out=0,in=180] (hmm5);
+				\draw[thick,->,shorten >=1pt] (hmm5) to [out=0,in=180] (hmm6);
+				
+				\draw[thick,->,shorten >=1pt] (hmm6) to [out=0,in=180] (hmm7);
+				
+				\draw[thick,->,shorten >=1pt] (hmm7) to [out=0,in=180] (hmm8);
+				\draw[thick,->,shorten >=1pt] (hmm8) to [out=0,in=180] (hmm9);
+				
+				\draw[thick,->,shorten >=1pt] (hmm9) to [out=0,in=0,looseness=1.1] (hmm10);
+				
+				\draw[thick,->,shorten >=1pt] (hmm10) to [out=180,in=0] (hmm11);
+				\draw[thick,->,shorten >=1pt] (hmm11) to [out=180,in=0] (hmm12);
+				
+				\draw[thick,->,shorten >=1pt] (hmm12) to [out=180,in=0] (hmm13);
+				
+				\draw[thick,->,shorten >=1pt] (hmm13) to [out=180,in=0] (hmm14);
+				\draw[thick,->,shorten >=1pt] (hmm14) to [out=180,in=0] (hmm15);
+				
+				\draw[thick,->,shorten >=1pt] (hmm15) to [out=180,in=0] (hmm16);
+				
+				\draw[thick,->,shorten >=1pt] (hmm16) to [out=180,in=0] (hmm17);
+				\draw[thick,->,shorten >=1pt] (hmm17) to [out=180,in=0] (hmm18);
+				
+		
+				\draw[thick,->] (hmm1.70) arc (-60:245:4mm);
+				\draw[thick,->] (hmm2.70) arc (-60:245:4mm);
+				\draw[thick,->] (hmm3.70) arc (-60:245:4mm);
+				
+				\draw[thick,->] (hmm4.70) arc (-60:245:4mm);
+				\draw[thick,->] (hmm5.70) arc (-60:245:4mm);
+				\draw[thick,->] (hmm6.70) arc (-60:245:4mm);
+				
+				\draw[thick,->] (hmm7.70) arc (-60:245:4mm);
+				\draw[thick,->] (hmm8.70) arc (-60:245:4mm);
+				\draw[thick,->] (hmm9.70) arc (-60:245:4mm);
+				
+				
+				
+				\draw[thick,->] (hmm10.110) arc (240:-65:4mm);
+				\draw[thick,->] (hmm11.110) arc (240:-65:4mm);
+				\draw[thick,->] (hmm12.110) arc (240:-65:4mm);
+				
+				\draw[thick,->] (hmm13.110) arc (240:-65:4mm);
+				\draw[thick,->] (hmm14.110) arc (240:-65:4mm);
+				\draw[thick,->] (hmm15.110) arc (240:-65:4mm);
+				
+				\draw[thick,->] (hmm16.110) arc (240:-65:4mm);
+				\draw[thick,->] (hmm17.110) arc (240:-65:4mm);
+				\draw[thick,->] (hmm18.110) arc (240:-65:4mm);
+				
+				\draw[thick,<-,shorten <=1pt] (hmm1) -- +(180:1cm);
+				\draw[thick,->,shorten <=1pt] (hmm18) -- +(180:1cm);
+				\end{scope}			
+			\end{tikzpicture} \\
+			
+			\hline
+		\end{tabular}
+    	\caption{sss}
+    	\label{fig:xxx}
+    	
+    \end{figure}
+    
+    
        \subsubsection{ Modele bezkontekstowe i kontekstowe}
        \subsubsection{ Metody redukcji liczby stanów modeli kontekstowych }	
 
