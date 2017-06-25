@@ -45,7 +45,9 @@
 
 % Define block styles
 \tikzstyle{ArmBlok} = [rectangle, draw, fill=blue!20, text width=10em, text centered, rounded corners, minimum height=4em]
+\tikzstyle{word} = [rectangle, draw, text width=10em, text centered, rounded corners, minimum height=4em]
 \tikzstyle{ArmBlok2} = [rectangle, draw, fill=blue!20, text width=10em, text centered, rounded corners, minimum height=4em, node distance=5cm]
+\tikzstyle{path}=[circle,thick,fill=gray!0,minimum size=1mm]
 \tikzstyle{hmm0}=[circle,thick,draw=gray!50,fill=gray!13,minimum size=4mm]
 \tikzstyle{hmm}=[circle,thick,draw=gray!75,fill=gray!20,minimum size=6mm]
 \tikzstyle{hmm2}=[circle,thick,draw=gray!75,fill=gray!20,minimum size=10mm]
@@ -284,6 +286,9 @@
 		   	\draw [->] (hmm4) [out=0, in=200]  to node[midway,above,rotate=0] {$a_{s4,s3}$} (hmm6);
 		   	\draw [->] (hmm5) [out=0, in=220]  to node[midway,right,rotate=0] {$a_{s5,s3}$} (hmm6);
 		   	
+		   	\draw[-stealth] (-2cm,-8cm)--(6cm,-8cm) node[right]{T}; 
+		   	\draw[-stealth] (-2cm,-8cm)--(-2cm,0.5cm) node[right]{Q}; 
+		   	\draw[dashed] (1cm,-8cm)--(1cm,0.5cm);
 		   	
 		   	\end{scope}
 		   	
@@ -297,13 +302,15 @@
 	   \subsubsection{Estymacja parametrów rozkładu normalnego}
 	
     \subsection{Modelowanie fonetyki z wykorzystaniem HMM }
-    W klasycznych systemach rozpoznających mowę, wykorzystujących ukryte modele Markova, zbiór stanów reprezentuje fony. Każdy fon ma trzy stany w HMM, tak jak opisano w rozdziale \ref{sec:Phones}. Zbiorem obserwacji są wektory cech wyznaczane zgodnie z opisem w rozdziale \ref{sec:Feature_vec}. Przejścia pomiędzy stanami jednego fonemu są zgodne z opisem z rozdziału \ref{sec:Phones}, natomiast przejścia pomiędzy różnymi fonami są tworzone na podstawie słownika (blok \refBlock{slownik} na rysunku \ref{fig:ARM_schemat}). Dla każdego słowa generowany jest ciąg stanów odpowiadający kolejnym fonemom, z których składa się słowo. 
+    W klasycznych systemach rozpoznających mowę, wykorzystujących ukryte modele Markova, zbiór stanów reprezentuje fony. Każdy fon ma trzy stany w HMM, tak jak opisano w rozdziale \ref{sec:Phones}. Zbiorem obserwacji są wektory cech wyznaczane zgodnie z opisem w rozdziale \ref{sec:Feature_vec}. Przejścia pomiędzy stanami jednego fonemu są zgodne z opisem z rozdziału \ref{sec:Phones}, natomiast przejścia pomiędzy różnymi fonami są tworzone na podstawie słownika (blok \refBlock{slownik} na rysunku \ref{fig:ARM_schemat}). Dla każdego słowa generowany jest ciąg stanów odpowiadający kolejnym fonemom, z których składa się słowo. \\
+    Na rysunku \ref{fig:AutomatExample} zamieszczono przykład automatu dla słowa \textit{jabłko}. Zgodnie z wykorzystanymi regułami leksykalnymi słowo \textit{jabłko} zapisuje się za pomocą fonemów jako $[j a p ł k o]$. \\
     
     \begin{figure}[H]
     	\centering
 		\begin{tabular}{|c|}
 			\hline
-			W = "jabłko" = \{j a p ł k o\} \\ 
+			\textit{jabłko} = [j a p ł k o] \\ 
+			\hline \\
 	
 			\begin{tikzpicture}[node distance=1.7cm]
 			
@@ -438,11 +445,149 @@
 			
 			\hline
 		\end{tabular}
-    	\caption{sss}
-    	\label{fig:xxx}
+    	\caption{Automat dla słowa \textit{jabłko}}
+    	\label{fig:AutomatExample}
     	
     \end{figure}
+
+    W najprostszej implementacji dla każdego słowa ze słownika, można stworzyć osobny ciąg stanów.
     
+    \begin{figure}[H]
+    	\centering
+    	\begin{tabular}{|c|}
+    		\hline
+    		\textit{kot} = [k o t],  \textit{kos} = [k o s],  \textit{kasa} = [k a s a]\\ 
+    		\hline \\
+    		
+    		\begin{tikzpicture}[node distance=1.7cm]
+    		
+    		\begin{scope} 		
+    		
+   			\node [hmm] (hmm1) {$k$};
+   			\node [hmm, right of=hmm1] (hmm2) {$o$};
+   			\node [hmm, right of=hmm2] (hmm3) {$t$};
+   			
+   			\node [hmm, below of=hmm1] (hmm4) {$k$};
+   			\node [hmm, right of=hmm4] (hmm5) {$o$};
+   			\node [hmm, right of=hmm5] (hmm6) {$s$};
+   			
+   			\node [hmm, below of=hmm4] (hmm7) {$k$};
+   			\node [hmm, right of=hmm7] (hmm8) {$a$};
+   			\node [hmm, right of=hmm8] (hmm9) {$s$};
+   			\node [hmm, right of=hmm9] (hmm10) {$a$};
+   			
+   			\node [hmm, left = 2 cm of hmm4] (start) {$start$};
+   			\node [hmm, right = 4 cm of hmm6] (stop) {$stop$};
+   			
+   			\coordinate [below of=hmm10] (P1);
+   			\coordinate [below of=hmm7] (P2);
+   			
+   			\draw[thick,->,shorten >=1pt] (hmm1) to [out=0,in=180] (hmm2);
+   			\draw[thick,->,shorten >=1pt] (hmm2) to [out=0,in=180] (hmm3);
+   			
+   			\draw[thick,->,shorten >=1pt] (hmm4) to [out=0,in=180] (hmm5);
+   			\draw[thick,->,shorten >=1pt] (hmm5) to [out=0,in=180] (hmm6);
+   			
+   			\draw[thick,->,shorten >=1pt] (hmm7) to [out=0,in=180] (hmm8);
+   			\draw[thick,->,shorten >=1pt] (hmm8) to [out=0,in=180] (hmm9);
+ 			\draw[thick,->,shorten >=1pt] (hmm9) to [out=0,in=180] (hmm10);
+   			
+   			\draw[thick,->] (hmm1.70) arc (-60:245:4mm);
+   			\draw[thick,->] (hmm2.70) arc (-60:245:4mm);
+   			\draw[thick,->] (hmm3.70) arc (-60:245:4mm);
+   			\draw[thick,->] (hmm4.70) arc (-60:245:4mm);
+   			\draw[thick,->] (hmm5.70) arc (-60:245:4mm);
+   			\draw[thick,->] (hmm6.70) arc (-60:245:4mm);
+   			\draw[thick,->] (hmm7.70) arc (-60:245:4mm);
+   			\draw[thick,->] (hmm8.70) arc (-60:245:4mm);
+   			\draw[thick,->] (hmm9.70) arc (-60:245:4mm);
+   			\draw[thick,->] (hmm10.70) arc (-60:245:4mm);
+   			
+   			\draw[thick,->,shorten >=1pt] (start) to [out=15,in=180] (hmm1);
+   			\draw[thick,->,shorten >=1pt] (start) to [out=0,in=180] (hmm4);
+   			\draw[thick,->,shorten >=1pt] (start) to [out=-15,in=180] (hmm7);
+   			
+   			\draw[thick,->,shorten >=1pt] (hmm3) to [out=0,in=165] (stop);
+   			\draw[thick,->,shorten >=1pt] (hmm6) to [out=0,in=180] (stop);
+   			\draw[thick,->,shorten >=1pt] (hmm10) to [out=0,in=195] (stop);
+   			
+   			\draw[thick,->,shorten >=1pt] (stop) to [out=-45,in=0] (P1);
+   			\draw[thick,->,shorten >=1pt] (P1) to [out=180,in=0] (P2);
+   			\draw[thick,->,shorten >=1pt] (P2) to [out=180,in=225] (start);
+    		
+    		\end{scope}			
+    		\end{tikzpicture} \\
+    		
+    		\hline
+    	\end{tabular}
+    	\caption{Niezoptymalizowany automat dla słów: \textit{kot}, \textit{kos}, \textit{kasa}. Dla uproszczenia automatu fonemy są reprezentowane pojedynczymi stanami. \textit{jabłko}}
+    	\label{fig:Graph_simple}
+    	
+    \end{figure}
+
+	\begin{figure}[H]
+		\centering
+		\begin{tabular}{|c|}
+			\hline
+			\textit{kot} = [k o t],  \textit{kos} = [k o s],  \textit{kasa} = [k a s a]\\ 
+			\hline \\
+			
+			\begin{tikzpicture}[node distance=1.7cm]
+			
+			\begin{scope}  		
+			
+			\node [hmm] (hmm1) {$k$};
+			\node [hmm, right of=hmm1] (hmm2) {$o$};
+			\node [hmm, right of=hmm2] (hmm3) {$t$};
+			
+			\node [hmm, above of=hmm3] (hmm4) {$s$};
+			
+			\node [hmm, below of=hmm2] (hmm5) {$a$};
+			\node [hmm, right of=hmm5] (hmm6) {$s$};
+			\node [hmm, right of=hmm6] (hmm7) {$a$};
+			
+			\node [hmm, left = 2 cm of hmm1] (start) {$start$};
+			\node [hmm, right = 4 cm of hmm3] (stop) {$stop$};
+			
+			\coordinate [below of=hmm7] (P1);
+			\coordinate [below of=hmm5] (P2);
+			
+			\draw[thick,->,shorten >=1pt] (hmm1) to [out=0,in=180] (hmm2);
+			\draw[thick,->,shorten >=1pt] (hmm2) to [out=0,in=180] (hmm3);
+			
+			\draw[thick,->,shorten >=1pt] (hmm2) to [out=15,in=196] (hmm4);
+			
+			\draw[thick,->,shorten >=1pt] (hmm1) to [out=-15,in=165] (hmm5);
+			\draw[thick,->,shorten >=1pt] (hmm5) to [out=0,in=180] (hmm6);
+			\draw[thick,->,shorten >=1pt] (hmm6) to [out=0,in=180] (hmm7);
+			
+			\draw[thick,->] (hmm1.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm2.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm3.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm4.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm5.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm6.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm7.70) arc (-60:245:4mm);
+			
+			\draw[thick,->,shorten >=1pt] (start) to [out=0,in=180] (hmm1);
+			
+			\draw[thick,->,shorten >=1pt] (hmm3) to [out=0,in=180] (stop);
+			\draw[thick,->,shorten >=1pt] (hmm4) to [out=0,in=165] (stop);
+			\draw[thick,->,shorten >=1pt] (hmm7) to [out=0,in=195] (stop);
+			
+			\draw[thick,->,shorten >=1pt] (stop) to [out=-45,in=0] (P1);
+			\draw[thick,->,shorten >=1pt] (P1) to [out=180,in=0] (P2);
+			\draw[thick,->,shorten >=1pt] (P2) to [out=180,in=225] (start);
+			
+			\end{scope}			
+			\end{tikzpicture} \\
+			
+			\hline
+		\end{tabular}
+		\caption{Zoptymalizowany automat dla słów: \textit{kot}, \textit{kos}, \textit{kasa}. Dla uproszczenia automatu fonemy są reprezentowane pojedynczymi stanami. \textit{jabłko}}
+		\label{fig:Graph_complex}
+		
+	\end{figure}
     
        \subsubsection{ Modele bezkontekstowe i kontekstowe}
        \subsubsection{ Metody redukcji liczby stanów modeli kontekstowych }	
