@@ -15,6 +15,7 @@
 \usepackage{multirow}
 \usepackage{tabularx}
 \usepackage{array}
+\usepackage{algorithmic}
 \hypersetup{
 	colorlinks,
 	citecolor=black,
@@ -30,7 +31,6 @@
 \frenchspacing
 
 \newcolumntype{K}[1]{>{\centering\arraybackslash}p{#1}}
-\newtheorem{mydef}{Definicja}
 \DeclareMathOperator*{\argmax}{\arg\max}   % rbp
 \newcounter{BlockCounter}
 \newcommand{\labelBlock}[1]{%
@@ -243,10 +243,10 @@
 		   Algorytmy Viterbiego sa dynamicznymi algorytmami do znajdowania najbardziej prawdopodobnej ścieżki w automacie oraz prawdopodobieństwa stanu $s_i$ po $t$ krokach. 
 		   
 		   \begin{itemize}
-			   	\item Aby znaleźć najbardziej prawdopodobną ścieżkę, należy skorzystać z równania \ref{equation:viterbi_path}.
-			   	\item Aby znaleźć prawdopodobieństwo stanu po $k$ krokach, należy skorzystać z równania \ref{equation:viterbi_node}.
+			   	\item Aby znaleźć najbardziej prawdopodobną ścieżkę, należy skorzystać z rekurencyjnego równania \ref{equation:viterbi_path}.
+			   	\item Aby znaleźć prawdopodobieństwo stanu po $k$ krokach, należy skorzystać z rekurencyjnego równania \ref{equation:viterbi_node}.
 		   \end{itemize}
-	   
+	   	   
 		   \begin{equation}
 		   P_t^q=\max_{q \in Q} \bigg( P_{t-1}^q\cdot a_{q,w}\cdot b_q(o) \bigg)
 		   \label{equation:viterbi_path}
@@ -256,6 +256,67 @@
 		   P_t^q=\sum_{q \in Q} \bigg( P_{t-1}^q\cdot a_{q,w}\cdot b_q(o) \bigg)
 		   \label{equation:viterbi_node}
 		   \end{equation}
+		   
+		  Oba równania (\ref{equation:viterbi_path} oraz \ref{equation:viterbi_node}) odwołując się jedynie do wartości z poprzedniej iteracji, zatem stosując techniki programowania dynamicznego można wyznaczyć najbardziej prawdopodobną ścieżkę stosując algorytm \ref{alg:viterbi}. Algorytm ten przechodzi przez wszystkie ramki czasowe $T$, w najbardziej zewnętrznej pętli. Następnie dla każdego stany $q1$, w najbardziej wewnętrznej pętli, wyszukuje przejścia o największym prawdopodobieństwie, które doprowadziło ze stanu $q2$ do $q1$. Rysunek \ref{fig:viterbi} ilustruje jedną iterację zewnętrznej pętli. Pod koniec działania algorytmu zwracany jest końcowy stan najbardziej prawdopodobnej ścieżki. \\
+		  Algorytm \ref{alg:viterbi2} pokazuje analogiczny sposób znajdowania najbardziej prawdopodobnego stanu.
+		
+		  \begin{figure}
+			   \begin{algorithmic}[1]
+				   	
+					   	\REQUIRE {tablica obserwacji $O$ o rozmiarze T}
+					   	\REQUIRE {macierz przejścia $A$ o rozmiarze $|Q| \times |Q|$}
+					   	
+					   	\STATE $T_a[0 \ldots Q] = 1$;
+					   	\COMMENT {inicjalizacja pierwszej tablicy pomocniczej}
+					   	\STATE $T_b[0 \ldots Q] = 0$;
+					   	\COMMENT {inicjalizacja drugiej tablicy pomocniczej}
+					   	
+					   	\FOR{$t=1$ to $T$}
+						   	\FOR{$q1=1$ to $|Q|$}
+							   	\STATE $p_{tmp} = 0$;
+							   	\FOR{$q2=1$ to $|Q|$}
+								   	\IF {$ \bigg( T_a[q2]\cdot a_{q,w}\cdot b_q(O_t) \bigg) > p_{tmp}$}
+									   	\STATE $p_{tmp} = \bigg( T_a[q2]\cdot a_{q,w}\cdot b_q(O_t) \bigg)$;
+								   	\ENDIF
+							   	\ENDFOR
+							   	\STATE $T_b[q1] = p_{tmp}$
+						   	\ENDFOR
+						   	\STATE $swap(T_a, T_b)$;
+					   	\ENDFOR
+					   	
+					   	\RETURN $\argmax{T_a}$;
+			   \end{algorithmic}
+		  \caption{Algorytmy Viterbiego znajdujący najbardziej prawdopodobną ścieżkę}
+		  \label{alg:viterbi}
+		  \end{figure}		
+	  
+		  \begin{figure}
+			  \begin{algorithmic}[1]
+		  		
+		  		  \REQUIRE {tablica obserwacji $O$ o rozmiarze T}
+		  		  \REQUIRE {macierz przejścia $A$ o rozmiarze $|Q| \times |Q|$}
+		  		
+		  	  	  \STATE $T_a[0 \ldots Q] = 1$;
+		  		  \COMMENT {inicjalizacja pierwszej tablicy pomocniczej}
+		  		  \STATE $T_b[0 \ldots Q] = 0$;
+		  		  \COMMENT {inicjalizacja drugiej tablicy pomocniczej}
+		  		
+		  		  \FOR{$t=1$ to $T$}
+			  		  \FOR{$q1=1$ to $|Q|$}
+				  		  \STATE $T_b[q1] = 0$;
+				  		  \FOR{$q2=1$ to $|Q|$}
+					  		  \STATE $T_b[q1] += \bigg( T_a[q2]\cdot a_{q,w}\cdot b_q(O_t) \bigg)$					  		  
+				  		  \ENDFOR
+				  		  \STATE $T_b[q1] = p_{tmp}$
+			  		  \ENDFOR
+			  		  \STATE $swap(T_a, T_b)$;
+		  		  \ENDFOR
+		  		
+		  		  \RETURN $\argmax{T_a}$;
+			  \end{algorithmic}
+			  \caption{Algorytmy Viterbiego znajdujący najbardziej prawdopodobną stan}
+		  	  \label{alg:viterbi2}
+		  \end{figure}	   
 		   
 		   \begin{figure}[H]
 		   	\centering
@@ -293,7 +354,7 @@
 		   	\end{scope}
 		   	
 		   	\end{tikzpicture}
-		   	\caption{Algorytmy Viterbiego}
+		   	\caption{Wizualizacja jednej iteracji algorytmu Viterbiego}
 		   	\label{fig:viterbi}
 		   	
 		   \end{figure}
@@ -450,7 +511,8 @@
     	
     \end{figure}
 
-    W najprostszej implementacji dla każdego słowa ze słownika, można stworzyć osobny ciąg stanów.
+    Przy generowaniu automatu dla wielu słów, w najprostszej implementacji, dla każdego słowa ze słownika, można stworzyć osobny ciąg stanów. Rysunek \ref{fig:Graph_simple} pokazuje przykład prostego grafu przejść dla słów: \textit{kot, kos, kasa, masa, ma}. Widać na nim dodatkowe dwa stany \textit{start} oraz \textit{stop}, z którymi nie wiąże się emisja żadnej obserwacji. Funkcją tych stanów jest połączenie wielu słów w jeden graf, odpowiadają one stanom \textit{$q_0$} oraz \textit{$q_F$} z definicji \ref{equation:HMM_def}. Dodane jest również jeszcze jedno techniczne przejście, ze stanu \textit{stop} do stanu \textit{start}, jego zadaniem jest umożliwienie przejścia na początek automatu w celu rozpoznawania kolejnego słowa. \\
+    Opisany powyżej automat dobrze oddaje koncepcję ukrytego modelu Markova, który jest wykorzystywany przy rozpoznawaniu mowy, jednak jest bardzo nie efektywny. Nieefektywność wynika z wielokrotnego powtarzania tych samych obliczeń, dla słów o wspólnym prefiksie. Naturalną optymalizacją jest więc połączenie wspólnych prefiksów. Rysunek \ref{fig:Graph_complex} ilustruje zoptymalizowany automat \ref{fig:Graph_simple}. Widać, że dzięki optymalizacji otrzymujemy znacznie mniejszy graf o bardziej zwięzłej strukturze. 
     
     \begin{landscape}
 	    \begin{figure}
@@ -460,12 +522,12 @@
 	    		\textit{kot} = [k o t],  \textit{kos} = [k o s],  \textit{kasa} = [k a s a], \textit{masa} = [m a s a], \textit{ma} = [m a]\\ 
 	    		\hline \\
 	    		
-	    		\begin{tikzpicture}[node distance=1.2cm]
+	    		\begin{tikzpicture}[node distance=1.13cm]
 	    		
 	    		\begin{scope} 		
 	    		\def \h{1.5}
 	    		\def \t{3.2}
-	    		\def \d{0.6}
+	    		\def \d{0.7}
 	    		
 	   			\node [hmm] (hmm1) {$k_1$};
 	   			\node [hmm, right of=hmm1] (hmm2) {$k_2$};
@@ -671,7 +733,7 @@
 	    		
 	    		\hline
 	    	\end{tabular}
-	    	\caption{Niezoptymalizowany automat dla słów: \textit{kot}, \textit{kos}, \textit{kasa}. Dla uproszczenia automatu fonemy są reprezentowane pojedynczymi stanami. \textit{jabłko}}
+	    	\caption{Niezoptymalizowany automat dla słów: \textit{kot}, \textit{kos}, \textit{kasa}, \textit{masa} oraz \textit{ma}}
 	    	\label{fig:Graph_simple}
 	    	
 	    \end{figure}
@@ -687,12 +749,12 @@
 				\textit{kot} = [k o t],  \textit{kos} = [k o s],  \textit{kasa} = [k a s a], \textit{masa} = [m a s a], \textit{ma} = [m a]\\ 
 				\hline \\
 				
-				\begin{tikzpicture}[node distance=1.2cm]
+				\begin{tikzpicture}[node distance=1.13cm]
 				
 				\begin{scope}  		
 				
 				\def \h{1.5}
-				\def \d{0.6}
+				\def \d{0.7}
 				
 				\node [hmm] (hmm1) {$k_1$};
 				\node [hmm, right of=hmm1] (hmm2) {$k_2$};
@@ -844,7 +906,7 @@
 				
 				\hline
 			\end{tabular}
-			\caption{Zoptymalizowany automat dla słów: \textit{kot}, \textit{kos}, \textit{kasa}.}
+			\caption{Zoptymalizowany automat dla słów: \textit{kot}, \textit{kos}, \textit{kasa}, \textit{masa} oraz \textit{ma}}
 			\label{fig:Graph_complex}
 			
 		\end{figure}
