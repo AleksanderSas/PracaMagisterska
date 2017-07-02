@@ -1,6 +1,7 @@
 \documentclass[11pt]{article}
 
 \usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage[T1]{fontenc}
 \usepackage[polish]{babel}
 \usepackage[utf8]{inputenc}
@@ -240,6 +241,7 @@
 	    	
 	   \subsubsection{Modele Markova}
 	   \subsubsection{Algorytmy Viterbiego}
+		   \label{sec:Viterbi}
 		   Algorytmy Viterbiego sa dynamicznymi algorytmami do znajdowania najbardziej prawdopodobnej ścieżki w automacie oraz prawdopodobieństwa stanu $s_i$ po $t$ krokach. 
 		   
 		   \begin{itemize}
@@ -741,7 +743,6 @@
 
 	\begin{landscape}
 		\begin{figure}
-			%\thispagestyle{empty}
 			\centering
 			
 			\begin{tabular}{|c|}
@@ -912,11 +913,49 @@
 		\end{figure}
 	\end{landscape}
     
+	   \subsubsection{ Rozpoznawanie}
+		   Mając zamodelowany słownik, za pomocą ukrytych modeli Markova zgodnie z opisem w rozdziale \ref{sec:Phones}, można przejść do rozpoznawania mowy. Proces rozpoznawania jest w rzeczywistości wyszukiwaniem najbardziej prawdopodobnej ścieżki w automacie, wraz z którą wiąże się sekwencja wypowiedzianych słów (blok \refBlock{lancuch_markova} na rysunku \ref{fig:ARM_schemat}).  W rozdziale \ref{sec:Viterbi} opisano algorytm \ref{alg:viterbi}, który wylicza ścieżkę której szukamy. Chcąc go wykorzystać do rozpoznawania, należy zmodyfikować algorytm o uwzględnianie prawdopodobieństwa słów z modelu językowego, które wyznaczamy za pomocą n-gramów, tak jak opisano w rozdziale \ref{sec:ngramm}. Ponadto należy dodać fragment kodu zapamiętującego słowa przez, które prowadzi ścieżka.\\
+		   Model językowy uwzględnia się poprzez pomnożenie prawdopodobieństwa ścieżki przez prawdopodobieństwo rozpoznanego słowa, przy przechodzeniu do stany \textit{stop}.\\
+		   W rzeczywistości wiele systemów rozpoznawania mowy, w szczególności \textit{Julius}, wykorzystują algorytm \textit{token passing} (\ref{alg:token_passing}), który jest wariancją algorytmu Viterbiego. Czas działania algorytmu \ref{fig:viterbi} to $O(T\cdot |Q|^2)$, co przy słowniku zawierającym kilkaset tysięcy słów przekłada się na bardzo wolny czas działania. W algorytmie \textit{token passing} uwzględnia się jedynie stany do których jest przejście, co znacząco przyśpiesza procedurę wyznaczania ścieżki. \\
+		   Ponadto w algorytmie \ref{alg:token_passing} można zastosować heurystyczną metodę przyśpieszania, polegającą na przycinaniu zbiory $Q2$ do zadanej wielkości, zwanej \textit{szerokością wiązki}. Podczas przycinania pozostawia się jedynie $n$ par o największym prawdopodobieństwie, gdzie $n$ jest empirycznie wyznaczanym parametrem. W praktyce, znaczące przyśpieszenie przy jednoczesnym znikomym spadku skuteczności rozpoznawania otrzymuje się dla $n \in [500, 2000]$.
+		    
+		    \begin{figure}
+		    	\begin{algorithmic}[1]
+		    		
+		    		\REQUIRE {tablica obserwacji $O$ o rozmiarze T}
+		    		\REQUIRE {macierz przejścia $A$ o rozmiarze $|Q| \times |Q|$}
+		    		\REQUIRE {zbiór krawędzi $E$, które występują w automacie}
+		    		
+		    		\STATE $Q1 = \{(start, 1)\}$; 
+		    		\STATE $Q2 = \phi$;		    
+		    		
+		    		\FOR{$t=1$ to $T$}
+			    		\STATE $Q2 = \phi$
+			    		\FOR{$(q1, p1)$ in $Q1$}
+				    		\FOR{$\{q2: (q1, q2) \in E \} $}
+					    		\STATE $p_{q_2} = \bigg( p1\cdot a_{q,w}\cdot b_q(O_t) \bigg)$;				    	
+					    		\STATE $Q2 = Q2 \cup \{(q2, p_{q_2})\}$
+				    		\ENDFOR
+			    		\ENDFOR
+			    		\STATE $swap(Q1, Q2)$;
+		    		\ENDFOR
+		    		
+		    		\RETURN $\argmax{Q1}$;
+		    	\end{algorithmic}
+	    	
+		    	Zbiory $Q1$, $Q2$ przechowują pary $(stan, parwdopodobieństwo)$ 
+		    	
+		    	\caption{Algorytmy token passing}
+		    	\label{alg:token_passing}
+		    \end{figure}		
+		    
+		    
        \subsubsection{ Modele bezkontekstowe i kontekstowe}
        \subsubsection{ Metody redukcji liczby stanów modeli kontekstowych }	
 
 \section{N-gramowy model językowy}
-Dosłownie kilka słów o n-gramach i wygładzaniu (to nie jest temat tej pracy)
+	\label{sec:ngramm}
+	Dosłownie kilka słów o n-gramach i wygładzaniu (to nie jest temat tej pracy)
     \subsection{ Rodzaje modeli językowych }
       Omówienie modeli stochastycznych, gramatycznych, moodeli językowych wykorzystujących sieci głębokiego uczenia (krótko)
     \subsection{ Estymacja parametrów modelu językowego na podstawie korpusu tekstów }
@@ -925,7 +964,35 @@ Dosłownie kilka słów o n-gramach i wygładzaniu (to nie jest temat tej pracy)
 
 \section{Rozpoznawanie mowy z wykorzystaniem sieci neuronowych}
 	\label{sec:ASR_NN}
-	\subsection{Sieć jako estymator prawdopodobieństw \textit{aposteriori} stanów }
+	W prezentowanym podejściu do rozpoznawania mowy z wykorzystaniem sieci neuronowych, sieć jest wykorzystywana do wyznaczania prawdopodobieństw stanów na podstawie wektora cech, co odpowiada blokwi \refBlock{klasyfikator} z rysunku \ref{fig:ARM_schemat}).
+	
+	\subsection{Sieć jako estymator prawdopodobieństw stanów }
+	\label{sec:nn_estymator}
+		Sieć neuronowa wykorzystywana jako klasyfikator, dostaje na wejściu $k$-elementowy wektor cech $v \in \mathbb{R}^k$, natomiast na wyjściu zwraca $n$-elementowy wektor $w \in \mathbb{R}_+^n$, gdzie $n$ jest liczbą rozpoznawanych klas. W idealnym klasyfikatorze $w \in \{0,1\}^n$ i dokładnie jeden element ma wartość $1$, a pozostałe $0$. W praktyce jednak uznajemy, że klasyfikator wybiera klasę o największej wartości. Aby nadać wyjściu klasyfikatora charakter prawdopodobieństwa, należy nałożyć na niego funkcję \textit{softmax} opisaną równaniem \ref{eqn:softmax}. Po złożeniu z funkcją \ref{eqn:softmax} klasyfikator będzie wyznaczał $P(w_i|v)$, czyli prawdopodobieństwo $i$-tej klasy pod warunkiem wektora wejściowego $v$.
+		
+		\begin{equation}
+			\sigma(w)_k=\frac{\mathrm{e}^{w_k}}{\sum_{i=1}^{n} \mathrm{e}^{w_i}}
+			\text{,   gdzie $n$ to szerokości wektora $w$}
+			\label{eqn:softmax}
+		\end{equation}
+		
+		Zgodnie z równaniem \ref{equation:ASR_definicja2} do rozpoznawani mowy potrzeba $P(O|W)$, co oznacza, że klasyfikator musi wyznaczać $P(v|w_i)$. Korzystając ze wzoru Bayes i obserwacji, że $P(v)$ nie ma wpływu na rozpoznawanie, gdyż jest takie samo dla wszystkich hipotez, otrzymujemy:
+		
+		\begin{equation}
+			P(v|w_i) = \frac{P(w_i|v) \cdot P(w_i)}{P(v)}\simeq P(w_i|v) \cdot P(w_i)
+			\label{eqn:softmax2}
+		\end{equation}
+		
+	\subsection{Prawdopodobieństwo stanów \textit{apriori} }
+		W rozdziale \ref{sec:nn_estymator} opisano, jak wykorzystać sieć neuronową do wyznaczania prawdopodobieństw stanów, jednak wymaga to wcześniejszego wyznaczenia prawdopodobieństw stanów apriori, czyli $P(w_i)$ ze wzoru \ref{eqn:softmax2}. 
+		$P(w_i)$ może być łatwo wyznaczone podczas przygotowywani danych do uczenia sieci neuronowej. Na etapie generowania wektorów wyjściowych do treningu, możliwe jest zliczanie wystąpień stanu $q_i$.
+		Następnie wystarczy dla każdego stanu obliczyć:
+		
+		\begin{equation}
+			P(w_k) = \frac{c_k}{\sum_{i=1}^{|Q|} c_i}
+			\text{,   gdzie $c_i$ to liczba wystąpień stanu $q_i$}
+		\end{equation}
+		
 	\subsection{Sieć jako generator cech dla procesu rozpoznawania }
 	\subsection{Zastosowanie sieci DNN w ARM}
 	\subsection{Zastosowanie sieci konwolucyjnych w ARM}
