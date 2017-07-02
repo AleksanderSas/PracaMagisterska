@@ -16,6 +16,7 @@
 \usepackage{multirow}
 \usepackage{tabularx}
 \usepackage{array}
+\usetikzlibrary{decorations.pathreplacing}
 \usepackage{algorithmic}
 \hypersetup{
 	colorlinks,
@@ -56,7 +57,7 @@
 \tikzstyle{block} = [rectangle, draw, fill=blue!20, text width=5em, text centered, rounded corners, minimum height=4em]
 \tikzstyle{line} = [draw, -latex']
 \tikzstyle{data} = [draw, ellipse,fill=red!20, node distance=2cm,minimum height=2em]
-
+\tikzstyle{frame} = [rectangle, draw, text centered, rounded corners, minimum height=4em, minimum width=0.7em] %, rotate=90,anchor=north]
 \maketitle
 \tableofcontents
 
@@ -933,7 +934,7 @@
 			    		\STATE $Q2 = \phi$
 			    		\FOR{$(q1, p1)$ in $Q1$}
 				    		\FOR{$\{q2: (q1, q2) \in E \} $}
-					    		\STATE $p_{q_2} = \bigg( p1\cdot a_{q,w}\cdot b_q(O_t) \bigg)$;				    	
+					    		\STATE $p_{q_2} = \bigg( p1\cdot a_{q,w}\cdot b_q(O_t) \label{line:b_q} \bigg)$;				    	
 					    		\STATE $Q2 = Q2 \cup \{(q2, p_{q_2})\}$
 				    		\ENDFOR
 			    		\ENDFOR
@@ -983,6 +984,13 @@
 			\label{eqn:softmax2}
 		\end{equation}
 		
+		 W proponowanym podejściu zastosowania sieci neuronowej przy rozpoznawaniu mowy, wejściem sieci jest $k$ $123$-elementowych wektorów cech, wyznaczanych zgodnie z opisem w rozdziale \ref{sec:Feature_vec}. Parametr $k$ określa ile kolejnych ramek jest dostarczanych sieci w wektorze wejściowym. Poprzez \textit{szerokość kontekstu} rozumieć będziemy liczbę ramek na prawn i lewo od rozpoznawanej ramki, zatem $k = 2 \cdot kontekst + 1$. Wyjściem jest natomiast wektor o szerokości równej liczbie stanów modu Markova. Uwzględniając równanie \ref{eqn:softmax2}, wartość funkcji $b_q(O_t)$ z \ref{line:b_q}. linii algorytmu \ref{alg:token_passing} odpowiada wyrażeniu:
+		 
+		 \begin{equation}
+			 b_q(O_t) = NN(O_t) \cdot P(w_q)			 
+		 \end{equation}
+		 ,gdzie NN to sieć neuronowa rozumiana jako funkcja.
+		
 	\subsection{Prawdopodobieństwo stanów \textit{apriori} }
 		W rozdziale \ref{sec:nn_estymator} opisano, jak wykorzystać sieć neuronową do wyznaczania prawdopodobieństw stanów, jednak wymaga to wcześniejszego wyznaczenia prawdopodobieństw stanów apriori, czyli $P(w_i)$ ze wzoru \ref{eqn:softmax2}. 
 		$P(w_i)$ może być łatwo wyznaczone podczas przygotowywani danych do uczenia sieci neuronowej. Na etapie generowania wektorów wyjściowych do treningu, możliwe jest zliczanie wystąpień stanu $q_i$.
@@ -993,7 +1001,35 @@
 			\text{,   gdzie $c_i$ to liczba wystąpień stanu $q_i$}
 		\end{equation}
 		
-	\subsection{Sieć jako generator cech dla procesu rozpoznawania }
+		\begin{figure}[H]
+			\centering
+			\begin{tikzpicture}[node distance=0.8cm]
+			
+			\begin{scope}
+			\node [frame] (fr1) {$t_1$};
+			\node [frame, right of=fr1] (fr2) {$t_2$};
+			\node [frame, right of=fr2] (fr3) {$t_3$};
+			\node [frame, right of=fr3] (fr4) {$t_4$};
+			\node [frame, right of=fr4] (fr5) {$t_5$};
+			\node [frame, right of=fr5] (fr6) {$t_6$};
+			\node [frame, right of=fr6] (fr7) {$t_7$};
+			\node [frame, right of=fr7] (fr8) {$t_8$};
+			\node [frame, right of=fr8] (fr9) {$t_9$};
+			
+			
+			\draw [decorate,decoration={brace,amplitude=10pt,mirror,raise=6pt},yshift=10pt]
+			(fr1.south west) -- (fr4.south east) node [black,midway,yshift=-1.5cm] {\footnotesize $P_2$};
+		
+			\end{scope}
+			
+			\end{tikzpicture}
+			\caption{Reprezentacja fonów}
+			\label{fig:xxx}
+			
+		\end{figure}
+		
+	\subsection{Architektura sieci i układ danych}
+		
 	\subsection{Zastosowanie sieci DNN w ARM}
 	\subsection{Zastosowanie sieci konwolucyjnych w ARM}
 	\subsection{Skuteczność ARM przy zastosowaniu sieci neuronowych}
