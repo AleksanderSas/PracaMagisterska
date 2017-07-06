@@ -57,7 +57,7 @@
 \tikzstyle{block} = [rectangle, draw, fill=blue!20, text width=5em, text centered, rounded corners, minimum height=4em]
 \tikzstyle{line} = [draw, -latex']
 \tikzstyle{data} = [draw, ellipse,fill=red!20, node distance=2cm,minimum height=2em]
-\tikzstyle{frame} = [rectangle, draw, text centered, rounded corners, minimum height=4em, minimum width=0.7em] %, rotate=90,anchor=north]
+\tikzstyle{frame} = [rectangle, draw, text centered, rounded corners, minimum height=0.7em, minimum width=4em, rotate=90,anchor=north]
 \maketitle
 \tableofcontents
 
@@ -208,6 +208,82 @@
 		Ten rozdział ma na pokazać, jak wcześniej opisane elementy składają się na działający system do rozpoznawani.
 	\subsection{ Ekstrakcja cech }
 	\label{sec:Feature_vec}
+
+	 Ekstrakcja cech, odpowiadająca blokowi \refBlock{ekstrakcja_cech} z rysunku \ref{fig:ARM_schemat}, polega na zamianie sygnału akustycznego na ciąg wektorów, które mogą być następnie sklasyfikowane na kolejnym etapie. Przy rozpoznawaniu mowy najczyściej wykorzystuje się cechy \textit{MFCC}, które składają się z 5 etapów przetwarzania:
+	 
+	 \begin{itemize}
+	 	\item Podział sygnału akustycznego.
+	 	\item Transformata Fouriera.
+	 	\item Nałożenie zestawu filtrów.
+	 	\item Nałożenie logarytmu. 
+	 	\item Dyskretna transformata Fouriera.
+	 \end{itemize}
+ 
+	 Pierwszym etapem ekstrakcji jest podzielenie sygnału na fragmenty zwane \textit{ramkami}. Typowo ramki mają $25ms$ i są przesunięte co $10ms$. Ramki o takiej długości zawierają wystarczająco dużo informacji, a jednocześnie można założyć, że są stochastycznie stacjonarne. 
+	 
+	 W drugim etapie każdą ramkę poddaje się transformacie Fouriera. W tej operacji efekcie otrzymuje się widmo sygnału akustycznego, opisujące ilość energii w zależności o częstotliwości.
+	 
+	 W trzecim etapie na widmo nakłada się zestaw filtrów trójkątnych. Filtry się przesunięte względem siebie, każdy kolejny filer jest coraz szerszy, co odpowiada ludzkiej percepcji. Ludzie dobrze rozróżniają sygnały o małej częstotliwości, natomiast te o wysokiej są podobnie odbierane przez ludzkie ucho. Aby określić zestaw filtrów należy podać ich liczbę, niech będzie nią $n$ oraz zdefiniować $n+1$ częstotliwości, które wyznaczają zakresy filtrów. Załóżmy, że częstotliwości sa zapisane w ciągu $f(1), f(2), \ldots f(n+1)$, wtedy $m$-ty filtr jest zdefiniowany równaniem \ref{eqn:filter}. Efektem nałożenia filtrów jest nowy ciąg wartości $v_1, v_2, \ldots \vDash_n$, które stanowy wejście do kolejnego etapu przetwarzania.
+	 
+	 \begin{equation}
+		 H_m(x)= 
+			 \begin{cases}
+				 0,				 					 & x < f(m-1) 		       \\
+				 \frac{x - f(m-1)}{f(m) - (f(m-1))}, & f(m-1) \leq x \leq f(m) \\
+				 \frac{f(m+1) - k}{f(m+1) - (f(m))}, & f(m) \leq x \leq f(m+1) \\
+				 0,				 					 & x > f(m+1)
+			 \end{cases}
+		 \label{eqn:filter}
+	 \end{equation}
+	 
+	  \begin{figure}[H]
+	 	\centering
+	 	\begin{tikzpicture}[node distance=1.7cm]
+	 	
+	 	\begin{scope}
+	 	
+	 	\def\q{2.8};
+	 	\def\w{3.5}
+	 	
+	 	\draw[-stealth] (0cm,0cm)--(9.4cm,0cm) node[right]{Hz}; 
+	 	\draw[-stealth] (0cm,0cm)--(0cm,\q cm); 
+	 	
+	 	\def\a{0.15}; \node at (\a, -0.5) {f(1)};
+	 	\def\s{1.0};  \node at (\s, -0.5) {f(2)};
+	 	\def\d{2.0};  \node at (\d, -0.5) {f(3)};
+	 	\def\f{3.6};  \node at (\f, -0.5) {f(4)};
+	 	\def\g{5.8};  \node at (\g, -0.5) {f(5)};
+	 	\def\h{8.8};  \node at (\h, -0.5) {f(6)};
+	    
+    	\path [line, dashed] (\s, 1.0) -- (\s, \w) node[above] {$v_1$};
+   		\path [line, dashed] (\d, 1.0) -- (\d, \w) node[above] {$v_2$};
+ 		\path [line, dashed] (\f, 1.0) -- (\f, \w) node[above] {$v_3$}; 
+		\path [line, dashed] (\g, 1.0) -- (\g, \w) node[above] {$v_4$};
+	 	
+	 	\pgfmathsetmacro{\z}{1.0 * \q / (\d - \a) * (\d - \a)};
+	 	\draw[-] (\a cm,0cm)--(\s cm,\z cm); 
+	 	\draw[-] (\d cm,0.0cm)--(\s cm,\z cm); 
+	 	
+	 	\pgfmathsetmacro{\z}{1.0 * \q / (\f - \s) * (\d - \a)};
+	 	\draw[-] (\s cm,0.0cm)--(\d cm,\z cm); 
+	 	\draw[-] (\f cm,0.0cm)--(\d cm,\z cm); 
+	 	
+	 	\pgfmathsetmacro{\z}{1.0 * \q / (\g - \d) * (\d - \a)};
+	 	\draw[-] (\d cm,0cm)--(\f cm,\z cm); 
+	 	\draw[-] (\g cm,0.0cm)--(\f cm,\z cm); 
+	 	
+	 	\pgfmathsetmacro{\z}{1.0 * \q / (\h - \f) * (\d - \a)};
+	 	\draw[-] (\f cm,0cm)--(\g cm,\z cm); 
+	 	\draw[-] (\h cm,0.0cm)--(\g cm,\z cm);
+	 	
+	 	\end{scope}
+	 	
+	 	\end{tikzpicture}
+	 	\caption{Wizualizacja jednej iteracji algorytmu Viterbiego}
+	 	\label{fig:feature_extraction}
+	 	
+	 \end{figure}
+	 
 	Tutaj omówić cechy MFCC i MFSC i krótko wspomnieć o innych np PLP, RASTA-PLP.
 	
 
@@ -364,6 +440,7 @@
 		   
 	   \subsubsection{Algorytm Bauma-Welcha}
 	   \subsubsection{Estymacja parametrów rozkładu normalnego}
+	 
 	
     \subsection{Modelowanie fonetyki z wykorzystaniem HMM }
     W klasycznych systemach rozpoznających mowę, wykorzystujących ukryte modele Markova, zbiór stanów reprezentuje fony. Każdy fon ma trzy stany w HMM, tak jak opisano w rozdziale \ref{sec:Phones}. Zbiorem obserwacji są wektory cech wyznaczane zgodnie z opisem w rozdziale \ref{sec:Feature_vec}. Przejścia pomiędzy stanami jednego fonemu są zgodne z opisem z rozdziału \ref{sec:Phones}, natomiast przejścia pomiędzy różnymi fonami są tworzone na podstawie słownika (blok \refBlock{slownik} na rysunku \ref{fig:ARM_schemat}). Dla każdego słowa generowany jest ciąg stanów odpowiadający kolejnym fonemom, z których składa się słowo. \\
@@ -984,7 +1061,7 @@
 			\label{eqn:softmax2}
 		\end{equation}
 		
-		 W proponowanym podejściu zastosowania sieci neuronowej przy rozpoznawaniu mowy, wejściem sieci jest $k$ $123$-elementowych wektorów cech, wyznaczanych zgodnie z opisem w rozdziale \ref{sec:Feature_vec}. Parametr $k$ określa ile kolejnych ramek jest dostarczanych sieci w wektorze wejściowym. Poprzez \textit{szerokość kontekstu} rozumieć będziemy liczbę ramek na prawn i lewo od rozpoznawanej ramki, zatem $k = 2 \cdot kontekst + 1$. Wyjściem jest natomiast wektor o szerokości równej liczbie stanów modu Markova. Uwzględniając równanie \ref{eqn:softmax2}, wartość funkcji $b_q(O_t)$ z \ref{line:b_q}. linii algorytmu \ref{alg:token_passing} odpowiada wyrażeniu:
+		 W proponowanym podejściu zastosowania sieci neuronowej przy rozpoznawaniu mowy, wejściem sieci jest $k$ $123$-elementowych wektorów cech, wyznaczanych zgodnie z opisem w rozdziale \ref{sec:Feature_vec}. Parametr $k$ określa liczbę kolejnych ramek dostarczanych sieci w wektorze wejściowym. Poprzez \textit{szerokość kontekstu} rozumieć będziemy liczbę ramek na prawo i lewo od rozpoznawanej obserwacji, zatem $k = 2 \cdot kontekst + 1$. Zwiększanie kontekstu wiąże się ze zmniejszeniem liczby obserwacji, gdyż pierwsza obserwacja może wystąpić dopiero po liczbie ramek równej $kontekst + 1$. Rysunek \ref{fig:nn_context} pokazuje, jak kolejne ramki są agregowane przy tworzeniu obserwacji. W przykładzie z rysunku szerokość kontekstu wynosi $2$, zatem każda obserwacja jest tworzona z $5$ kolejnych ramek. Wyjściem sieci jest wektor o szerokości równej liczbie stanów modelu Markova. Uwzględniając równanie \ref{eqn:softmax2}, wartość funkcji $b_q(O_t)$ z \ref{line:b_q}. linii algorytmu \ref{alg:token_passing} odpowiada wyrażeniu:
 		 
 		 \begin{equation}
 			 b_q(O_t) = NN(O_t) \cdot P(w_q)			 
@@ -1007,24 +1084,47 @@
 			
 			\begin{scope}
 			\node [frame] (fr1) {$t_1$};
-			\node [frame, right of=fr1] (fr2) {$t_2$};
-			\node [frame, right of=fr2] (fr3) {$t_3$};
-			\node [frame, right of=fr3] (fr4) {$t_4$};
-			\node [frame, right of=fr4] (fr5) {$t_5$};
-			\node [frame, right of=fr5] (fr6) {$t_6$};
-			\node [frame, right of=fr6] (fr7) {$t_7$};
-			\node [frame, right of=fr7] (fr8) {$t_8$};
-			\node [frame, right of=fr8] (fr9) {$t_9$};
+			\node [frame, below of=fr1] (fr2) {$t_2$};
+			\node [frame, below of=fr2] (fr3) {$t_3$};
+			\node [frame, below of=fr3] (fr4) {$t_4$};
+			\node [frame, below of=fr4] (fr5) {$t_5$};
+			\node [frame, below of=fr5] (fr6) {$t_6$};
+			\node [frame, below of=fr6] (fr7) {$t_7$};
+			\node [frame, below of=fr7] (fr8) {$t_8$} node [black,midway,yshift=-2.3cm, xshift=5.8cm] {\footnotesize $\ldots$};;
+			\node [frame, below of=fr8] (fr9) {$t_9$};
+			\node [frame, below of=fr9] (fr10) {$t_{10}$};
+			\node [frame, below of=fr10] (fr11) {$t_{11}$};
+			\node [frame, below of=fr11] (fr12) {$t_{12}$};
+			\node [frame, below of=fr12] (fr13) {$t_{13}$};
+			\node [frame, below of=fr13] (fr14) {$t_{14}$};
+			\node [frame, below of=fr14] (fr15) {$t_{15}$};
 			
 			
-			\draw [decorate,decoration={brace,amplitude=10pt,mirror,raise=6pt},yshift=10pt]
-			(fr1.south west) -- (fr4.south east) node [black,midway,yshift=-1.5cm] {\footnotesize $P_2$};
+			
+			
+			\draw [decorate,decoration={brace,amplitude=10pt,mirror,raise=5pt},yshift=10pt]
+			(fr1.north west) -- (fr5.south west) node [black,midway,yshift=-1.5cm] {\footnotesize $o_3$};
+			\draw [decorate,decoration={brace,amplitude=10pt,mirror,raise=12pt},yshift=10pt]
+			(fr2.north west) -- (fr6.south west) node [black,midway,yshift=-1.5cm] {\footnotesize $o_4$};
+			\draw [decorate,decoration={brace,amplitude=10pt,mirror,raise=19pt},yshift=10pt]
+			(fr3.north west) -- (fr7.south west) node [black,midway,yshift=-1.5cm] {\footnotesize $o_5$};
+			\draw [decorate,decoration={brace,amplitude=10pt,mirror,raise=26pt},yshift=10pt]
+			(fr4.north west) -- (fr8.south west) node [black,midway,yshift=-1.5cm] {\footnotesize $o_6$};
+			
+			\draw [decorate,decoration={brace,amplitude=10pt,mirror,raise=5pt},yshift=10pt]
+			(fr8.north west) -- (fr12.south west) node [black,midway,yshift=-1.5cm] {\footnotesize $o_{10}$};
+			\draw [decorate,decoration={brace,amplitude=10pt,mirror,raise=12pt},yshift=10pt]
+			(fr9.north west) -- (fr13.south west) node [black,midway,yshift=-1.5cm] {\footnotesize $o_{11}$};
+			\draw [decorate,decoration={brace,amplitude=10pt,mirror,raise=19pt},yshift=10pt]
+			(fr10.north west) -- (fr14.south west) node [black,midway,yshift=-1.5cm] {\footnotesize $o_{12}$};
+			\draw [decorate,decoration={brace,amplitude=10pt,mirror,raise=26pt},yshift=10pt]
+			(fr11.north west) -- (fr15.south west) node [black,midway,yshift=-1.5cm] {\footnotesize $o_{13}$};
 		
 			\end{scope}
 			
 			\end{tikzpicture}
-			\caption{Reprezentacja fonów}
-			\label{fig:xxx}
+			\caption{Tworzenie obserwacji dla sieci neuronowej przy kontekście równym $2$.}
+			\label{fig:nn_context}
 			
 		\end{figure}
 		
@@ -1247,6 +1347,23 @@ W celu odrzucenia nagrań o niepoprawnej transkrypcji, przepuszczono je przez sy
 	\end{tabular}
 	\end{adjustwidth}
 	\caption{\label{tab:text2}Wyniki cz.2}
+	\end{figure}
+
+
+	\begin{figure}
+		\begin{tabular}{|c|c|c|c|c|c|} \hline
+			Nazwa modelu & \vtop{\hbox{\strut Liczba neuronów}\hbox{\strut w warstwie ukrytej}}  & 
+			\vtop{\hbox{\strut Liczba }\hbox{\strut filtrów}} & \vtop{\hbox{\strut Skuteczność}\hbox{\strut corr}} & \vtop{\hbox{\strut Skuteczność}\hbox{\strut acc}} \\
+			\hline
+			siec 16 & 1200 & 32 & 88.54 & 83.10 \\
+			\hline
+			siec 17 & 600 & 32 & 87.52 & 82.01 \\
+			\hline
+			siec 18 & 300 & 32 & 86.90 & 81.36 \\
+			\hline
+			
+		\end{tabular}
+		\caption{\label{tab:text2}Wpływ liczby neuronów na skuteczność rozpoznawania.}
 	\end{figure}
 
 
