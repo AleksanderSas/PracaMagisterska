@@ -207,9 +207,11 @@
 	\subsection{ Rozpoznawanie }
 		Ten rozdział ma na pokazać, jak wcześniej opisane elementy składają się na działający system do rozpoznawani.
 	\subsection{ Ekstrakcja cech }
-	\label{sec:Feature_vec}
 
-	 Ekstrakcja cech, odpowiadająca blokowi \refBlock{ekstrakcja_cech} z rysunku \ref{fig:ARM_schemat}, polega na zamianie sygnału akustycznego na ciąg wektorów, które mogą być następnie sklasyfikowane na kolejnym etapie. Przy rozpoznawaniu mowy najczyściej wykorzystuje się cechy \textit{MFCC}, które składają się z 5 etapów przetwarzania:
+	 Ekstrakcja cech, odpowiadająca blokowi \refBlock{ekstrakcja_cech} z rysunku \ref{fig:ARM_schemat}, polega na zamianie sygnału akustycznego na ciąg wektorów, które mogą być następnie sklasyfikowane na kolejnym etapie. 
+	 \subsubsection{Cechy \textit{MFCC}}
+	 \label{sec:Feature_vec_mfcc}
+	 Przy rozpoznawaniu mowy najczyściej wykorzystuje się cechy \textit{MFCC}, które składają się z 5 etapów przetwarzania:
 	 
 	 \begin{itemize}
 	 	\item Podział sygnału akustycznego.
@@ -223,14 +225,14 @@
 	 
 	 W drugim etapie każdą ramkę poddaje się transformacie Fouriera. W tej operacji efekcie otrzymuje się widmo sygnału akustycznego, opisujące ilość energii w zależności o częstotliwości.
 	 
-	 W trzecim etapie na widmo nakłada się zestaw filtrów trójkątnych. Filtry się przesunięte względem siebie, każdy kolejny filer jest coraz szerszy, co odpowiada ludzkiej percepcji. Ludzie dobrze rozróżniają sygnały o małej częstotliwości, natomiast te o wysokiej są podobnie odbierane przez ludzkie ucho. Aby określić zestaw filtrów należy podać ich liczbę, niech będzie nią $n$ oraz zdefiniować $n+1$ częstotliwości, które wyznaczają zakresy filtrów. Załóżmy, że częstotliwości sa zapisane w ciągu $f(1), f(2), \ldots f(n+1)$, wtedy $m$-ty filtr jest zdefiniowany równaniem \ref{eqn:filter}. Efektem nałożenia filtrów jest nowy ciąg wartości $v_1, v_2, \ldots \vDash_n$, które stanowy wejście do kolejnego etapu przetwarzania.
+	 W trzecim etapie na widmo nakłada się zestaw filtrów trójkątnych. Filtry się przesunięte względem siebie, każdy kolejny filer jest coraz szerszy, co odpowiada ludzkiej percepcji. Ludzie dobrze rozróżniają sygnały o małej częstotliwości, natomiast te o wysokiej są podobnie odbierane przez ludzkie ucho. Aby określić zestaw filtrów należy podać ich liczbę, niech będzie nią $N$ oraz zdefiniować $N+1$ częstotliwości, które wyznaczają zakresy filtrów. Załóżmy, że częstotliwości sa zapisane w ciągu $f(1), f(2), \ldots f(N+1)$, wtedy $m$-ty filtr jest zdefiniowany równaniem \ref{eqn:filter}. Na rysunku \ref{fig:filter_bank} wizualizowano $4$ kolejne filtry. Efektem nałożenia filtrów jest nowy ciąg wartości $v_1, v_2, \ldots v_N$, które stanowy wejście do kolejnego etapu przetwarzania.
 	 
 	 \begin{equation}
 		 H_m(x)= 
 			 \begin{cases}
 				 0,				 					 & x < f(m-1) 		       \\
-				 \frac{x - f(m-1)}{f(m) - (f(m-1))}, & f(m-1) \leq x \leq f(m) \\
-				 \frac{f(m+1) - k}{f(m+1) - (f(m))}, & f(m) \leq x \leq f(m+1) \\
+				 \frac{x - f(m-1)}{\big(f(m) - f(m-1)\big)^2}, & f(m-1) \leq x \leq f(m) \\
+				 \frac{f(m+1) - k}{\big(f(m+1) - f(m)\big)^2}, & f(m) \leq x \leq f(m+1) \\
 				 0,				 					 & x > f(m+1)
 			 \end{cases}
 		 \label{eqn:filter}
@@ -279,12 +281,80 @@
 	 	\end{scope}
 	 	
 	 	\end{tikzpicture}
-	 	\caption{Wizualizacja jednej iteracji algorytmu Viterbiego}
-	 	\label{fig:feature_extraction}
+	 	\caption{Wizualizacja $4$ kolejnych filtrów trójkątnych.}
+	 	\label{fig:filter_bank}
 	 	
 	 \end{figure}
 	 
-	Tutaj omówić cechy MFCC i MFSC i krótko wspomnieć o innych np PLP, RASTA-PLP.
+	 Czwartym etapem przetwarzania jest nałożenia logarytmu na wektor cech otrzymany w poprzednim etapie. Ma to również związek z percepcją człowieka, gdyż ludzkie zmysły, w szczególności słuch", odbierają bodźce w skali logarytmicznej. 
+	 
+	 Piąty etap tworzenia cech \textit{MFCC} polega na nałożeniu dyskretnej transformaty kosinusowej, zgodnie z równaniami \ref{eqn:DCT}. W efekcie jej działania otrzymamy ciąg wartości $W=(w_1, w_2, \ldots, w_N)$. Celem tego etapu jest dekorelacja wcześniej otrzymanych wartości, wynikająca z nakładania się na siebie filtrów z etapu trzeciego oraz samej natury sygnału akustycznego, zawierającego składowe harmoniczne dźwięków.
+	 
+	 \begin{equation}
+		w_k = 
+		\begin{cases}
+			\sqrt{\frac{1}{N}}\sum_{m=1}^{N}v_m, & k = 1 \\
+			&\\
+			\sqrt{\frac{2}{N}}\sum_{m=1}^{N}{v_m \cos(\frac{\pi k \cdot (2m - 1)}{2N})}, & k = 2,3,\ldots,N
+		\end{cases}
+		\label{eqn:DCT}
+	 \end{equation}
+	 
+	 Ostatni etap przetwarzania polega na przybliżeniu pierwszej i drugiej pochodnej, co daje informację o dynamicznej zmianie sygnału akustycznego. Pierwsza pochodna, dla $t$-tej ramki, może być przybliżona wzorem \ref{eqn:d1}, natomiast druga wzorem \ref{eqn:d2}.
+	 
+	 \begin{equation}
+	 	 w_{k,t}'=\frac{w_{k,t+1}-w_{k,t-1}}{2}
+	 	 \label{eqn:d1}
+	 \end{equation}
+	 \begin{equation}
+		 w_{k,t}''=\frac{2w_{k,t+2}+w_{k,t+1}-w_{k,t-1}-2w_{k,t-2}}{10}
+		 \label{eqn:d2}
+	 \end{equation}
+	 \begin{equation}
+	 	\epsilon = \log \sum_{i=1}^N {v_i^2}
+	 	\label{eqn:energy}
+	 \end{equation}
+	 
+	 Ostatecznie, wektor cech jest składany z $M$ pierwszych wartości ciągu $W$, całkowitej energii sygnału akustycznego $\epsilon$ liczonej według wzory \ref{eqn:energy} oraz pierwszej i drugiej pochodnej tych wartości liczonych według wzorów \ref{eqn:d1} oraz \ref{eqn:d2}. Łącznie otrzymuje się wektor cech o $3(M+1)$ elementach. Rysunek \ref{fig:feature_vector} pokazuje ostateczną formę wektora cech na $t$-tej ramki.
+	 
+	
+	\begin{figure}
+		\begin{center}
+			\begin{tabular}{l|ccccc}
+				zerowa pochodna   & $\epsilon_t$   & $w_{1,t}$   & $w_{2,t}$   & $\ldots$ & $w_{M,t}$   \\
+				pierwsza pochodna & $\epsilon_t'$  & $w_{1,t}'$  & $w_{2,t}'$  & $\ldots$ & $w_{M,t}'$  \\
+				druga pochodna    & $\epsilon_t''$ & $w_{1,t}''$ & $w_{2,t}''$ & $\ldots$ & $w_{M,t}''$ \\
+			\end{tabular}
+			\label{fig:feature_vector}
+			\caption{Ostateczne forma wektora cech.}
+		\end{center}
+	\end{figure}
+
+	\subsubsection{Cechy \textit{MFSC}}
+	\label{sec:Feature_vec_mfsc}
+	
+	Cechy \textit{MFSC} są uproszczoną wariacją cech MFCC, zaprojektowaną specjalnie na potrzeby \textit{splotowych sieci neuronowych}. W cechach tych nie nakłada się logarytmu ani dyskretnej transformaty kosinusowej z czwartego i piątego kroku. W efekcie otrzymuje się wektory, w których kolejne elementy są pomiędzy sobą skorelowane, co jest korzystne ze względu na splotową architekturę sieci. W tabeli \ref{fig:feature_comparision} znajduje się porównanie cech MFCC oraz MFSC.
+	
+	\begin{figure}
+		\begin{center}
+			\begin{tabular}{|l|c|c|}
+				\hline
+				                                          & \textit{MFCC} & \textit{MFSC} \\ 
+                \hline
+				liczba filtrów $(N)$                      &       26      &      40       \\
+				liczba filtrów w wektorze wynikowym $(M)$ &       12      &      40       \\  
+				logarytmowanie wartości filtrów           &       tak     &      nie      \\
+				całkowita energia                         &       tak     &      tak      \\
+				pierwsza pochodna                         &       tak     &      tak      \\
+				druga pochodna                            &       tak     &      tak      \\
+				całkowita liczba cech                     &       39      &      123      \\
+				\hline
+				
+			\end{tabular}			
+		\end{center}
+		\label{fig:feature_comparision}
+		\caption{Zestawienie cech \textit{MFCC} orz \textit{MFSC}.}
+	\end{figure}
 	
 
 \section {Rozpoznawanie mowy z zastosowaniem ukrytych modeli markowa}
@@ -443,7 +513,7 @@
 	 
 	
     \subsection{Modelowanie fonetyki z wykorzystaniem HMM }
-    W klasycznych systemach rozpoznających mowę, wykorzystujących ukryte modele Markova, zbiór stanów reprezentuje fony. Każdy fon ma trzy stany w HMM, tak jak opisano w rozdziale \ref{sec:Phones}. Zbiorem obserwacji są wektory cech wyznaczane zgodnie z opisem w rozdziale \ref{sec:Feature_vec}. Przejścia pomiędzy stanami jednego fonemu są zgodne z opisem z rozdziału \ref{sec:Phones}, natomiast przejścia pomiędzy różnymi fonami są tworzone na podstawie słownika (blok \refBlock{slownik} na rysunku \ref{fig:ARM_schemat}). Dla każdego słowa generowany jest ciąg stanów odpowiadający kolejnym fonemom, z których składa się słowo. \\
+    W klasycznych systemach rozpoznających mowę, wykorzystujących ukryte modele Markova, zbiór stanów reprezentuje fony. Każdy fon ma trzy stany w HMM, tak jak opisano w rozdziale \ref{sec:Phones}. Zbiorem obserwacji są wektory cech wyznaczane zgodnie z opisem w rozdziale \ref{sec:Feature_vec_mfcc}. Przejścia pomiędzy stanami jednego fonemu są zgodne z opisem z rozdziału \ref{sec:Phones}, natomiast przejścia pomiędzy różnymi fonami są tworzone na podstawie słownika (blok \refBlock{slownik} na rysunku \ref{fig:ARM_schemat}). Dla każdego słowa generowany jest ciąg stanów odpowiadający kolejnym fonemom, z których składa się słowo. \\
     Na rysunku \ref{fig:AutomatExample} zamieszczono przykład automatu dla słowa \textit{jabłko}. Zgodnie z wykorzystanymi regułami leksykalnymi słowo \textit{jabłko} zapisuje się za pomocą fonemów jako $[j a p ł k o]$. \\
     
     \begin{figure}[H]
@@ -1061,7 +1131,7 @@
 			\label{eqn:softmax2}
 		\end{equation}
 		
-		 W proponowanym podejściu zastosowania sieci neuronowej przy rozpoznawaniu mowy, wejściem sieci jest $k$ $123$-elementowych wektorów cech, wyznaczanych zgodnie z opisem w rozdziale \ref{sec:Feature_vec}. Parametr $k$ określa liczbę kolejnych ramek dostarczanych sieci w wektorze wejściowym. Poprzez \textit{szerokość kontekstu} rozumieć będziemy liczbę ramek na prawo i lewo od rozpoznawanej obserwacji, zatem $k = 2 \cdot kontekst + 1$. Zwiększanie kontekstu wiąże się ze zmniejszeniem liczby obserwacji, gdyż pierwsza obserwacja może wystąpić dopiero po liczbie ramek równej $kontekst + 1$. Rysunek \ref{fig:nn_context} pokazuje, jak kolejne ramki są agregowane przy tworzeniu obserwacji. W przykładzie z rysunku szerokość kontekstu wynosi $2$, zatem każda obserwacja jest tworzona z $5$ kolejnych ramek. Wyjściem sieci jest wektor o szerokości równej liczbie stanów modelu Markova. Uwzględniając równanie \ref{eqn:softmax2}, wartość funkcji $b_q(O_t)$ z \ref{line:b_q}. linii algorytmu \ref{alg:token_passing} odpowiada wyrażeniu:
+		 W proponowanym podejściu zastosowania sieci neuronowej przy rozpoznawaniu mowy, wejściem sieci jest $k$ $123$-elementowych wektorów cech, wyznaczanych zgodnie z opisem w rozdziale \ref{sec:Feature_vec_mfsc}. Parametr $k$ określa liczbę kolejnych ramek dostarczanych sieci w wektorze wejściowym. Poprzez \textit{szerokość kontekstu} rozumieć będziemy liczbę ramek na prawo i lewo od rozpoznawanej obserwacji, zatem $k = 2 \cdot kontekst + 1$. Zwiększanie kontekstu wiąże się ze zmniejszeniem liczby obserwacji, gdyż pierwsza obserwacja może wystąpić dopiero po liczbie ramek równej $kontekst + 1$. Rysunek \ref{fig:nn_context} pokazuje, jak kolejne ramki są agregowane przy tworzeniu obserwacji. W przykładzie z rysunku szerokość kontekstu wynosi $2$, zatem każda obserwacja jest tworzona z $5$ kolejnych ramek. Wyjściem sieci jest wektor o szerokości równej liczbie stanów modelu Markova. Uwzględniając równanie \ref{eqn:softmax2}, wartość funkcji $b_q(O_t)$ z \ref{line:b_q}. linii algorytmu \ref{alg:token_passing} odpowiada wyrażeniu:
 		 
 		 \begin{equation}
 			 b_q(O_t) = NN(O_t) \cdot P(w_q)			 
@@ -1129,7 +1199,157 @@
 		\end{figure}
 		
 	\subsection{Architektura sieci i układ danych}
+	
+	\begin{figure}[H]
+		\centering
+		\begin{tikzpicture}
 		
+		\begin{scope}
+		
+		\node at (0.0,3.25){warstwa wejściowa};
+		\node at (3.6,3.25){warstwy splotowe};
+		\node at (7.5,3.25){warstwy pełne};
+		
+		\def\w{1.5}		
+		
+		\def\x{0.0}	
+		\def\y{0.5}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \w};
+		\draw[fill=black,opacity=0.2,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
+		
+		\def\x{0.25}	
+		\def\y{0.25}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \w};
+		\draw[fill=black,opacity=0.2,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
+		
+		\def\x{0.5}	
+		\def\y{0.0}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \w};
+		\draw[fill=black,opacity=0.2,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
+		
+		\def\w{0.75}
+		
+		\def\x{3.0}	
+		\def\y{1.25}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \w};
+		\draw[fill=black,opacity=0.2,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
+		
+		\def\x{3.25}	
+		\def\y{1.0}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \w};
+		\draw[fill=black,opacity=0.2,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
+		
+		\def\x{3.5}	
+		\def\y{0.75}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \w};
+		\draw[fill=black,opacity=0.2,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
+		
+		\def\x{3.75}	
+		\def\y{0.5}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \w};
+		\draw[fill=black,opacity=0.2,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
+		
+		\def\x{4.0}	
+		\def\y{0.25}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \w};
+		\draw[fill=black,opacity=0.2,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
+		
+		\def\x{4.25}	
+		\def\y{0.0}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \w};
+		\draw[fill=black,opacity=0.2,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
+			
+		\draw (1.1,1.1) -- (1.3,1.1) -- (1.3,1.3) -- (1.1,1.3) -- (1.1,1.1);	
+		\draw (1.3,1.3) -- (3.7,1.2);
+		\draw (1.3,1.1) -- (3.7,1.2);
+		
+		\def\w{0.5}	
+		\def\h{2.0}	
+		\def\x{6.5}	
+		\def\y{0.0}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \h};
+		\draw[fill=black,opacity=0.2,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
+		
+		\draw (3.75,2.0) -- (6.75,1.0);
+		\draw (5.0,0.0) -- (6.75,1.0);
+		
+		\def\w{0.5}	
+		\def\h{1.5}	
+		\def\x{8.5}	
+		\def\y{0.25}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \h};
+		\draw[fill=black,opacity=0.2,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
+		
+		\draw (7.0,2.0) -- (8.75,1.0);
+		\draw (7.0,0.0) -- (8.75,1.0);
+		
+		\end{scope}
+		
+		\end{tikzpicture}
+		\label{fig:cnn_architecture_1}
+		\caption{Architektura splotowej sieci neuronowej.}
+	\end{figure}
+
+	Do wyznaczanie prawdopodobieństw stanów modelu Markova wykorzystano splotową sieć neuronową. Wejście sieci jest podzielone na trzy warstwy odpowiadające zerowej ($\epsilon + w$), pierwszej ($\epsilon' + w'$) i drugiej pochodnej $\epsilon'' + w''$), co odzwierciedla charakter wektorów cech wyznaczanych zgodnie z opisem w rozdziale \ref{sec:Feature_vec_mfsc}. Dzięki oddzieleniu pochodnych warstwami, dane pochodzące z różnych pochodnych nie są przetwarzane przez jeden filtr. Na rysunku \ref{fig:cnn_architecture_input} wizualizowano podział wektora wejściowego. 
+	
+	\begin{figure}[H]
+		\centering
+		\begin{tikzpicture}
+		
+		\begin{scope}
+		
+		\def\w{5.0}		
+		\def\h{2.0}	
+		
+		\def\x{0.0}	
+		\def\y{1.0}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \h};
+		\draw[fill=black,fill=gray!20,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
+		
+		\draw [decorate,decoration={brace,amplitude=10pt,raise=26pt},xshift=8pt]
+		(\x, \y) -- (\x, \Y) node [black,midway,xshift=-1.5cm, rotate=90] {\footnotesize $2\cdot kontekst + 1$};
+		
+		\def\x{0.5}	
+		\def\y{0.5}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \h};
+		\draw[fill=black,fill=gray!20,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
+		
+		\def\x{1.0}	
+		\def\y{0.0}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \h};
+		\draw[fill=black,fill=gray!20,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
+		
+		\draw (\x,\Y) -- (\X,\Y)  node [black,midway,below] {$\epsilon_{t-1} + w_{t-1}$};
+		\pgfmathsetmacro{\H}{\y + 2 * \h / 3};
+		\draw [gray!80] (\x,\H) -- (\X,\H)  node [black,midway,below] {$\epsilon_{t} + w_{t}$};
+		\pgfmathsetmacro{\H}{\y + \h / 3};
+		\draw [gray!80] (\x,\H) -- (\X,\H)  node [black,midway,below] {$\epsilon_{t+1} + w_{t+1}$};
+		
+		\draw [decorate,decoration={brace,amplitude=10pt,mirror,raise=26pt},yshift=10pt]
+		(\x, \y) -- (\X, \y) node [black,midway,yshift=-1.5cm] {\footnotesize liczba filtrów (M) + całkowita energia};
+		
+		\end{scope}
+		
+		\end{tikzpicture}
+		\label{fig:cnn_architecture_input}
+		\caption{Wejście splotowej sieci neuronowej.}
+	\end{figure}
+
+
 	\subsection{Zastosowanie sieci DNN w ARM}
 	\subsection{Zastosowanie sieci konwolucyjnych w ARM}
 	\subsection{Skuteczność ARM przy zastosowaniu sieci neuronowych}
