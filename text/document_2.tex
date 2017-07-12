@@ -47,7 +47,6 @@
 
 % Define block styles
 \tikzstyle{ArmBlok} = [rectangle, draw, fill=blue!20, text width=10em, text centered, rounded corners, minimum height=4em]
-\tikzstyle{word} = [rectangle, draw, text width=10em, text centered, rounded corners, minimum height=4em]
 \tikzstyle{ArmBlok2} = [rectangle, draw, fill=blue!20, text width=10em, text centered, rounded corners, minimum height=4em, node distance=5cm]
 \tikzstyle{path}=[circle,thick,fill=gray!0,minimum size=1mm]
 \tikzstyle{hmm0}=[circle,thick,draw=gray!50,fill=gray!13,minimum size=4mm]
@@ -87,13 +86,12 @@
 		\begin{tikzpicture}[node distance = 2cm, auto]
 		% Place nodes
 		\node [data] (etap0) {Mowa};
-		\node [ArmBlok,  below of=etap0] (etap1) {\labelBlock{zbieranie_sygnalu} sygnału akustycznego};
+		\node [ArmBlok,  below of=etap0] (etap1) {\labelBlock{zbieranie_sygnalu}Zbieranie sygnału akustycznego};
 		\node [ArmBlok,  below of=etap1] (etap2) {\labelBlock{ekstrakcja_cech} Ekstrakcja cech};
 		\node [ArmBlok,  below of=etap2] (etap3) {\labelBlock{klasyfikator} Klasyfikacja stanów};
 		\node [ArmBlok,  below of=etap3] (etap4) {\labelBlock{lancuch_markova} Wyszukiwanie najlepszej ścieżki w modelu Markova};
-		\node [ArmBlok2, right of=etap3] (etap5) {\labelBlock{n_gramy} Estymacja prawdopowobieństw słów};
-		\node [model,    right of=etap2] (model_jezykowy) {Model językowy};
-		\node [model,    left  of=etap2] (model_akustyczny) {\labelBlock{model_akustyczny} Model językowy};
+		\node [model, right of=etap3] (etap5) {\labelBlock{n_gramy} Model językowy};
+		\node [model,    left  of=etap2] (model_akustyczny) {\labelBlock{model_akustyczny} Model akustyczny};
 		\node [data,     below of=etap4] (etap6) {Rozpoznanie};
 		\node [model,   right  of=etap6] (slownik) {\labelBlock{slownik} Słownik};
 		
@@ -101,9 +99,8 @@
 		\path [line] (etap1) -- (etap2);
 		\path [line] (etap2) -- (etap3);
 		\path [line] (etap3) -- (etap4);
-		\path [line] (etap5) |- (etap4);
+		\path [line, dashed] (etap5) |- (etap4);
 		\path [line] (etap4) -- (etap6);
-		\path [line, dashed] (model_jezykowy) -- (etap5);
 		\path [line, dashed] (slownik) |- (etap4);
 		\path [line, dashed] (model_akustyczny) |- (etap3);
 		\path [line, dashed] (model_akustyczny) |- (etap4);
@@ -160,11 +157,8 @@
 			
 		\end{figure}
 
-		Fony są podstawową koncepcją przy modelowaniu dźwięków w mowie, będącą rozszerzeniem pojęcia głoski. Typowo rozróżniają dźwięczne i bezdźwięczne warianty głosek oraz wprowadzają nowe dźwięki, takie jak przykładowo \textit{cisza}. W tabeli \ref{tab:phone_list} znajduje się lista fonów zamodelowanych w wykorzystanych modelach akustycznych, łącznie jest ich 40. Słowa, które mają być rozpoznawane przez system muszą mieć przypisaną transkrypcję na fony. Lista słów wraz z transkrypcją znajduje się w \textit{słowniku} (blok \refBlock{slownik} na rysunku \ref{fig:ARM_schemat}).
-		\\
-		Lingwistyka <<?>>
-		\\
-		Parametry modelujące wszystkie rozpoznawane fony są częścią \textit{modelu akustycznego} (blok \refBlock{model_akustyczny} na rysunku \ref{fig:ARM_schemat}). 
+		Fony są podstawową koncepcją przy modelowaniu dźwięków w mowie, będącą rozszerzeniem pojęcia głoski. Typowo rozróżniają dźwięczne i bezdźwięczne warianty głosek oraz wprowadzają nowe dźwięki, takie jak przykładowo \textit{cisza}. W tabeli \ref{tab:phone_list} znajduje się lista fonów zamodelowanych w wykorzystanych modelach akustycznych, łącznie jest ich 40. Każdy zamodelowany fonem ma swój zestaw parametrów, które go opisują. Parametry te tworzą \textit{model akustyczny} odpowiadający blokowi \ref{model_akustyczny} z rysunku \ref{fig:ARM_schemat}. Słowa, które mają być rozpoznawane przez system, muszą mieć przypisaną transkrypcję na fony. Lista słów wraz z transkrypcją znajduje się w \textit{słowniku}, który odpowiada blokowi \refBlock{slownik} na rysunku \ref{fig:ARM_schemat}. Aby umożliwić poprane rozpoznawanie, każda forma gramatyczne danego słowa musi się znaleźć w słowniku, gdyż jest traktowana, jak niezależne słowo. Konsekwencją tego, jest bardzo duża liczba wpisów w słownikach dla języków o rozbudowanej fleksji, takich jak język polski. 
+		W wykorzystanym słowniku, zawierającym $1209017$ wpisów, transkrypcje zostały zbudowane na podstawie zasad sformułowanych przez Marię Steffen-Batogową w książce \textit{Automatyzacja transkrypcji fonematycznej tekstów polskich} \cite{transkrypcja}. Zasady te nie są jednak jednoznaczne i w sytuacji, gdy dla jednego słowa można wyprowadzić wiele różnych transkrypcji, wszystkie zostają umieszczone w słowniku. Przykładem wyrazu o wielu transkrypcjach jest słowo \textit{wystrzygł}, które zgodnie z regułami, zapisuje się jako \textit{v y s t sz y k} lub \textit{v y s t sz y k ł}.  
 
 		\begin{figure}
 			\begin{tabular}{|K{1cm}K{1cm}K{1cm}K{1cm}K{1cm}K{1cm}K{1cm}K{1cm}|}
@@ -204,8 +198,6 @@
 		\\
 		Należy zauważyć, że korzystając z \textit{tri-fonów} zamiast \textit{uni-fonów} wprowadzamy dodatkową informację, zarówno do modelu językowego, jak i do modelu akustycznego, ale jednocześnie znacznie zwiększamy liczbę parametrów do estymacji i czas działania silnika rozpoznającego. W modelu \textit{tri-fonowym} występuje $O(n^3)$ tri-fonów, gdzie $n$ to liczba fonów w modelu uni-fonowym.  
 		
-	\subsection{ Rozpoznawanie }
-		Ten rozdział ma na pokazać, jak wcześniej opisane elementy składają się na działający system do rozpoznawani.
 	\subsection{ Ekstrakcja cech }
 
 	 Ekstrakcja cech, odpowiadająca blokowi \refBlock{ekstrakcja_cech} z rysunku \ref{fig:ARM_schemat}, polega na zamianie sygnału akustycznego na ciąg wektorów, które mogą być następnie sklasyfikowane na kolejnym etapie. 
@@ -218,14 +210,14 @@
 	 	\item Transformata Fouriera.
 	 	\item Nałożenie zestawu filtrów.
 	 	\item Nałożenie logarytmu. 
-	 	\item Dyskretna transformata Fouriera.
+	 	\item Dyskretna transformata kosinusowa.
 	 \end{itemize}
  
 	 Pierwszym etapem ekstrakcji jest podzielenie sygnału na fragmenty zwane \textit{ramkami}. Typowo ramki mają $25ms$ i są przesunięte co $10ms$. Ramki o takiej długości zawierają wystarczająco dużo informacji, a jednocześnie można założyć, że są stochastycznie stacjonarne. 
 	 
 	 W drugim etapie każdą ramkę poddaje się transformacie Fouriera. W tej operacji efekcie otrzymuje się widmo sygnału akustycznego, opisujące ilość energii w zależności o częstotliwości.
 	 
-	 W trzecim etapie na widmo nakłada się zestaw filtrów trójkątnych. Filtry się przesunięte względem siebie, każdy kolejny filer jest coraz szerszy, co odpowiada ludzkiej percepcji. Ludzie dobrze rozróżniają sygnały o małej częstotliwości, natomiast te o wysokiej są podobnie odbierane przez ludzkie ucho. Aby określić zestaw filtrów należy podać ich liczbę, niech będzie nią $N$ oraz zdefiniować $N+1$ częstotliwości, które wyznaczają zakresy filtrów. Załóżmy, że częstotliwości sa zapisane w ciągu $f(1), f(2), \ldots f(N+1)$, wtedy $m$-ty filtr jest zdefiniowany równaniem \ref{eqn:filter}. Na rysunku \ref{fig:filter_bank} wizualizowano $4$ kolejne filtry. Efektem nałożenia filtrów jest nowy ciąg wartości $v_1, v_2, \ldots v_N$, które stanowy wejście do kolejnego etapu przetwarzania.
+	 W trzecim etapie na widmo nakłada się zestaw filtrów trójkątnych. Filtry się przesunięte względem siebie, każdy kolejny filer jest coraz szerszy, co odpowiada ludzkiej percepcji. Ludzie dobrze rozróżniają sygnały o małej częstotliwości, natomiast te o wysokiej są podobnie odbierane przez ludzkie ucho. Aby określić zestaw filtrów należy podać ich liczbę, niech będzie nią $N$ oraz zdefiniować $N+1$ częstotliwości, które wyznaczają zakresy filtrów. Załóżmy, że częstotliwości sa zapisane w ciągu $f(1), f(2), \ldots f(N+1)$, wtedy $m$-ty filtr jest zdefiniowany równaniem \ref{eqn:filter}. Na rysunku \ref{fig:filter_bank} zwizualizowano $4$ kolejne filtry. Efektem nałożenia filtrów jest nowy ciąg wartości $v_1, v_2, \ldots v_N$, które stanowy wejście do kolejnego etapu przetwarzania.
 	 
 	 \begin{equation}
 		 H_m(x)= 
@@ -317,8 +309,7 @@
 	 
 	 Ostatecznie, wektor cech jest składany z $M$ pierwszych wartości ciągu $W$, całkowitej energii sygnału akustycznego $\epsilon$ liczonej według wzory \ref{eqn:energy} oraz pierwszej i drugiej pochodnej tych wartości liczonych według wzorów \ref{eqn:d1} oraz \ref{eqn:d2}. Łącznie otrzymuje się wektor cech o $3(M+1)$ elementach. Rysunek \ref{fig:feature_vector} pokazuje ostateczną formę wektora cech na $t$-tej ramki.
 	 
-	
-	\begin{figure}
+	\begin{figure}[H]
 		\begin{center}
 			\begin{tabular}{l|ccccc}
 				zerowa pochodna   & $\epsilon_t$   & $w_{1,t}$   & $w_{2,t}$   & $\ldots$ & $w_{M,t}$   \\
@@ -330,10 +321,17 @@
 		\end{center}
 	\end{figure}
 
+	Ponadto, opcjonalnie, wektory cech mogą zostać poddane normalizacji, co uniezależnia je od niektórych czynników zewnętrznych, takich jak przykładowo głośność wypowiedzi. Normalizacji dokonuje się poprzez odjęcie średniej i podzielenie przez wariancję zgodnie ze wzorem \ref{eqn:norm}, gdzie $W$ jest zbiorem wektorów, a $W_i$ $i$-tym wektorem ze zbioru. Każdy z parametrów wektora jest normalizowany względem odpowiadających mu parametrów w innych wektorach cech ze zbiory $W$. Typowo normalizacji dokonuje się dla pojedynczej frazy, co oznacza ze zbiór $W$ zawiera jedynie wektory z jednej wypowiedzi.
+	
+	\begin{equation}
+		\hat{W_i} = \frac{W_i - mean(W)}{var(W)}
+		\label{eqn:norm}
+	\end{equation}
+
 	\subsubsection{Cechy \textit{MFSC}}
 	\label{sec:Feature_vec_mfsc}
 	
-	Cechy \textit{MFSC} są uproszczoną wariacją cech MFCC, zaprojektowaną specjalnie na potrzeby \textit{splotowych sieci neuronowych}. W cechach tych nie nakłada się logarytmu ani dyskretnej transformaty kosinusowej z czwartego i piątego kroku. W efekcie otrzymuje się wektory, w których kolejne elementy są pomiędzy sobą skorelowane, co jest korzystne ze względu na splotową architekturę sieci. W tabeli \ref{fig:feature_comparision} znajduje się porównanie cech MFCC oraz MFSC.
+	Cechy \textit{MFSC} są uproszczoną wariacją cech MFCC, zaprojektowaną specjalnie na potrzeby \textit{splotowych sieci neuronowych}. W cechach tych nie nakłada się logarytmu ani dyskretnej transformaty kosinusowej z czwartego i piątego kroku. W efekcie otrzymuje się wektory, w których kolejne elementy są pomiędzy sobą skorelowane, co jest korzystne ze względu na splotową architekturę sieci. Cechy MFSC też mogą zostać poddane normalizacji opisanej wzorem \ref{eqn:norm}. W tabeli \ref{fig:feature_comparision} znajduje się porównanie cech MFCC oraz MFSC wraz z parametrami, jakie zostały wykorzystane w przeprowadzonych eksperymentach.
 	
 	\begin{figure}
 		\begin{center}
@@ -1103,7 +1101,9 @@
 
 \section{N-gramowy model językowy}
 	\label{sec:ngramm}
-	Dosłownie kilka słów o n-gramach i wygładzaniu (to nie jest temat tej pracy)
+	\textit{N-gramowy model językowy}, odpowiadający blokowi \refBlock{n_gramy} z rysunku \ref{fig:ARM_schemat}, zawiera prawdopodobieństwa słów ze słownika \refBlock{slownik}, pod warunkiem wystąpienie $n$ poprzednich słów.
+	
+	
     \subsection{ Rodzaje modeli językowych }
       Omówienie modeli stochastycznych, gramatycznych, moodeli językowych wykorzystujących sieci głębokiego uczenia (krótko)
     \subsection{ Estymacja parametrów modelu językowego na podstawie korpusu tekstów }
@@ -1216,19 +1216,19 @@
 		\def\y{0.5}				
 		\pgfmathsetmacro{\X}{\x + \w};
 		\pgfmathsetmacro{\Y}{\y + \w};
-		\draw[fill=black,opacity=0.2,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
+		\draw[fill=black,fill=gray!20,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
 		
 		\def\x{0.25}	
 		\def\y{0.25}				
 		\pgfmathsetmacro{\X}{\x + \w};
 		\pgfmathsetmacro{\Y}{\y + \w};
-		\draw[fill=black,opacity=0.2,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
+		\draw[fill=black,fill=gray!20,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
 		
 		\def\x{0.5}	
 		\def\y{0.0}				
 		\pgfmathsetmacro{\X}{\x + \w};
 		\pgfmathsetmacro{\Y}{\y + \w};
-		\draw[fill=black,opacity=0.2,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
+		\draw[fill=black,fill=gray!20,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
 		
 		\def\w{0.75}
 		
@@ -1236,37 +1236,37 @@
 		\def\y{1.25}				
 		\pgfmathsetmacro{\X}{\x + \w};
 		\pgfmathsetmacro{\Y}{\y + \w};
-		\draw[fill=black,opacity=0.2,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
+		\draw[fill=black,fill=gray!20,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
 		
 		\def\x{3.25}	
 		\def\y{1.0}				
 		\pgfmathsetmacro{\X}{\x + \w};
 		\pgfmathsetmacro{\Y}{\y + \w};
-		\draw[fill=black,opacity=0.2,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
+		\draw[fill=black,fill=gray!20,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
 		
 		\def\x{3.5}	
 		\def\y{0.75}				
 		\pgfmathsetmacro{\X}{\x + \w};
 		\pgfmathsetmacro{\Y}{\y + \w};
-		\draw[fill=black,opacity=0.2,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
+		\draw[fill=black,fill=gray!20,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
 		
 		\def\x{3.75}	
 		\def\y{0.5}				
 		\pgfmathsetmacro{\X}{\x + \w};
 		\pgfmathsetmacro{\Y}{\y + \w};
-		\draw[fill=black,opacity=0.2,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
+		\draw[fill=black,fill=gray!20,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
 		
 		\def\x{4.0}	
 		\def\y{0.25}				
 		\pgfmathsetmacro{\X}{\x + \w};
 		\pgfmathsetmacro{\Y}{\y + \w};
-		\draw[fill=black,opacity=0.2,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
+		\draw[fill=black,fill=gray!20,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
 		
 		\def\x{4.25}	
 		\def\y{0.0}				
 		\pgfmathsetmacro{\X}{\x + \w};
 		\pgfmathsetmacro{\Y}{\y + \w};
-		\draw[fill=black,opacity=0.2,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
+		\draw[fill=black,fill=gray!20,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
 			
 		\draw (1.1,1.1) -- (1.3,1.1) -- (1.3,1.3) -- (1.1,1.3) -- (1.1,1.1);	
 		\draw (1.3,1.3) -- (3.7,1.2);
@@ -1278,7 +1278,7 @@
 		\def\y{0.0}				
 		\pgfmathsetmacro{\X}{\x + \w};
 		\pgfmathsetmacro{\Y}{\y + \h};
-		\draw[fill=black,opacity=0.2,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
+		\draw[fill=black,fill=gray!20,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
 		
 		\draw (3.75,2.0) -- (6.75,1.0);
 		\draw (5.0,0.0) -- (6.75,1.0);
@@ -1289,7 +1289,7 @@
 		\def\y{0.25}				
 		\pgfmathsetmacro{\X}{\x + \w};
 		\pgfmathsetmacro{\Y}{\y + \h};
-		\draw[fill=black,opacity=0.2,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
+		\draw[fill=black,fill=gray!20,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
 		
 		\draw (7.0,2.0) -- (8.75,1.0);
 		\draw (7.0,0.0) -- (8.75,1.0);
@@ -1301,7 +1301,9 @@
 		\caption{Architektura splotowej sieci neuronowej.}
 	\end{figure}
 
-	Do wyznaczanie prawdopodobieństw stanów modelu Markova wykorzystano splotową sieć neuronową. Wejście sieci jest podzielone na trzy warstwy odpowiadające zerowej ($\epsilon + w$), pierwszej ($\epsilon' + w'$) i drugiej pochodnej $\epsilon'' + w''$), co odzwierciedla charakter wektorów cech wyznaczanych zgodnie z opisem w rozdziale \ref{sec:Feature_vec_mfsc}. Dzięki oddzieleniu pochodnych warstwami, dane pochodzące z różnych pochodnych nie są przetwarzane przez jeden filtr. Na rysunku \ref{fig:cnn_architecture_input} wizualizowano podział wektora wejściowego. 
+	Do wyznaczanie prawdopodobieństw stanów modelu Markova wykorzystano splotową sieć neuronową. Sieć składa się z odpowiednio sformatowanej warstwy wejściowej, warstw splotowych oraz klasycznych, pełnych warstw ma samym końcu. Rysunek \ref{fig:cnn_architecture_1} wizualizuje ogólną architekturę wykorzystanych sieci. Szczegółowy opis konfiguracji warstw znajduje się w rozdziale \ref{sec:experiments}. Jako funkcję błędu zastosowano \textit{entropię skrośna}. W celu zapobieżenia efektowi przeuczania dodano \textit{dropout} ze współczynnikiem odrzucania równym $0.5$ do pierwszej warstwy klasycznej oraz \textit{regularyzacje} parametrów ze współczynnikiem $10^{-5}$. Początkowy współczynnik uczenia wynosił $5 \cdot 10^{-3}$ i w każdej epoce, w której nie nastąpiła poprawo na zbiorze walidacyjnym, był mnożony przez $0.94$, trening trwał $160$ epok.
+	
+	Wejście sieci jest podzielone na trzy warstwy odpowiadające zerowej ($\epsilon, w$), pierwszej ($\epsilon', w'$) i drugiej pochodnej $\epsilon'', w''$), co odzwierciedla charakter wektorów cech wyznaczanych zgodnie z opisem w rozdziale \ref{sec:Feature_vec_mfsc}. Dzięki oddzieleniu pochodnych warstwami, dane pochodzące z różnych pochodnych nie są przetwarzane przez jeden filtr. Szerokości jednej warstwy odpowiada liczbie uwzględnionych filtrów wraz z całkowitą energią, łącznie $M+1$ liczb. Wysokości jest równa liczbie ramek z jakich składna się pojedyncza obserwacja, czyli $2\cdot kontekst + 1$. Na rysunku \ref{fig:cnn_architecture_input} zwizualizowano podział wektora wejściowego. 
 	
 	\begin{figure}[H]
 		\centering
@@ -1333,11 +1335,11 @@
 		\pgfmathsetmacro{\Y}{\y + \h};
 		\draw[fill=black,fill=gray!20,draw=black] (\x,\y) -- (\x,\Y) -- (\X,\Y) -- (\X,\y) -- (\x,\y);
 		
-		\draw (\x,\Y) -- (\X,\Y)  node [black,midway,below] {$\epsilon_{t-1} + w_{t-1}$};
+		\draw (\x,\Y) -- (\X,\Y)  node [black,midway,below] {$\epsilon_{t-1}, w_{t-1}$};
 		\pgfmathsetmacro{\H}{\y + 2 * \h / 3};
-		\draw [gray!80] (\x,\H) -- (\X,\H)  node [black,midway,below] {$\epsilon_{t} + w_{t}$};
+		\draw [gray!80] (\x,\H) -- (\X,\H)  node [black,midway,below] {$\epsilon_{t}, w_{t}$};
 		\pgfmathsetmacro{\H}{\y + \h / 3};
-		\draw [gray!80] (\x,\H) -- (\X,\H)  node [black,midway,below] {$\epsilon_{t+1} + w_{t+1}$};
+		\draw [gray!80] (\x,\H) -- (\X,\H)  node [black,midway,below] {$\epsilon_{t+1}, w_{t+1}$};
 		
 		\draw [decorate,decoration={brace,amplitude=10pt,mirror,raise=26pt},yshift=10pt]
 		(\x, \y) -- (\X, \y) node [black,midway,yshift=-1.5cm] {\footnotesize liczba filtrów (M) + całkowita energia};
@@ -1453,6 +1455,7 @@ W fazie wstępnego przetwarzania danych, nagrania zostały poddane następujący
 W celu odrzucenia nagrań o niepoprawnej transkrypcji, przepuszczono je przez system do rozpoznawania mowy. Nagrania, których transkrypcje różniła się znacząco od wyniku rozpoznawania zostały odrzucone.
 
 \section{Eksperymenty}
+\label{sec:experiments}
 
 
 	\begin{figure}
@@ -1470,7 +1473,8 @@ W celu odrzucenia nagrań o niepoprawnej transkrypcji, przepuszczono je przez sy
 		MODEL\_UNIFONOWY     &  N/A  & N/A &     N/A      & 71.86 \\
 		\hline
 	\end{tabular}
-	\caption{\label{tab:acustic_models}Wytrenowane modele akustyczne}
+	\label{tab:acustic_models}
+	\caption{Wytrenowane modele akustyczne}
 	\end{figure}
 
 	 \begin{figure}
@@ -1575,6 +1579,8 @@ W celu odrzucenia nagrań o niepoprawnej transkrypcji, przepuszczono je przez sy
 			Nazwa modelu & \vtop{\hbox{\strut Liczba neuronów}\hbox{\strut w warstwie ukrytej}}  & 
 			\vtop{\hbox{\strut Liczba }\hbox{\strut filtrów}} & \vtop{\hbox{\strut Skuteczność}\hbox{\strut corr}} & \vtop{\hbox{\strut Skuteczność}\hbox{\strut acc}} \\
 			\hline
+			siec 19 & 2400 & 32 & 88.36 & 83.02 \\
+			\hline
 			siec 16 & 1200 & 32 & 88.54 & 83.10 \\
 			\hline
 			siec 17 & 600 & 32 & 87.52 & 82.01 \\
@@ -1586,9 +1592,101 @@ W celu odrzucenia nagrań o niepoprawnej transkrypcji, przepuszczono je przez sy
 		\caption{\label{tab:text2}Wpływ liczby neuronów na skuteczność rozpoznawania.}
 	\end{figure}
 
-
-    Należy tutaj jasno określić cel przeprowadzanych badań i go uzasadnić. Uzasadnić potrrzebę dobrania optymalnych parametrów dekodowania, osobno dla GMM-HMM i CNN-HMM. Każdy z podpunktów musi kończyć się krótką analizą zaprezentowanych wyników oraz próbą ich uzasadnienia.
+	Wiele badań i publikacji pokazało, że stosując \textit{tri-fonowe modele akustyczne} można znacząco poprawić skuteczność rozpoznawania. Niestety przejście z modeli \textit{uni-fonowych} do \textit{tri-fonowych} wiąże się ze zwiększeniem stopnia skomplikowania całego systemu, procesu uczenia, jak i wydłużeniem samego czasu rozpoznawania. Ponadto, w przypadku zastosowania sieci neuronowej, duża liczba stanów modelu tri-fonowego wymaga jednoczesnej estymacji wielu prawdopodobieństw, co z kolei może utrudnić proces trenowania sieć. Kompromisem są właśnie \textit{modele tri-fonowe z ograniczonym kontekstem} budowane zgodnie z koncepcją opisane w rozdziale >>>> \ref{sec:x} <<<<, które łączą zwiększoną zdolność gromadzenia wiedzy klasycznych modeli tri-fonowych ze zmniejszoną liczbą parametrów, które trzeba wyuczyć w klasycznym modelu uni-fonowych. 
+	W celu sprawdzenie możliwości zastosowanie sieci neuronowych z ograniczonym kontekstem do rozpoznawania mowy, przeprowadzono szereg eksperymentów, mających porównać skuteczność klasycznego podejścia opisanego w rozdziale \ref{sec:ASR_HMM} z podejściem opisanym w rozdziale \ref{sec:ASR_NN}. 
+	
+	
+	
 	\subsection{ Środowisko sprzętowo-programisytyczne }
+	
+	W celu przeprowadzenia eksperymentów wykorzystany został szereg ogólnodostępnych pakietów i bibliotek oraz komercyjny system do rozpoznawania mowy \textit{Magic Scribe} formy \textit{Unikkon} z Wrocławia. W skład ogólnodostępnych, wykorzystanych pakietów wchodzi \textit{HTK} (\url{http://htk.eng.cam.ac.uk/}) oferujący zestaw narzędzi do budowy klasycznych modeli akustycznych oraz językowych. Kolejnym wykorzystanym narzędziem jest \textit{Julius} (\url{http://julius.osdn.jp/en_index.php}) będący dekoderem w pełni kompatybilnym z pakietem HTK. Julius jest jednym z kilku open-sourcowych dekoderów, jednak nie oferuje on najwyższej skuteczności rozpoznawani, o czym można przeczytać w artykule \cite{asr_toolkit_cmp}. Pomimo to, zdecydowałem się na to narzędzie ponieważ mam doświadczenie w pracy z nim, ponadto Julius uchodzi za szybki dekoder, co też jest istotne z punktu widzenia użytkownika systemu rozpoznającego mowę. Do budowy sieci neuronowych wykorzystano bibliotekę \textit{Lasagne} \url{http://lasagne.readthedocs.io/en/latest/}, napisaną w jezyku Python, zapewniającą wygodny interfejs do środowiska \textit{Theano}. Lasagne oferuje zestaw metod do budowy sieci składających się z warstw klasycznych, splotowych, dropout, max-pull itd. \textit{Theano} \url{http://deeplearning.net/software/theano/} jest z kolei biblioteką umożliwiającą wykonywanie współbieżnych obliczeń na karcie graficznej. Z wykorzystaniem tej bibliotece oraz GPU udało się znacząco przyśpieszyć trening sieci neuronowych w stosunku do treningu na CPU.
+	Schemat zależności pomiędzy użytymi komponentami znajduje się na rysunku \ref{fig:arch}. Punktem wyjścia stworzonej architektury jest korpus językowy \textit{Clarin} przedstawiony w rozdziale \ref{sec:opis_danych}, na schemacie \ref{fig:arch} odpowiada mu blok \refBlock{clarin_wav}. Na podstawie transkrypcji zawartych w korpusie, zbudowano model językowy wraz ze słownikiem \refBlock{lang_model_clarin} wykorzystując do tego pakiet HTK oraz system Magic Scribe z bloku \refBlock{htk_ms}. Do budowy modelu językowego i słownika \refBlock{lang_model_clarin} wykorzystano wszystkie wypowiedzi ze zbioru treningowego, walidacyjnego i testowego. Tak powstały model językowy został wykorzystany wraz z zewnętrznym modelem akustycznym \refBlock{model_acc_ms} do rozpoznania wypowiedzi z korpusu \refBlock{clarin_wav} i stworzenia plików \textit{mfc} oraz \textit{out} tworzących korpus \refBlock{clarin_mfc}. Każda z oryginalnych wypowiedzi znajdujących się w korpusie \refBlock{clarin_wav} ma przypisany w \refBlock{clarin_mfc} plik \textit{mfc} zawierający kolejne wektory cech oraz \textit{out} zawierający przypisanie tri-fonu wraz z numerem stanu do ramki. Pliki \textit{out} wygenerował dekoder \refBlock{julius2} podczas procesu rozpoznawania. Dzięki dobremu zewnętrznemu  modelowi akustycznemu \refBlock{model_acc_ms} oraz modeli językowemu \refBlock{lang_model_clarin} uzyskano bardzo wysoką skuteczność rozpoznawania <<<??>>> gdzięki czemu dopasowanie ramek do stanów w korpusie \refBlock{clarin_mfc} powinno być bardzo precyzyjne.
+	
+	
+%	\tikzstyle{block} = [rectangle, draw, fill=blue!20, text width=5em, text centered, rounded corners, minimum height=4em]
+	
+	\begin{figure}[H]
+		\centering
+		\begin{tikzpicture}
+			
+			\begin{scope}
+			\tikzstyle{arch_part} = [rectangle, draw, text width=7em, text centered, rounded corners, minimum height=3em]
+			
+			\def\l{-2.5}
+			\def\r{7.0}
+			\def\c{2}
+			\def\x{10.5}
+			\def\j{4.0}
+			
+			\draw  [rounded corners, text centered] (0,0) rectangle (4,1.2);
+			
+			\path [line, dashed] (1.0, 0.75) -- (1.0, 1.5) node[above, xshift=-10pt] {Zbiór treningowy};
+			\path [line, dashed] (2.5, 0.75) -- (2.5, 2.0) node[above, xshift=-20pt] {Zbiór testowy};
+			\path [line, dashed] (3.5, 0.75) -- (3.5, 2.5) node[above, xshift=-20pt] {Zbiór walidacyjny};
+			
+			\draw [gray!80, dashed] (2,0.4) -- (2,1.2)  node [black,below, yshift=-20pt] {\labelBlock{clarin_wav} CLARIN : wav, txt};
+			\draw [gray!80, dashed] (3,0.4) -- (3,1.2)  node [black,midway,below] {};
+			
+			\node [arch_part] (htk) at (\l, 0.6) {\labelBlock{htk_ms}HTK, Magic Scribe};
+			\path [line] (0,0.6) -- (htk);
+			
+			\node [arch_part] (model_lang) at (\l, -3) {\labelBlock{lang_model_clarin}Model językowy ze słwnikiem};
+			\path [line] (htk) -- (model_lang);
+			
+			\node [arch_part] (model_acc) at (\c, 5) {Model akustyczny};
+			\path [line] (htk) |- (model_acc);
+			
+			\node [arch_part] (julius2) at (\r, 2.5) {\labelBlock{julius2} Julius};
+			\path [line] (4,0.6) -| (julius2);
+			\path [line] (model_acc) -| (julius2);
+			
+			\node [arch_part] (model_acc) at (\x, 2.5) {Skuteczność modelu klasycznego};
+			\path [line] (julius2) -- (model_acc);
+						
+			\node [arch_part] (julius) at (\c, -3) {Julius};
+			\path [line] (model_lang) -- (julius);
+			\path [line] (2, 0) -- (julius);
+			\path [line] (julius) -- (2, -4.8);
+			
+			\draw  [rounded corners, text centered] (0,-6) rectangle (4,-4.8);
+			\draw [gray!80, dashed] (2,-5.6) -- (2,-4.8)  node [black,below, yshift=-20pt] {CLARIN : mfc, out};
+			\draw [gray!80, dashed] (3,-5.6) -- (3,-4.8)  node [black,midway,below] {};
+			
+			\node [arch_part] (data_processor) at (\l, -5.4) {Przetwarzanie danych};
+			\path [line] (0, -5.4) -- (data_processor);
+			
+			\node [arch_part] (siec_builder) at (\l, -7.5) {Budowa sieci};
+			\path [line] (data_processor) -- (siec_builder);
+			
+			\node [arch_part] (siec) at (\c, -7.5) {Sieć neuronowa};
+			\path [line] (siec_builder) -- (siec);
+			
+			\node [arch_part] (julius3) at (\r, -3) {\labelBlock{clarin_mfc} Julius + modul sieci neuronowej};
+			\path [line] (siec) -| (julius3);
+			\path [line] (4,0.6) -| (julius3);
+			
+			\node [arch_part] (model_acc2) at (\x, -3) {Skuteczność modelu neuronowego};
+			\path [line] (julius3) -- (model_acc2);
+			
+			\node [arch_part] (model_lang2) at (\x, 0.6) {Zewnętrzny model językowy};
+			\path [line] (model_lang2) -| (7.5, 1.9);
+			\path [line] (model_lang2) -| (7.5, -2.2);
+			
+			\node [arch_part] (model_acc3) at (4.5, -1.0) {\labelBlock{model_acc_ms}Zewnętrzny model akustyczny};
+			\path [line] (model_acc3) -| (2.5, -2.4);
+			
+			
+			\end{scope}
+		
+		\end{tikzpicture}
+		\caption{Mapowanie tri-fonów wirtualnych na tri-fony fizyczne}
+		\label{fig:arch}
+		
+	\end{figure}
+	
+	Pierwszym etapem było wytrenowanie klasycznych modeli tri-fonowych oraz uni-fonowego, na danych opisanych w rozdziale \ref{sec:opis_danych}, których zestawienie znajduje się w tabeli \ref{tab:acustic_models}.
+	
+    Należy tutaj jasno określić cel przeprowadzanych badań i go uzasadnić. Uzasadnić potrrzebę dobrania optymalnych parametrów dekodowania, osobno dla GMM-HMM i CNN-HMM. Każdy z podpunktów musi kończyć się krótką analizą zaprezentowanych wyników oraz próbą ich uzasadnienia.
 	\subsection{ Optymalizacja parametrów procesu dekodowania }
 	\subsection{ Wpływ sposobu wyznaczania cech na skuteczność rozpoznawania }
 	Tutaj należy porównać skuteczność rozpoznawania dla cech MFCC i MFSC dla GMM-HMM i CNN-HMM oraz uzasadnić otrzymamy wynik (dla GMM lepsze MFCC, dla CNN lepsze MFSC)
