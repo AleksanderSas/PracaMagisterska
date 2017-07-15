@@ -16,6 +16,7 @@
 \usepackage{multirow}
 \usepackage{tabularx}
 \usepackage{array}
+\usepackage{pgfplots}
 \usetikzlibrary{decorations.pathreplacing}
 \usepackage{algorithmic}
 \hypersetup{
@@ -1098,6 +1099,7 @@
 		    
        \subsubsection{ Modele bezkontekstowe i kontekstowe}
        \subsubsection{ Metody redukcji liczby stanów modeli kontekstowych }	
+       \label{sec:state_red}
 
 \section{N-gramowy model językowy}
 	\label{sec:ngramm}
@@ -1160,7 +1162,7 @@
 			\node [frame, below of=fr4] (fr5) {$t_5$};
 			\node [frame, below of=fr5] (fr6) {$t_6$};
 			\node [frame, below of=fr6] (fr7) {$t_7$};
-			\node [frame, below of=fr7] (fr8) {$t_8$} node [black,midway,yshift=-2.3cm, xshift=5.8cm] {\footnotesize $\ldots$};;
+			\node [frame, below of=fr7] (fr8) {$t_8$} node [black,midway,yshift=-2.3cm, xshift=5.8cm] {\footnotesize $\ldots$};
 			\node [frame, below of=fr8] (fr9) {$t_9$};
 			\node [frame, below of=fr9] (fr10) {$t_{10}$};
 			\node [frame, below of=fr10] (fr11) {$t_{11}$};
@@ -1573,34 +1575,15 @@ W celu odrzucenia nagrań o niepoprawnej transkrypcji, przepuszczono je przez sy
 	\caption{\label{tab:text2}Wyniki cz.2}
 	\end{figure}
 
-
-	\begin{figure}
-		\begin{tabular}{|c|c|c|c|c|c|} \hline
-			Nazwa modelu & \vtop{\hbox{\strut Liczba neuronów}\hbox{\strut w warstwie ukrytej}}  & 
-			\vtop{\hbox{\strut Liczba }\hbox{\strut filtrów}} & \vtop{\hbox{\strut Skuteczność}\hbox{\strut corr}} & \vtop{\hbox{\strut Skuteczność}\hbox{\strut acc}} \\
-			\hline
-			siec 19 & 2400 & 32 & 88.36 & 83.02 \\
-			\hline
-			siec 16 & 1200 & 32 & 88.54 & 83.10 \\
-			\hline
-			siec 17 & 600 & 32 & 87.52 & 82.01 \\
-			\hline
-			siec 18 & 300 & 32 & 86.90 & 81.36 \\
-			\hline
-			
-		\end{tabular}
-		\caption{\label{tab:text2}Wpływ liczby neuronów na skuteczność rozpoznawania.}
-	\end{figure}
-
 	Wiele badań i publikacji pokazało, że stosując \textit{tri-fonowe modele akustyczne} można znacząco poprawić skuteczność rozpoznawania. Niestety przejście z modeli \textit{uni-fonowych} do \textit{tri-fonowych} wiąże się ze zwiększeniem stopnia skomplikowania całego systemu, procesu uczenia, jak i wydłużeniem samego czasu rozpoznawania. Ponadto, w przypadku zastosowania sieci neuronowej, duża liczba stanów modelu tri-fonowego wymaga jednoczesnej estymacji wielu prawdopodobieństw, co z kolei może utrudnić proces trenowania sieć. Kompromisem są właśnie \textit{modele tri-fonowe z ograniczonym kontekstem} budowane zgodnie z koncepcją opisane w rozdziale >>>> \ref{sec:x} <<<<, które łączą zwiększoną zdolność gromadzenia wiedzy klasycznych modeli tri-fonowych ze zmniejszoną liczbą parametrów, które trzeba wyuczyć w klasycznym modelu uni-fonowych. 
 	W celu sprawdzenie możliwości zastosowanie sieci neuronowych z ograniczonym kontekstem do rozpoznawania mowy, przeprowadzono szereg eksperymentów, mających porównać skuteczność klasycznego podejścia opisanego w rozdziale \ref{sec:ASR_HMM} z podejściem opisanym w rozdziale \ref{sec:ASR_NN}. 
 	
 	
-	
 	\subsection{ Środowisko sprzętowo-programisytyczne }
 	
-	W celu przeprowadzenia eksperymentów wykorzystany został szereg ogólnodostępnych pakietów i bibliotek oraz komercyjny system do rozpoznawania mowy \textit{Magic Scribe} formy \textit{Unikkon} z Wrocławia. W skład ogólnodostępnych, wykorzystanych pakietów wchodzi \textit{HTK} (\url{http://htk.eng.cam.ac.uk/}) oferujący zestaw narzędzi do budowy klasycznych modeli akustycznych oraz językowych. Kolejnym wykorzystanym narzędziem jest \textit{Julius} (\url{http://julius.osdn.jp/en_index.php}) będący dekoderem w pełni kompatybilnym z pakietem HTK. Julius jest jednym z kilku open-sourcowych dekoderów, jednak nie oferuje on najwyższej skuteczności rozpoznawani, o czym można przeczytać w artykule \cite{asr_toolkit_cmp}. Pomimo to, zdecydowałem się na to narzędzie ponieważ mam doświadczenie w pracy z nim, ponadto Julius uchodzi za szybki dekoder, co też jest istotne z punktu widzenia użytkownika systemu rozpoznającego mowę. Do budowy sieci neuronowych wykorzystano bibliotekę \textit{Lasagne} \url{http://lasagne.readthedocs.io/en/latest/}, napisaną w jezyku Python, zapewniającą wygodny interfejs do środowiska \textit{Theano}. Lasagne oferuje zestaw metod do budowy sieci składających się z warstw klasycznych, splotowych, dropout, max-pull itd. \textit{Theano} \url{http://deeplearning.net/software/theano/} jest z kolei biblioteką umożliwiającą wykonywanie współbieżnych obliczeń na karcie graficznej. Z wykorzystaniem tej bibliotece oraz GPU udało się znacząco przyśpieszyć trening sieci neuronowych w stosunku do treningu na CPU.
-	Schemat zależności pomiędzy użytymi komponentami znajduje się na rysunku \ref{fig:arch}. Punktem wyjścia stworzonej architektury jest korpus językowy \textit{Clarin} przedstawiony w rozdziale \ref{sec:opis_danych}, na schemacie \ref{fig:arch} odpowiada mu blok \refBlock{clarin_wav}. Na podstawie transkrypcji zawartych w korpusie, zbudowano model językowy wraz ze słownikiem \refBlock{lang_model_clarin} wykorzystując do tego pakiet HTK oraz system Magic Scribe z bloku \refBlock{htk_ms}. Do budowy modelu językowego i słownika \refBlock{lang_model_clarin} wykorzystano wszystkie wypowiedzi ze zbioru treningowego, walidacyjnego i testowego. Tak powstały model językowy został wykorzystany wraz z zewnętrznym modelem akustycznym \refBlock{model_acc_ms} do rozpoznania wypowiedzi z korpusu \refBlock{clarin_wav} i stworzenia plików \textit{mfc} oraz \textit{out} tworzących korpus \refBlock{clarin_mfc}. Każda z oryginalnych wypowiedzi znajdujących się w korpusie \refBlock{clarin_wav} ma przypisany w \refBlock{clarin_mfc} plik \textit{mfc} zawierający kolejne wektory cech oraz \textit{out} zawierający przypisanie tri-fonu wraz z numerem stanu do ramki. Pliki \textit{out} wygenerował dekoder \refBlock{julius2} podczas procesu rozpoznawania. Dzięki dobremu zewnętrznemu  modelowi akustycznemu \refBlock{model_acc_ms} oraz modeli językowemu \refBlock{lang_model_clarin} uzyskano bardzo wysoką skuteczność rozpoznawania <<<??>>> gdzięki czemu dopasowanie ramek do stanów w korpusie \refBlock{clarin_mfc} powinno być bardzo precyzyjne.
+	W celu przeprowadzenia eksperymentów wykorzystany został szereg ogólnodostępnych pakietów i bibliotek oraz komercyjny system do rozpoznawania mowy \textit{Magic Scribe} formy \textit{Unikkon} z Wrocławia. W skład ogólnodostępnych, wykorzystanych pakietów wchodzi \textit{HTK} (\url{http://htk.eng.cam.ac.uk/}) oferujący zestaw narzędzi do budowy klasycznych modeli akustycznych oraz językowych. Kolejnym wykorzystanym narzędziem jest \textit{Julius} (\url{http://julius.osdn.jp/en_index.php}) będący dekoderem w pełni kompatybilnym z pakietem HTK. Julius jest jednym z kilku open-sourcowych dekoderów, jednak nie oferuje on najwyższej skuteczności rozpoznawani, o czym można przeczytać w artykule \cite{asr_toolkit_cmp}. Pomimo to, zdecydowałem się na to narzędzie ponieważ mam doświadczenie w pracy z nim, ponadto Julius uchodzi za szybki dekoder, co też jest istotne z punktu widzenia użytkownika systemu rozpoznającego mowę. Do budowy sieci neuronowych wykorzystano bibliotekę \textit{Lasagne} \url{http://lasagne.readthedocs.io/en/latest/}, napisaną w jezyku Python, zapewniającą wygodny interfejs do środowiska \textit{Theano}. Lasagne oferuje zestaw metod do budowy sieci składających się z warstw klasycznych, splotowych, dropout, max-pull itd. \textit{Theano} (\url{http://deeplearning.net/software/theano/}) jest z kolei biblioteką umożliwiającą wykonywanie współbieżnych obliczeń na karcie graficznej. Z wykorzystaniem tej bibliotece oraz GPU udało się znacząco przyśpieszyć trening sieci neuronowych w stosunku do treningu na CPU. Schemat zależności pomiędzy użytymi komponentami znajduje się na rysunku \ref{fig:arch}. 
+	
+	Punktem wyjścia stworzonej architektury jest korpus językowy \textit{Clarin} przedstawiony w rozdziale \ref{sec:opis_danych}, na schemacie \ref{fig:arch} odpowiada mu blok \refBlock{clarin_wav}. Na podstawie transkrypcji zawartych w korpusie, zbudowano model językowy wraz ze słownikiem \refBlock{lang_model_clarin}, wykorzystując do tego pakiet HTK oraz system Magic Scribe z bloku \refBlock{htk_ms}. Do budowy modelu językowego i słownika \refBlock{lang_model_clarin} wykorzystano wszystkie wypowiedzi ze zbioru treningowego, walidacyjnego i testowego. Tak powstały model językowy został wykorzystany wraz z zewnętrznym modelem akustycznym \refBlock{model_acc_ms} do rozpoznania wypowiedzi z korpusu \refBlock{clarin_wav} i stworzenia plików \textit{mfc} oraz \textit{out} tworzących korpus \refBlock{clarin_mfc}. Każda z oryginalnych wypowiedzi znajdujących się w korpusie \refBlock{clarin_wav} ma przypisany, w zbiorze \refBlock{clarin_mfc}, plik \textit{mfc} zawierający kolejne wektory cech oraz plik \textit{out} z zapisanym mapowaniem tri-fonu wraz z numerem stanu na ramkę. Pliki \textit{out} wygenerował dekoder \refBlock{julius} podczas procesu rozpoznawania. Dzięki dobremu zewnętrznemu  modelowi akustycznemu \refBlock{model_acc_ms} oraz modeli językowemu \refBlock{lang_model_clarin} uzyskano bardzo wysoką skuteczność rozpoznawania <<<??>>>, dzięki czemu dopasowanie ramek do stanów w korpusie \refBlock{clarin_mfc} jest bardzo precyzyjne. Wysoka skuteczność jest w znacznej mierze efektem budowy słownika \refBlock{lang_model_clarin} na zbiorze, który został nim później rozpoznany. Taki słownik zawiera jedynie słowa, które mają się pojawić w wyniku rozpoznawania. Na podstawie korpusu \refBlock{clarin_mfc} przygotowano narzędziem \refBlock{data_processor} dane do treningu sieci neuronowej. Efektem działania narzędzia \refBlock{data_processor} jest plik z mapowaniem \textit{wektor cech} $\longrightarrow$ \textit{stan modelu Markova}. Podczas tego etapu dokonana została normalizacja wektorów cech dla każdej frazy zgodnie z opisem w rozdziale \ref{sec:Feature_vec_mfcc}. Wykorzystując stworzone mapowanie oraz wspomnianą powyżej bibliotekę \textit{Lasagne} i \textit{Theano} w kroku \refBlock{net_build} wytrenowano szereg sieci \refBlock{net}. Ostatecznie uruchomiono rozpoznawanie \textit{zbioru testowego} dekoderem \refBlock{julius3} korzystającym z sieci neuronowych \refBlock{net}. W efekcie otrzymano skuteczności rozpoznawania \refBlock{results2}. Należy dodać, że dekoder \refBlock{julius3} jest oryginalnym dekoderem z własnoręcznie dopisanym modułem pobierającym prawdopodobieństw stanów modelu Markowa z sieci neuronowej zamiast z klasycznego modelu Gaussowskiego. Równocześnie korzystając z pakietu HTK i systemu Magic Scribe (\refBlock{htk_ms}) wyuczono szereg klasycznych modeli akustycznych \refBlock{model_acc2}, modele te zostały wytrenowane jedynie na \textit{zbiorze treningowym} z korpusu \refBlock{clarin_wav}. Następnie wykorzystując te modele dokonano testów skuteczności rozpoznawania \textit{zbioru testowego} z korpusu \refBlock{clarin_wav} dekoderem \refBlock{julius2}. W efekcie otrzymano rezultatu \refBlock{results1}.
 	
 	
 %	\tikzstyle{block} = [rectangle, draw, fill=blue!20, text width=5em, text centered, rounded corners, minimum height=4em]
@@ -1610,10 +1593,10 @@ W celu odrzucenia nagrań o niepoprawnej transkrypcji, przepuszczono je przez sy
 		\begin{tikzpicture}
 			
 			\begin{scope}
-			\tikzstyle{arch_part} = [rectangle, draw, text width=7em, text centered, rounded corners, minimum height=3em]
+			\tikzstyle{arch_part} = [rectangle, draw, text width=8em, text centered, rounded corners, minimum height=3em]
 			
 			\def\l{-2.5}
-			\def\r{7.0}
+			\def\r{6.85}
 			\def\c{2}
 			\def\x{10.5}
 			\def\j{4.0}
@@ -1633,42 +1616,42 @@ W celu odrzucenia nagrań o niepoprawnej transkrypcji, przepuszczono je przez sy
 			\node [arch_part] (model_lang) at (\l, -3) {\labelBlock{lang_model_clarin}Model językowy ze słwnikiem};
 			\path [line] (htk) -- (model_lang);
 			
-			\node [arch_part] (model_acc) at (\c, 5) {Model akustyczny};
+			\node [arch_part] (model_acc) at (\c, 5) {\labelBlock{model_acc}Model akustyczny};
 			\path [line] (htk) |- (model_acc);
 			
-			\node [arch_part] (julius2) at (\r, 2.5) {\labelBlock{julius2} Julius};
+			\node [arch_part] (julius2) at (\r, 2.5) {\labelBlock{julius2}Julius};
 			\path [line] (4,0.6) -| (julius2);
 			\path [line] (model_acc) -| (julius2);
 			
-			\node [arch_part] (model_acc) at (\x, 2.5) {Skuteczność modelu klasycznego};
-			\path [line] (julius2) -- (model_acc);
+			\node [arch_part] (results) at (\x, 2.5) {\labelBlock{results1}Skuteczność modelu klasycznego};
+			\path [line] (julius2) -- (results);
 						
-			\node [arch_part] (julius) at (\c, -3) {Julius};
+			\node [arch_part] (julius) at (\c, -3) {\labelBlock{julius} Julius};
 			\path [line] (model_lang) -- (julius);
 			\path [line] (2, 0) -- (julius);
 			\path [line] (julius) -- (2, -4.8);
 			
 			\draw  [rounded corners, text centered] (0,-6) rectangle (4,-4.8);
-			\draw [gray!80, dashed] (2,-5.6) -- (2,-4.8)  node [black,below, yshift=-20pt] {CLARIN : mfc, out};
+			\draw [gray!80, dashed] (2,-5.6) -- (2,-4.8)  node [black,below, yshift=-20pt] {\labelBlock{clarin_mfc}CLARIN : mfc, out};
 			\draw [gray!80, dashed] (3,-5.6) -- (3,-4.8)  node [black,midway,below] {};
 			
-			\node [arch_part] (data_processor) at (\l, -5.4) {Przetwarzanie danych};
+			\node [arch_part] (data_processor) at (\l, -5.4) {\labelBlock{data_processor}Przetwarzanie danych};
 			\path [line] (0, -5.4) -- (data_processor);
 			
-			\node [arch_part] (siec_builder) at (\l, -7.5) {Budowa sieci};
+			\node [arch_part] (siec_builder) at (\l, -7.5) {\labelBlock{net_build}Budowa sieci};
 			\path [line] (data_processor) -- (siec_builder);
 			
-			\node [arch_part] (siec) at (\c, -7.5) {Sieć neuronowa};
+			\node [arch_part] (siec) at (\c, -7.5) {\labelBlock{net}Sieć neuronowa};
 			\path [line] (siec_builder) -- (siec);
 			
-			\node [arch_part] (julius3) at (\r, -3) {\labelBlock{clarin_mfc} Julius + modul sieci neuronowej};
+			\node [arch_part] (julius3) at (\r, -3) {\labelBlock{julius3}Julius + modul sieci neuronowej};
 			\path [line] (siec) -| (julius3);
 			\path [line] (4,0.6) -| (julius3);
 			
-			\node [arch_part] (model_acc2) at (\x, -3) {Skuteczność modelu neuronowego};
+			\node [arch_part] (model_acc2) at (\x, -3) {\labelBlock{results2}Skuteczność modelu neuronowego};
 			\path [line] (julius3) -- (model_acc2);
 			
-			\node [arch_part] (model_lang2) at (\x, 0.6) {Zewnętrzny model językowy};
+			\node [arch_part] (model_lang2) at (\x, 0.6) {\labelBlock{lang_model2}Zewnętrzny model językowy};
 			\path [line] (model_lang2) -| (7.5, 1.9);
 			\path [line] (model_lang2) -| (7.5, -2.2);
 			
@@ -1679,23 +1662,215 @@ W celu odrzucenia nagrań o niepoprawnej transkrypcji, przepuszczono je przez sy
 			\end{scope}
 		
 		\end{tikzpicture}
-		\caption{Mapowanie tri-fonów wirtualnych na tri-fony fizyczne}
-		\label{fig:arch}
-		
+		\caption{Zależności pomiędzy wykorzystanymi komponentami.}
+		\label{fig:arch}	
 	\end{figure}
 	
-	Pierwszym etapem było wytrenowanie klasycznych modeli tri-fonowych oraz uni-fonowego, na danych opisanych w rozdziale \ref{sec:opis_danych}, których zestawienie znajduje się w tabeli \ref{tab:acustic_models}.
-	
-    Należy tutaj jasno określić cel przeprowadzanych badań i go uzasadnić. Uzasadnić potrrzebę dobrania optymalnych parametrów dekodowania, osobno dla GMM-HMM i CNN-HMM. Każdy z podpunktów musi kończyć się krótką analizą zaprezentowanych wyników oraz próbą ich uzasadnienia.
 	\subsection{ Optymalizacja parametrów procesu dekodowania }
-	\subsection{ Wpływ sposobu wyznaczania cech na skuteczność rozpoznawania }
-	Tutaj należy porównać skuteczność rozpoznawania dla cech MFCC i MFSC dla GMM-HMM i CNN-HMM oraz uzasadnić otrzymamy wynik (dla GMM lepsze MFCC, dla CNN lepsze MFSC)
 	\subsection{Wpływ liczby fizycznych stanów na skuteczność rozpoznawania }
-	Należy tutaj przetestować równocześnie (dla tych samych danych) model GMM-HMM i CNN-HMM, dla neutralnych parametrów lmp/lmp2 i dla parametrów optymalizowanych na zbiorze walidacyjnym
-	\subsection{ Wpływ głębokości/architektury sieci na skuteczność rozpoznawania }
-	\subsection{ Wpływ szerokości kontekstu na skuteczność rozpoznawania }
-	\subsection{ Porównanie efektywności czasowej modeli GMM i CNN }
+		\label{sec:q-num_impact}
+	
+		W celu zweryfikowania głównej tezy niniejszej pracy przeprowadzono porównanie modeli o różnym stopniu zdławienia, dokonanym zgodnie z opisem w rozdziale \ref{sec:state_red}. Manipulując liczba obserwacji wymaganych do podziału tri-fonu zbudowano serię klasycznych modeli akustycznych o różnej liczbie stanów. Następnie dla każdego z nich wytrenowano sieć neuronową zgodnie z filozofią opisaną w rozdziale \ref{sec:ASR_NN}. Wszystkie wykorzystane w tym eksperymencie siec neuronowe miały taką samą architekturę. Składały się z jednej warstwy splotowej zbudowanej z $64$ filtrów, filtry były trzy kanałowe i miały wymiary $19\times6$, co było związane w szerokością kontekstu i odpowiada $kontekst \cdot 2 + 1\times6$. Następnie dodano jedną klasyczną warstwę ukrytą, składającą się z $2400$ neuronów oraz warstwę wyjściową, której szerokość była równa liczbie stanów danego modelu akustycznego. Warstwa środkowa miała dodatkowo dropout w współczynniku $0.5$. Funkcją aktywacji było \textit{rectify} opisane wzorem $\max{x,0}$, ostatnia warstwa miała funkcję \textit{softmax} aby nadać wyjściu sieci charakter prawdopodobieństwa. Schemat \ref{fig:arch_q_num_impact} obrazuje architekturę sieci. Powstałe pary modeli akustycznych przebadano na testowym podzbiorze korpusu językowego \textit{Clarin}. Otrzymane wyniki zamieszczono w tabeli \ref{fig:tab_q_num_impact}. Wykres \ref{fig:fig_q_num_impact} obrazuje, w sposób graficzny, wpływ liczby stanów na skuteczność rozpoznawania dla modeli neuronowych oraz klasycznych.
+		
+		>>>>>>>>>>  Tu beda jakies częsciowe wnioski, ale czekam jeszcze na jedna siec <<<<<<<<<<<<<<<<<<<<<<<<<<<
+		
+		\begin{figure}[H]
+			\centering
+			\begin{tikzpicture}
+			
+			\begin{scope}
+			
+			\tikzstyle{conv_layer} = [fill=black,fill=gray!20,draw=black, text centered]
+			
+			\node at (0.5,2.4){$64$ filtry};
+			\node at (3.4,2.9){warstwa pełna + dropout $0.5$};
+			\node at (6.8,2.4){warstwa pełna + softmax};
+			
+			\def\w{1.5}		
+			
+			\def\x{0.0}	
+			\def\y{0.5}				
+			\pgfmathsetmacro{\X}{\x + \w};
+			\pgfmathsetmacro{\Y}{\y + \w};
+			\draw [fill=black,fill=gray!20,draw=black] (\x,\y) rectangle (\X,\Y);
 
+			
+			\def\x{0.25}	
+			\def\y{0.25}				
+			\pgfmathsetmacro{\X}{\x + \w};
+			\pgfmathsetmacro{\Y}{\y + \w};
+			\draw [fill=black,fill=gray!20,draw=black] (\x,\y) rectangle (\X,\Y);
+			
+			\def\x{0.5}	
+			\def\y{0.0}				
+			\pgfmathsetmacro{\X}{\x + \w};
+			\pgfmathsetmacro{\Y}{\y + \w};
+			\draw [fill=black,fill=gray!20,draw=black] (\x,\y) rectangle (\X,\Y) node [black,midway] {$19\times6$};
+			
+			
+			\def\w{0.6}	
+			\def\h{2.0}	
+			\def\x{3.5}	
+			\def\y{0.0}				
+			\pgfmathsetmacro{\X}{\x + \w};
+			\pgfmathsetmacro{\Y}{\y + \h};
+			\draw [fill=black,fill=gray!20,draw=black] (\x,\y) rectangle (\X,\Y) node [black,midway, rotate=90] {$2400$};
+			
+			\draw (1.5,2.0) -- (3.5,1.0);
+			\draw (2.0,0.0) -- (3.5,1.0);
+			
+			\def\w{0.6}	
+			\def\h{1.5}	
+			\def\x{5.5}	
+			\def\y{0.25}				
+			\pgfmathsetmacro{\X}{\x + \w};
+			\pgfmathsetmacro{\Y}{\y + \h};
+			\draw [fill=black,fill=gray!20,draw=black] (\x,\y) rectangle (\X,\Y) node [black,midway, rotate=90] {$|Q|$};
+			
+			\draw (4.2,2.0) -- (5.5,1.0);
+			\draw (4.2,0.0) -- (5.5,1.0);
+			
+			\end{scope}
+			
+			\end{tikzpicture}
+			\label{fig:arch_q_num_impact}
+			\caption{Architektura sieci przy badaniu wpływu liczby stanów na skuteczność rozpoznawania mowy.}
+		\end{figure}
+		
+		\begin{figure}[H]
+			\centering
+			\begin{tikzpicture}			
+			\begin{axis}[axis lines = left,	xlabel = Liczba stanów, ylabel = {$f(x)$},xmin=100,xmax=320,ymin=45,ymax=100,]
+	
+			\addplot[color=blue,mark=square,]
+			coordinates {
+				(122,81.55)(147,81.69)(214,83.34)(231,83.48)(304, 57.42)
+			};
+			\addlegendentry{Modele neuronowe}
+		
+			\addplot[color=red,mark=square,]
+			coordinates {
+				(147,75.91)(214,77.13)(231,77.23)(304, 78.06)
+			};
+			\addlegendentry{Modele klasyczne}
+					
+			\end{axis}			
+			\end{tikzpicture}
+			\label{fig:fig_q_num_impact}
+			\caption{Wpływ liczby stanów na skuteczność rozpoznawania.}
+		\end{figure}
+		
+		
+		
+			
+		\begin{figure}[H]
+			\centering
+			\begin{tabular}{|c|c|c|c|c|} \hline
+				Liczba stanów & \vtop{\hbox{\strut Min liczba}\hbox{\strut obserwacji}} & Typ & \vtop{\hbox{\strut Skuteczność}\hbox{\strut modelu GMM}} & \vtop{\hbox{\strut Skuteczność}\hbox{\strut modelu CNN}} \\
+				\hline
+				- & - &  UNI & 71.86 & 81.55 \\
+				\hline
+				122 & 180000 & TRI & & 81.69 \\				
+				\hline
+				147 & 70000& TRI & 75.91 & 83.24 \\
+				\hline
+				214 & 37000 & TRI & 77.13 & 83.39 \\
+				\hline
+				231 & 33000 & TRI & 77.23 & 83.48 \\
+				\hline
+				304 & 25000 & TRI & 78.06 & 57.42 \\
+				\hline
+				
+			\end{tabular}
+			\label{fig:tab_q_num_impact}
+			\caption{Wpływ liczby stanów na skuteczność rozpoznawania mowy.}
+	\end{figure}
+		
+	\subsection{ Wpływ głębokości/architektury sieci na skuteczność rozpoznawania }
+		Celem tego eksperymentu jest sprawdzenie, jak architektura sieci, w tym liczba neuronów wpływa na skuteczność rozpoznawania. 
+		
+		\begin{figure}
+			\begin{tabular}{|c|c|c|c|c|c|} \hline
+				Nazwa modelu & \vtop{\hbox{\strut Liczba neuronów}\hbox{\strut w warstwie ukrytej}}  & 
+				\vtop{\hbox{\strut Liczba }\hbox{\strut filtrów}} & \vtop{\hbox{\strut Skuteczność}\hbox{\strut corr}} & \vtop{\hbox{\strut Skuteczność}\hbox{\strut acc}} \\
+				\hline
+				siec 19 & 2400 & 32 & 88.36 & 83.02 \\
+				\hline
+				siec 16 & 1200 & 32 & 88.54 & 83.10 \\
+				\hline
+				siec 17 & 600 & 32 & 87.52 & 82.01 \\
+				\hline
+				siec 18 & 300 & 32 & 86.90 & 81.36 \\
+				\hline
+				
+			\end{tabular}
+			\caption{\label{tab:text2}Wpływ liczby neuronów na skuteczność rozpoznawania.}
+		\end{figure}
+	
+		\begin{figure}[H]
+			\centering
+			\begin{tikzpicture}			
+			\begin{axis}[axis lines = left,	xlabel = {Liczba neuronów [$x\cdot300$]} , ylabel = {WER [\%]},xmin=0,xmax=9,ymin=80,ymax=85,]
+			
+			\addplot[color=red,mark=square,]
+			coordinates {
+				(1,81.36)(2,82.01)(4,83.10)(8, 83.02)
+			};
+			
+			\end{axis}			
+			\end{tikzpicture}
+			\label{fig:fig_n_impact}
+			\caption{Wpływ liczby neuronów warstwy ukrytej na skuteczność rozpoznawania.}
+		\end{figure}
+	
+	\subsection{ Wpływ szerokości kontekstu na skuteczność rozpoznawania }
+		Typowa szybkość mówienia wynosi $12-14$ głosek na sekundę w związku z tym uzasadnione wydaje się przekazywanie do wektora cech wielu kolejnych ramek. W tym eksperymencie sprawdzono wpływ liczby ramek, z których budowany jest wektor cech na skuteczność rozpoznawania mowy z wykorzystaniem sieci neuronowych. Architektura wykorzystanej siec była podobna do architektury z eksperyment opisanego w rozdziale \ref{sec:q-num_impact}. Jednak teraz liczba neuronów w warstwie wyjściowej była ustalona, gdyż bazowano na jednym modelu akustycznym o $231$ stanach. Liczba filtrów pozostała taka sama i wyniosła $64$. Zmieniał się natomiast kształt filtrów, który wynosił $kontekst \cdot 2 + 1 \times 6$. Ponadto zamiast funkcji nieliniowości \textit{rectify} wykorzystano funkcję \textit{leaky rectify} opisana wzorem $\max(x, 0.01x)$. Wykres \ref{fig:fig_ctx_impact} przedstawia wyniki przeprowadzonych eksperymentów. 
+		
+		Na podstawie otrzymanych wyników ciężko jednoznacznie określić wpływ szerokości kontekstu na skuteczność rozpoznawania. Najlepszy wynik otrzymano dla kontekstu $5$, co odpowiada $11$ ramkom przekazywanym do wektora cech.
+		
+		\begin{figure}[H]
+			\centering
+			\begin{tikzpicture}			
+			\begin{axis}[axis lines = left,	xlabel = Szerokość kontekstu, ylabel = {WER [\%]},xmin=0,xmax=10,ymin=82.7,ymax=84.5,]
+			
+			\addplot[color=blue,mark=square,]
+			coordinates {
+				(1,83.83)(3,83.64)(5,83.89 )(7,83.57 )(9, 83.57)
+			};
+			\addlegendentry{Modele neuronowe}		
+			
+			\end{axis}			
+			\end{tikzpicture}
+			\label{fig:fig_ctx_impact}
+			\caption{Wpływ szerokości kontekstu na skuteczność rozpoznawania mowy.}
+		\end{figure}
+
+	\subsection{ Inne czynniki wpływające na skuteczność rozpoznawania }
+		Oprócz wspomnianych we wcześniejszych rozdziałach parametrach, sprawdzono jaki wpływ na skuteczność rozpoznawania ma funkcja aktywacji oraz pomieszanie danych uczących. 
+		
+		W eksperymencie opisanym w rozdziale \ref{sec:q-num_impact} wykorzystano funkcję nieliniowości opisaną wzorem $\max(x,0)$. Celem tego eksperymentu jest sprawdzenie czy funkcja \textit{leaky rectify} opisana wzorem $\max(x, 0.01x)$ umożliwia wytrenowanie, skuteczniejszej sieci. W założeniach czynniki $0.01x$ daje sieci informację z neuronów o negatywnym pobudzeniu. Jest to różnica w stosunku do funkcji \textit{rectify}, która zwraca wtedy zawsze $0$, nie propagując żadnej informacji. 
+		
+		W wcześniejszych eksperymentach dane treningowe były ułożone w uporządkowany sposób. Wektory cech pochodzące od jednego mówcy następowały po sobie. Podobnie, wektory dla kolejnych ramek pochodzących z jednej wypowiedzi, też  ułożone było kolejno po sobie. Celem eksperymentu jest sprawdzenie czy po przemieszaniu wektorów cech można uzyskać lepszą skuteczność. Efektem przemieszania, kolejne, podobne wektory nie są razem pokazywane sieci podczas treningu.
+		
+		Oba czynniki testowane były przy takich samych architekturach, ale innych liczbach neuronów. Tabele \ref{fig:tab_other_impact} pokazuje wyniki eksperymentu. Pokazał on, że zarówno stosowanie funkcji \textit{leaky rectify}, jak i mieszanie danych treningowych poprawia skuteczność. Funkcja \textit{leaky rectify} dała względna poprawę o $2.97\%$, natomiast mieszanie danych dało $3.2\%$.
+		
+		\begin{figure}[H]
+			\centering
+			\begin{tabular}{|l|c|c|c|c|} \hline
+				\vtop{\hbox{\strut Funkcja}\hbox{\strut nieliniowości}} & \vtop{\hbox{\strut Dane}\hbox{\strut przemieszane}} & \vtop{\hbox{\strut Liczba}\hbox{\strut filtrów}} & \vtop{\hbox{\strut Liczba}\hbox{\strut neuronów}} & Skuteczność \\
+				\hline
+				recify        &  nie & 64 & 2400 & 83.50  \\
+				leaky rectify &  nie & 64 & 2400 & 83.89 \\
+				\hline
+				leaky rectify &  nie & 32 & 1200 & 83.10 \\
+				leaky rectify &  tak & 32 & 1200 & 83.64\\
+				\hline
+				
+			\end{tabular}
+			\label{fig:tab_other_impact}
+			\caption{Wpływ liczby stanów na skuteczność rozpoznawania mowy.}
+		\end{figure}
+	
 \section{ Podsumowanie }
   Tej sekcji zwykle nie dzieli się już na podsekcje Zqamieścić tutaj ocenę uzyskanych wyników, praktycznego znaczenia uzyskanych wyników, napotkane problemy, możliwe dalsze prace rozwojowe
    
