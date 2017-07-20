@@ -1378,12 +1378,12 @@
 	Ten rozdział ma na pokazać, jak wcześniej opisane elementy składają się na działający system do rozpoznawani.
 
 \section{ Zastosowanie modelowania fonemów z ograniczonym kontekstem w ASR }	
-	Wykorzystując ukryte modele Markova, tak jak opisano w rozdziale \ref{sec:ASR_HMM}, wymaga policzenia, dla każdej ramki, prawdopodobieństwa każdego ze zdefiniowanych fonemów. Wykorzystując tri-fony przy rozpoznawaniu mowy trzeba zdefiniować $O(\sigma^3)$ modeli. Jednak tylko niektóre z tri-fonów o wspólnym środkowym fonie różnią się w istotny sposób. Oczywiście wraz ze wzrostem liczby fonemów, rośnie liczba obliczeń, które trzeba wykonać, co ma negatywny wpływ na szybkość rozpoznawania. Ponadto, przy wykorzystaniu sieci neuronowych zgodnie z podejściem opisanym w rozdziale \ref{sec:ASR_NN} trzeba wytrenować więcej parametrów, co z kolei, w ogóle utrudnia lub wręcz uniemożliwia proces uczenia. Aby ograniczyć negatywny wpływ dużej liczby fonemów, zastosowano technikę opisaną w rozdziale \ref{sec:tri-fone_mapping}. Dzięki niej można było znacznie ograniczyć szerokość warstwy wyjściowej, które jest równa liczbie fizycznych fonemów.
+	Wykorzystując ukryte modele Markova, tak jak opisano w rozdziale \ref{sec:ASR_HMM}, wymaga się policzenia, dla każdej ramki, prawdopodobieństwa obserwacji pod warunkiem każdego ze zdefiniowanych stanów. Wykorzystując tri-fony przy rozpoznawaniu mowy, trzeba zdefiniować $O(\sigma^3)$ stanów. Jednak tylko niektóre z tri-fonów o wspólnym środkowym fonie różnią się w istotny sposób. Oczywiście wraz ze wzrostem liczby fonemów, rośnie liczba obliczeń, które trzeba wykonać, co ma negatywny wpływ na szybkość rozpoznawania. Ponadto, przy wykorzystaniu sieci neuronowych zgodnie z podejściem opisanym w rozdziale \ref{sec:ASR_NN} trzeba wytrenować więcej parametrów, co z kolei utrudnia lub wręcz uniemożliwia proces uczenia. Aby ograniczyć negatywny wpływ dużej liczby fonemów, zastosowano technikę opisaną w rozdziale \ref{sec:tri-fone_mapping}. Dzięki niej możliwe jest znaczne ograniczenie liczby stanów, a w konsekwencji szerokości warstwy wyjściowej.
 	
 	\subsection{ Problemy wynikające z zastosowania kontekstowych modeli fonemów }
 	\subsection{ Definicja modelu z ograniczonym kontekstem }
 		\label{sec:tri-fone_mapping}
-		Korzystając ze spostrzeżenia, że tylko niektóre tri-fony o wspólnym środkowym fonie istotnie się różnią, można zastosować mechanizm współdzielenia \textit{fizycznych modeli} przez wiele tri-fonów. Poprzez \textit{fizyczne tri-fony} będziemy tu rozumieć modele, które mają bezpośrednio zdefiniowane parametry, czyli przypisane stany modelu Markova oraz macierz przejścia pomiędzy nimi. Poprzez \textit{tri-fony wirtualne} będziemy rozumieć modele, które są zdefiniowane poprzez jakiś tri-fon fizyczny. Innymi słowy, istnieje mapowanie z tri-fonu wirtualnego na tri-fon fizyczny. Rysunek \ref{fig:virtual_phisical_tri-phones} pokazuje przykładowe mapowanie. Znajdujące się na nim tri-fony $d-b+d$, $k-l+m$ oraz $u-y+t$ sa fizyczne, natomiast $d-b+e$, $a-b+c$, $x-y+z$ oraz $d-y+t$ sa wirtualne. Ponadto fizyczne modele mogą współdzielić stany, przy czym drugi, środkowy stan jest zawsze współdzielony przez wszystkie tri-fony o takim samym środkowym fonie. Oba mechanizmy umożliwiają bardzo skuteczne ograniczenie liczby parametrów, które trzeba wyliczyć. W tabeli \ref{tab:acustic_models} umieszczono zestawienie modeli akustycznych wytrenowanych na potrzeby eksperymentu, w kolumnie \textit{Liczba stanów} wpisano liczbę stanów, do jakiej ograniczono modele tri-fonowe. \\
+		Korzystając ze spostrzeżenia, że tylko niektóre tri-fony o wspólnym środkowym fonie istotnie się różnią, można zastosować mechanizm współdzielenia \textit{fizycznych modeli} przez wiele tri-fonów. Poprzez \textit{fizyczne tri-fony} będziemy tu rozumieć modele, które mają bezpośrednio zdefiniowane parametry, czyli przypisane stany modelu Markova oraz macierz przejścia pomiędzy nimi. Poprzez \textit{tri-fony wirtualne} będziemy rozumieć modele, które są zdefiniowane poprzez jakiś tri-fon fizyczny. Innymi słowy, istnieje mapowanie z tri-fonu wirtualnego na tri-fon fizyczny. Rysunek \ref{fig:virtual_phisical_tri-phones} pokazuje przykładowe mapowanie. Znajdujące się na nim tri-fony $d-b+d$, $k-l+m$ oraz $u-y+t$ sa fizyczne, natomiast $d-b+e$, $a-b+c$, $x-y+z$ oraz $d-y+t$ sa wirtualne. Ponadto fizyczne modele mogą współdzielić stany. Oba mechanizmy umożliwiają bardzo skuteczne ograniczenie liczby parametrów, które trzeba wyliczyć. W tabeli \ref{tab:acustic_models} umieszczono zestawienie modeli akustycznych, wytrenowanych na potrzeby eksperymentu, w kolumnie \textit{Liczba stanów} wpisano liczbę stanów, do jakiej ograniczono modele tri-fonowe. \\
 		Poprzez \textit{Model z Ograniczonym Kontekstem} będziemy rozumieć akustyczny model tri-fonowy, w którym ograniczono liczbę stanów modelu Markova poprzez oba opisane powyżej mechanizmy.
 		
 		\begin{figure}[H]
@@ -1439,7 +1439,302 @@
 			\label{fig:virtual_phisical_tri-phones}
 			
 		\end{figure}
+	
+	\subsection{Metody ograniczania kontekstu}
+	Wykorzystany do budowy modeli językowych pakiet \textit{HTK} oferuje dwie metody ograniczania liczby stanów.  Pierwsza metoda o nazwie \textit{Data driven clustering} zakłada, że na wejściu dostaje się zbiór tri-fonów. Każdy z tri-fonów ma przypisane trzy stany, zgodnie z opisem w rozdziale \ref{sec:Phones}. Następnie porównuje się zróżnicowanie w obrębie pierwszych, drugich i trzecich stanów. Jeśli dwa stany są podobne, łączy się je. W efekcie, wraz z każdą iteracją algorytmu, otrzymuje się mniejszy zbiór stanów wykorzystywanych przez zbiór tri-fonów. Jako miarę podobieństwa pomiędzy stanami wykorzystuje się odległość Euklidesową średnich z rozkładów normalnych modelujących stan. Wada tej metody jest niemożność obsłużenia tri-fonów, które nie wystąpiły w zbiorze treningowym.
+	
+	Drugą metodą z pakietu \textit{HTK}, która została wykorzystana podczas eksperymentów, jest \textit{Tree- based clustering}. W przeciwieństwie do \textit{Data driven clustering}, ta metoda obsługuje również tri-fony, które nie pojawiły się w zbiorze treningowym. Metoda ta wymaga wczytania zbioru reguł, opisujących zależności pomiędzy fonami. Reguły powinny odzwierciedlać fizyczne podobieństwa w wymowie fonemów. Ponadto, każda z reguł powinna dzielić cały zbiór zdefiniowanych fonemów na dwa podzbiory. Przykładowymi regułami są \textit{Czy fonem x jest nosowy?} oraz \textit{Czy fonem x jest spółgłoską zwartą}. Zbiór wykorzystanych reguł >>>> SKAD ZOSTAL WZIETY?<<<<.  Na podstawie reguł odbywa się dzielenie tri-fonów. Po wczytaniu zbioru tri-fonów dzielących lewy lub prawy stan, wszystkie zdefiniowane reguły są uruchamiane. W efekcie dostaje się zbiór hipotetycznych podziałów, z których wybierany jest jeden. Aby zdecydować, który podział jest najlepszy, dla każdego z nich, liczy się prawdopodobieństwo zbiory treningowego. Reguła maksymalizująca prawdopodobieństwo jest wybierana. \\
+	Na rysunek \ref{fig:trr-based_clustering_example} znajduje się przykład działania opisanego algorytmu. Ilustruje on, jak podziały wpływają na współdzielenie stanów. Początkowo wszystkie trzy tri-fony dzielą te same stany. Odpowiada to sytuacji, gdy jeden z nich jest tri-fonem fizycznym, a pozostałe dwa wirtualnymi. W pierwszej iteracji wybrana została reguła dla pierwszego stanu, dzieląca fonemy na dwie grupy $\{a,w\},\{n\}$. W efekcie stan $s1$ został podzielony na dwa $s0,s1$. W kolejnej iteracji wybrano regułę dla stanu trzeciego dzielącą fonemy na grupy $\{z\},\{b\}$. Stany $s3$ został podzielony na dwa nowe $s3,s4$. W wyniku działania algorytmu powstały trzy tri-fony fizyczne, każdy z nich ma innych zbiór stanów, które go modelują.\\
+	Proces podziału jest iterowany tak długo, do póki nie osiągnie się kryterium stopu. Jednym z możliwych kryteriów jest \textit{minimalna liczba obserwacji}. Stosując ten warunek wymaga się, aby przy podziale na dwa nowe stany, oba z nich miały co najmniej $n$ obserwacji, gdzie $n$ jest zadanym parametrem. Iteruje się tak długo, jak długo w istnieje podział spełniający kryterium. Wraz z każdą iteracją, zwiększa się liczba stanów w zbiorze $Q$, a jednocześnie zmniejsza się liczba tri-fonów współdzielących ten sam stan. Ustawiając wysoką liczbę wymaganych obserwacji można zdławić proces dzielenia się tri-fonów i otrzymać model o małej liczbie stanów. Analogicznie przesuwając prób w druga stronę można zbudować bardzo duży model. Warto zauważyć, że w przypadku tego algorytmu, nie ma sensu poddawać podziałowi środkowego stanu.  \\
+	Rysunek \ref{fig:tree-based_clustering-tree} pokazuje zagłębianie się reguł nałożonych na pierwszy stan wraz z kolejnymi iteracjami. Początkowo wybierana jest reguła pytająca o spółgłoski zwarte, która dzieli tri-fony na dwie grupy. Następnie obie grupy dzielone są regułą odpytująca o fonemy nosowe. \\
+	Dodatkowo po wykonaniu podziałów stanów, można zastosować algorytm podobny do opisanego \textit{Data driven clustering} w celu połączenia podobnych stanów pochodzących z tri-fonów o różnym fonemie centralnym. Proces ten nazywa się \textit{Parameter Tying}.
+	
+	\begin{figure}
+		\centering
+		\begin{tikzpicture}[node distance=1.2cm]
 		
+		\begin{scope}
+		
+		\tikzstyle{state}=[circle,thick,draw=gray!75,fill=gray!20,minimum size=1mm];
+		\tikzstyle{node}=[circle,thick,draw=gray!100,minimum size=1mm];
+		
+		\def\xl{-2.5}
+		\def\xa{-0.85}
+		\def\xb{0}
+		\def\xc{0.85}
+		
+		\def\ya{-0.85}
+		\def\yb{0}
+		\def\yc{0.85}
+		\def\yd{-3.0}
+		\def\ye{-4.6}
+		\def\yf{-6.3}
+		
+		\def\r{1.5}
+		
+		\draw [dashed] (-1.2, 1.8) -- (-1.2, -1.8);
+		\draw [dashed] (-0.5, 1.8) -- (-0.5, -1.8);
+		
+		
+		\node [state] (s1_1) at (\xa, \ya) {};
+		\node [state] (s1_2) at (\xb, \ya) {};
+		\node [state] (s1_3) at (\xc, \ya) {};
+		\node at (\xl, \ya) {$a-o+z$};
+		
+		\path [line] (s1_1) -> (s1_2);
+		\path [line] (s1_2) -> (s1_3);
+		\draw[thick,->] (s1_1.110) arc (240:-65:\r mm);
+		\draw[thick,->] (s1_2.110) arc (240:-65:\r mm);
+		\draw[thick,->] (s1_3.110) arc (240:-65:\r mm);
+		
+		\node [state] (s2_1) at (\xa, \yb) {};
+		\node [state] (s2_2) at (\xb, \yb) {};
+		\node [state] (s2_3) at (\xc, \yb) {};
+		\node at (\xl, \yb) {$r-o+b$};
+		
+		\path [line] (s2_1) -> (s2_2);
+		\path [line] (s2_2) -> (s2_3);
+		\draw[thick,->] (s2_1.110) arc (240:-65:\r mm);
+		\draw[thick,->] (s2_2.110) arc (240:-65:\r mm);
+		\draw[thick,->] (s2_3.110) arc (240:-65:\r mm);
+		
+		\node [state] (s3_1) at (\xa, \yc) {};
+		\node [state] (s3_2) at (\xb, \yc) {};
+		\node [state] (s3_3) at (\xc, \yc) {};
+		\node at (\xl, \yc) {$w-o+z$};
+		
+		\path [line] (s3_1) -> (s3_2);
+		\path [line] (s3_2) -> (s3_3);
+		\draw[thick,->] (s3_1.110) arc (240:-65:\r mm);
+		\draw[thick,->] (s3_2.110) arc (240:-65:\r mm);
+		\draw[thick,->] (s3_3.110) arc (240:-65:\r mm);
+		
+		\path [line] (\xa, -1.5) -> (\xa, -2.4);
+		
+		//--------------- POZIOM DRZEWA 0 ----------------------
+		
+		\node [node] (r0_1) at (\xa, \yd) {}; \node [right of= r0_1, xshift=60] {Czy fonem jest spółgłoską zwartą?};
+		
+		//--------------- POZIOM DRZEWA 1 ----------------------
+		
+		\node [node] (r1_1) at (-2.2, \ye) {}; \node [left of= r1_1, xshift=-35] {Czy fonem jest nosowy?};
+		\node [node] (r1_2) at (0.4, \ye) {}; \node [right of= r1_2, xshift=35] {Czy fonem jest nosowy?};
+		
+		\draw  (r0_1) -- (r1_1) node [left, midway] {tak};
+		\draw  (r0_1) -- (r1_2) node [right, midway] {nie};
+		
+		//--------------- POZIOM DRZEWA 2 ----------------------
+				
+		\node [node] (r2_1) at (-3.0, \yf) {};
+		\node [node] (r2_2) at (-1.6, \yf) {};
+		
+		\draw  (r1_1) -- (r2_1) node [left, midway] {tak};
+		\draw  (r1_1) -- (r2_2) node [right, midway] {nie};
+		
+		\node [node] (r2_3) at (-0.4, \yf) {};
+		\node [node] (r2_4) at (1.0, \yf) {};
+		
+		\draw  (r1_2) -- (r2_3) node [left, midway] {tak};
+		\draw  (r1_2) -- (r2_4) node [right, midway] {nie};
+		
+		//--------------- POZIOM DRZEWA 3 ----------------------
+		
+		\end{scope}
+		
+		\end{tikzpicture}
+		\caption{Tree-based clustering - reguły}
+		\label{fig:tree-based_clustering-tree}
+		
+	\end{figure}
+	
+	\begin{figure}
+		\centering
+		\begin{tikzpicture}[node distance=1.2cm]
+		
+		\begin{scope}
+		
+		\tikzstyle{state}=[circle,thick,draw=gray!75,fill=gray!20,minimum size=1mm];
+		\tikzstyle{node}=[circle,thick,draw=gray!100,minimum size=1mm];
+		
+		\def\ya{0}
+		\def\yb{-5}
+		\def\yc{-10}
+		
+		\def\d{0.5}
+		\def\s{0.8}
+		\def\h{0.8}
+		
+		\def\hl{1.5}
+		\def\hs{0.2}
+		
+		\def\r{1.5}
+		
+		//-------------------  KROK 1 ---------------------
+		
+		\node [state] (s1_1) at (0, \ya) {};
+		\node [state, right = \d cm of s1_1] (s1_2) {};
+		\node [state, right = \d cm of s1_2] (s1_3) {};
+		\node [above = \h cm of s1_2] {$a-o+b$};
+		
+		\path [line] (s1_1) -> (s1_2);
+		\path [line] (s1_2) -> (s1_3);
+		\draw[thick,->] (s1_1.110) arc (240:-65:\r mm);
+		\draw[thick,->] (s1_2.110) arc (240:-65:\r mm);
+		\draw[thick,->] (s1_3.110) arc (240:-65:\r mm);
+		
+		\node [state, right = \s cm of s1_3] (s2_1) {};
+		\node [state, right = \d cm of s2_1] (s2_2) {};
+		\node [state, right = \d cm of s2_2] (s2_3) {};
+		\node [above = \h cm of s2_2] {$n-o+b$};
+		
+		\path [line] (s2_1) -> (s2_2);
+		\path [line] (s2_2) -> (s2_3);
+		\draw[thick,->] (s2_1.110) arc (240:-65:\r mm);
+		\draw[thick,->] (s2_2.110) arc (240:-65:\r mm);
+		\draw[thick,->] (s2_3.110) arc (240:-65:\r mm);
+		
+		\node [state, right = \s cm of s2_3] (s3_1) {};
+		\node [state, right = \d cm of s3_1] (s3_2) {};
+		\node [state, right = \d cm of s3_2] (s3_3) {};
+		\node [above = \h cm of s3_2] {$w-o+z$};
+		
+		\path [line] (s3_1) -> (s3_2);
+		\path [line] (s3_2) -> (s3_3);
+		\draw[thick,->] (s3_1.110) arc (240:-65:\r mm);
+		\draw[thick,->] (s3_2.110) arc (240:-65:\r mm);
+		\draw[thick,->] (s3_3.110) arc (240:-65:\r mm);
+		
+		
+		\node [state, below = \hl cm of s2_1] (s1) {}; \node [below = \hs cm of s1] {$s1$};
+		\node [state, right = \d cm of s1] (s2) {}; \node [below = \hs cm of s2] {$s2$};
+		\node [state, right = \d cm of s2] (s3) {}; \node [below = \hs cm of s3] {$s3$};
+		
+		\draw[thick,->,shorten >=1pt] (s1_1) to [out=-60,in=130] (s1);
+		\draw[thick,->,shorten >=1pt] (s1_2) to [out=-60,in=130] (s2);
+		\draw[thick,->,shorten >=1pt] (s1_3) to [out=-60,in=130] (s3);
+		
+		\draw[thick,->,shorten >=1pt] (s2_1) to [out=-90,in=90] (s1);
+		\draw[thick,->,shorten >=1pt] (s2_2) to [out=-90,in=90] (s2);
+		\draw[thick,->,shorten >=1pt] (s2_3) to [out=-90,in=90] (s3);
+		
+		\draw[thick,->,shorten >=1pt] (s3_1) to [out=-120,in=50] (s1);
+		\draw[thick,->,shorten >=1pt] (s3_2) to [out=-120,in=50] (s2);
+		\draw[thick,->,shorten >=1pt] (s3_3) to [out=-120,in=50] (s3);
+		
+		//-------------------  KROK 2 ---------------------
+		
+		\node [state] (s1_1) at (0, \yb) {};
+		\node [state, right = \d cm of s1_1] (s1_2) {};
+		\node [state, right = \d cm of s1_2] (s1_3) {};
+		\node [above = \h cm of s1_2] {$a-o+b$};
+		
+		\path [line] (s1_1) -> (s1_2);
+		\path [line] (s1_2) -> (s1_3);
+		\draw[thick,->] (s1_1.110) arc (240:-65:\r mm);
+		\draw[thick,->] (s1_2.110) arc (240:-65:\r mm);
+		\draw[thick,->] (s1_3.110) arc (240:-65:\r mm);
+		
+		\node [state, right = \s cm of s1_3] (s2_1) {};
+		\node [state, right = \d cm of s2_1] (s2_2) {};
+		\node [state, right = \d cm of s2_2] (s2_3) {};
+		\node [above = \h cm of s2_2] {$n-o+z$};
+		
+		\path [line] (s2_1) -> (s2_2);
+		\path [line] (s2_2) -> (s2_3);
+		\draw[thick,->] (s2_1.110) arc (240:-65:\r mm);
+		\draw[thick,->] (s2_2.110) arc (240:-65:\r mm);
+		\draw[thick,->] (s2_3.110) arc (240:-65:\r mm);
+		
+		\node [state, right = \s cm of s2_3] (s3_1) {};
+		\node [state, right = \d cm of s3_1] (s3_2) {};
+		\node [state, right = \d cm of s3_2] (s3_3) {};
+		\node [above = \h cm of s3_2] {$w-o+z$};
+		
+		\path [line] (s3_1) -> (s3_2);
+		\path [line] (s3_2) -> (s3_3);
+		\draw[thick,->] (s3_1.110) arc (240:-65:\r mm);
+		\draw[thick,->] (s3_2.110) arc (240:-65:\r mm);
+		\draw[thick,->] (s3_3.110) arc (240:-65:\r mm);
+		
+		
+		\node [state, below = \hl cm of s2_1] (s1) {}; \node [below = \hs cm of s1] {$s1$};
+		\node [state, right = \d cm of s1] (s2) {}; \node [below = \hs cm of s2] {$s2$};
+		\node [state, right = \d cm of s2] (s3) {}; \node [below = \hs cm of s3] {$s3$};
+		\node [state, left = \d cm of s1] (s0) {}; \node [below = \hs cm of s0] {$s0$};
+		
+		\draw[thick,->,shorten >=1pt] (s1_1) to [out=-60,in=130] (s0);
+		\draw[thick,->,shorten >=1pt] (s1_2) to [out=-60,in=130] (s2);
+		\draw[thick,->,shorten >=1pt] (s1_3) to [out=-60,in=130] (s3);
+		
+		\draw[thick,->,shorten >=1pt] (s2_1) to [out=-90,in=90] (s1);
+		\draw[thick,->,shorten >=1pt] (s2_2) to [out=-90,in=90] (s2);
+		\draw[thick,->,shorten >=1pt] (s2_3) to [out=-90,in=90] (s3);
+		
+		\draw[thick,->,shorten >=1pt] (s3_1) to [out=-120,in=50] (s0);
+		\draw[thick,->,shorten >=1pt] (s3_2) to [out=-120,in=50] (s2);
+		\draw[thick,->,shorten >=1pt] (s3_3) to [out=-120,in=50] (s3);
+		
+		//-------------------  KROK 3 ---------------------
+		
+		\node [state] (s1_1) at (0, \yc) {};
+		\node [state, right = \d cm of s1_1] (s1_2) {};
+		\node [state, right = \d cm of s1_2] (s1_3) {};
+		\node [above = \h cm of s1_2] {$a-o+b$};
+		
+		\path [line] (s1_1) -> (s1_2);
+		\path [line] (s1_2) -> (s1_3);
+		\draw[thick,->] (s1_1.110) arc (240:-65:\r mm);
+		\draw[thick,->] (s1_2.110) arc (240:-65:\r mm);
+		\draw[thick,->] (s1_3.110) arc (240:-65:\r mm);
+		
+		\node [state, right = \s cm of s1_3] (s2_1) {};
+		\node [state, right = \d cm of s2_1] (s2_2) {};
+		\node [state, right = \d cm of s2_2] (s2_3) {};
+		\node [above = \h cm of s2_2] {$n-o+z$};
+		
+		\path [line] (s2_1) -> (s2_2);
+		\path [line] (s2_2) -> (s2_3);
+		\draw[thick,->] (s2_1.110) arc (240:-65:\r mm);
+		\draw[thick,->] (s2_2.110) arc (240:-65:\r mm);
+		\draw[thick,->] (s2_3.110) arc (240:-65:\r mm);
+		
+		\node [state, right = \s cm of s2_3] (s3_1) {};
+		\node [state, right = \d cm of s3_1] (s3_2) {};
+		\node [state, right = \d cm of s3_2] (s3_3) {};
+		\node [above = \h cm of s3_2] {$w-o+z$};
+		
+		\path [line] (s3_1) -> (s3_2);
+		\path [line] (s3_2) -> (s3_3);
+		\draw[thick,->] (s3_1.110) arc (240:-65:\r mm);
+		\draw[thick,->] (s3_2.110) arc (240:-65:\r mm);
+		\draw[thick,->] (s3_3.110) arc (240:-65:\r mm);
+		
+		
+		\node [state, below = \hl cm of s2_1] (s1) {}; \node [below = \hs cm of s1] {$s1$};
+		\node [state, right = \d cm of s1] (s2) {}; \node [below = \hs cm of s2] {$s2$};
+		\node [state, right = \d cm of s2] (s3) {}; \node [below = \hs cm of s3] {$s3$};
+		\node [state, left = \d cm of s1] (s0) {}; \node [below = \hs cm of s0] {$s0$};
+		\node [state, right = \d cm of s3] (s4) {}; \node [below = \hs cm of s4] {$s4$};
+		
+		\draw[thick,->,shorten >=1pt] (s1_1) to [out=-60,in=130] (s0);
+		\draw[thick,->,shorten >=1pt] (s1_2) to [out=-60,in=130] (s2);
+		\draw[thick,->,shorten >=1pt] (s1_3) to [out=-60,in=130] (s3);
+		
+		\draw[thick,->,shorten >=1pt] (s2_1) to [out=-90,in=90] (s1);
+		\draw[thick,->,shorten >=1pt] (s2_2) to [out=-90,in=90] (s2);
+		\draw[thick,->,shorten >=1pt] (s2_3) to [out=-90,in=90] (s4);
+		
+		\draw[thick,->,shorten >=1pt] (s3_1) to [out=-120,in=50] (s0);
+		\draw[thick,->,shorten >=1pt] (s3_2) to [out=-120,in=50] (s2);
+		\draw[thick,->,shorten >=1pt] (s3_3) to [out=-120,in=50] (s4);
+		
+		\end{scope}
+		
+		\end{tikzpicture}
+		\caption{Tree-based clustering - dzielenie stanów}
+		\label{fig:trr-based_clustering_example}
+		
+	\end{figure}
 		
 	\subsection{ Uczenie sieci NN estymującej prawdopodobieństwa stanów dla modeli z ograniczonym kontekstem }
 		\subsubsection{ Redukowanie liczby stanów fizycznych w modelu }
@@ -1842,7 +2137,7 @@ W celu odrzucenia nagrań o niepoprawnej transkrypcji, przepuszczono je przez sy
 	
 			\addplot[color=blue,mark=square,]
 			coordinates {
-				(122,81.55)(147,81.69)(214,83.34)(231,83.48)(304, 57.42)
+				(122,81.55)(147,81.69)(214,83.34)(231,83.48)(269,72.07)(304, 57.42)
 			};
 			\addlegendentry{Modele neuronowe}
 		
@@ -1871,7 +2166,7 @@ W celu odrzucenia nagrań o niepoprawnej transkrypcji, przepuszczono je przez sy
 				147 & 70000  & TRI & 75.91 & 83.24 \\
 				214 & 37000  & TRI & 77.13 & 83.39 \\
 				231 & 33000  & TRI & 77.23 & 83.48 \\
-				269 & 29000  & TRI & 77.75 &  	   \\
+				269 & 29000  & TRI & 77.75 & 72.07 \\
 				304 & 25000  & TRI & 78.06 & 57.42 \\
 				\hline
 				
