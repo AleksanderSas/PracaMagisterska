@@ -509,8 +509,55 @@
 		   \end{figure}
 		   
 	   \subsubsection{Algorytm Bauma-Welcha}
+	   \label{sec:Baum_Welch}
+	   Algorytm \textit{Bauma-Welcha} jest techniką klasy \textit{Expectation-Maximization} służącą estymacji prawdopodobieństw przejścia pomiędzy stanami $A$ oraz funkcji emisji $b$. Został on zaproponowany przez Leonard E. Bauma, szczegółowy opis teorii dotyczącej algorytmu znajduje się w artykule \cite{BaumWelch_tutorial}. Koncepcyjnie, podczas treningu wykorzystującego \textit{algorytm Bauma-Welcha}, w $i-tej$ iteracji, rozpoznaje się zbiór treningowy z wykorzystaniem modelu $M_i$, otrzymując w efekcie dopasowanie stanów do obserwacji. Następnie buduje się nowy model $M_{i+1}$, maksymalizujący wcześniej dopasowane obserwacje. Wraz z kolejnym iteracjami parametry modelu powinny zbiegać do sub-optymalnych wartości.
+	   
+	   Chcą wyznaczyć prawdopodobieństwo przejścia $q_i \rightarrow q_j$ należy policzyć:
+	   \begin{equation}
+		    a_{i,j}=\frac{\text{oczekiwana liczba przejść } q_i \rightarrow q_j}{\text{oczekiwana liczba przejść ze stanu } q_i} = \frac{\sum_{t=1}^T 	\xi_t(i,j)}{\sum_{t=1}^T \sum_{k=1}^{|Q|}	\xi_t(i,k)}
+		    \label{eqn:qi_qj}
+	   \end{equation}
+	   Aby to osiągnąć zdefiniujemy następujące pomocnicze prawdopodobieństwa:
+	   \begin{equation}
+			\xi_t(i,j)=P(q_{i,t}, q_{j,t+1}|O,M)
+			\label{eqn:ksi}
+	   \end{equation}
+	   \begin{equation}
+	   	    \beta_t(i)=P(o_{t+1}, \ldots, o_T|q_{i,t}|M)
+	   	    \label{eqn:beta}
+	   \end{equation}
+	   \begin{equation}
+			\alpha_t(i)=P(o_1, \ldots, o_{t},q_{i,t}|M)
+			\label{eqn:alfa}
+	   \end{equation}
+	   
+	   $\alpha_t(i)$ jest dokładnie tym, co wyznacza opisany w rozdziale \ref{sec:Viterbi} \textit{algorytm Viterbiego}, natomiast $\beta_t(i)$ dale się wyznaczyć za pomocą analogicznej procedury. Warto zauważyć, że:
+	   \begin{equation}
+		   P(O|M) = \sum_{i=1}^{|Q|}\alpha_t(i)\beta_t(i)
+	   \end{equation}
+	   Dodatkowo, zdefiniujemy $\hat{\xi}$ zgodnie ze wzorem \ref{eqn:quite_ksi}, które jest prawie tym samym co $\xi$. Korzystając ze wzory Bayesa w postaci \ref{eqn:bayes2} przejdziemy zgodnie z równaniem \ref{eqn:quite_ksi_2_ksi} do interesującego nas $\xi$.
+	   \begin{equation}
+	       \hat{\xi} = P(q_{i,t}, q_{j,t+1},O|M)
+	       \label{eqn:quite_ksi}
+	   \end{equation}
+	   \begin{equation}
+	        P(X|Y,W) = \frac{P(X,Y|W)}{P(Y|W)}
+	        \label{eqn:bayes2}
+	   \end{equation}
+	   \begin{equation}
+			\xi_t(i,j)=P(q_{i,t}, q_{j,t+1}|O,M) = \frac{P(q_{i,t}, q_{j,t+1},O|M)}{P(O|M)}= \frac{\hat{\xi_t(i,j)}}{P(O|M)}
+			\label{eqn:quite_ksi_2_ksi}
+		\end{equation}
+		
+		Następnie wykorzystując \ref{eqn:alfa} oraz \ref{eqn:beta} zapiszemy $\hat{\xi_t(i,j)}$ w następujący sposób:
+		\begin{equation}
+			hat{\xi_t(i,j)} = \alpha_t(i) a_{i,j} b_j(o_{t+1}) \beta_{t+1}(j)
+		\end{equation}
+		
+		Powyższe równości dają pozwalają nam skutecznie wyznaczać prawdopodobieństwo przejścia $q_i \rightarrow q_j$ zw wzory \ref{eqn:qi_qj}.
+		
 	   \subsubsection{Estymacja parametrów rozkładu normalnego}
-	 
+	   \label{sec:gmm_estimation}
 	
     \subsection{Modelowanie fonetyki z wykorzystaniem HMM }
     W klasycznych systemach rozpoznających mowę, wykorzystujących ukryte modele Markova, zbiór stanów reprezentuje fony. Każdy fon ma trzy stany w HMM, tak jak opisano w rozdziale \ref{sec:Phones}. Zbiorem obserwacji są wektory cech wyznaczane zgodnie z opisem w rozdziale \ref{sec:Feature_vec_mfcc}. Przejścia pomiędzy stanami jednego fonemu są zgodne z opisem z rozdziału \ref{sec:Phones}, natomiast przejścia pomiędzy różnymi fonami są tworzone na podstawie słownika (blok \refBlock{slownik} na rysunku \ref{fig:ARM_schemat}). Dla każdego słowa generowany jest ciąg stanów odpowiadający kolejnym fonemom, z których składa się słowo. \\
@@ -1120,14 +1167,7 @@
 	
 \section{N-gramowy model językowy}
 	\label{sec:ngramm}
-	\textit{N-gramowy model językowy}, odpowiadający blokowi \refBlock{n_gramy} z rysunku \ref{fig:ARM_schemat}, zawiera prawdopodobieństwa słów ze słownika \refBlock{slownik}, pod warunkiem wystąpienie $n$ poprzednich słów.
-	
-	
-    \subsection{ Rodzaje modeli językowych }
-      Omówienie modeli stochastycznych, gramatycznych, moodeli językowych wykorzystujących sieci głębokiego uczenia (krótko)
-    \subsection{ Estymacja parametrów modelu językowego na podstawie korpusu tekstów }
-    \subsection{ Metody wygładzania stochastycznych modeli językowych }
-
+	\textit{N-gramowy model językowy}, odpowiadający blokowi \refBlock{n_gramy} z rysunku \ref{fig:ARM_schemat}, zawiera prawdopodobieństwa słów ze słownika \refBlock{slownik}. Model o stopniu $n$ opisuje szansę wystąpienia słowa $w$ poprzedzonego $n-1$ słowami, co można zapisać jako: $P(w|w_{n-1},w_{n-2},\cdots,w_1)$. Oczywiście N-gramowy model zawiera w sobie również modele o niższy stopniu, które są wykorzystywane na początku zdania. Modele językowe buduje się przez zliczanie wystąpień kombinacji słów w pewnym korpusie treningowym. Wraz ze wzrostem $n$ wykładniczo rośnie ilość tekstu potrzebna do zbudowania modelu. W konsekwencji, przy ograniczonej liczbie wypowiedzi, niektóre kombinacje z warunkowego członu prawdopodobieństwa  $P(w|w_{n-1},w_{n-2},\cdots,w_1)$ nie występują. Aby umożliwić rozpoznanie takiego słowa $w$, poprzedzonego słowami $w_{n-1},w_{n-2},\cdots,w_1$ stosuje się techniki \textit{wygładzania} (ang: \textit{smoothing}), takie jak przykładowo \textit{Add-on} czy \textit{Katz smoothing}. Ideą tych algorytmów jest przypisanie niewystępującym kombinacjom niezerowego prawdopodobieństwa. Wykorzystane w eksperymentach modele językowe miały stopień $3$.
 
 \section{Rozpoznawanie mowy z wykorzystaniem sieci neuronowych}
 	\label{sec:ASR_NN}
@@ -1445,9 +1485,16 @@
 	Wykorzystany do budowy modeli akustycznych pakiet \textit{HTK} oferuje dwie metody ograniczania liczby stanów. Pierwsza metoda o nazwie \textit{Data driven clustering} zakłada, że na wejściu dostaje się zbiór tri-fonów. Każdy z tri-fonów ma przypisane trzy stany, zgodnie z opisem w rozdziale \ref{sec:Phones}. Następnie porównuje się zróżnicowanie w obrębie pierwszych, drugich i trzecich stanów. Jeśli dwa stany są podobne, łączy się je. W efekcie, wraz z każdą iteracją algorytmu, otrzymuje się mniejszy zbiór stanów wykorzystywanych przez zbiór tri-fonów. Jako miarę podobieństwa pomiędzy stanami wykorzystuje się odległość Euklidesową średnich z rozkładów normalnych modelujących stan. Wadą tej metody jest niemożność obsłużenia tri-fonów, które nie wystąpiły w zbiorze treningowym.
 	
 	Drugą metodą z pakietu \textit{HTK}, która została wykorzystana podczas eksperymentów, jest \textit{Tree- based clustering}. W przeciwieństwie do \textit{Data driven clustering}, ta metoda obsługuje również tri-fony, które nie pojawiły się w zbiorze treningowym. Metoda ta wymaga wczytania zbioru reguł, opisujących zależności pomiędzy fonami. Reguły powinny odzwierciedlać fizyczne podobieństwa w wymowie fonemów. Ponadto, każda z reguł powinna dzielić cały zbiór zdefiniowanych fonemów na dwa podzbiory. Przykładowymi regułami są \textit{Czy fonem x jest nosowy?} oraz \textit{Czy fonem x jest spółgłoską zwartą}. Zbiór wykorzystanych reguł >>>> SKAD ZOSTAL WZIETY?<<<<.  Na podstawie reguł odbywa się dzielenie tri-fonów. Po wczytaniu zbioru tri-fonów współdzielących lewy lub prawy stan, wszystkie zdefiniowane reguły są uruchamiane. W efekcie dostaje się zbiór hipotetycznych podziałów, z których wybierany jest jeden. Aby zdecydować, który podział jest najlepszy, dla każdego z nich, liczy się prawdopodobieństwo zbiory treningowego. Reguła maksymalizująca prawdopodobieństwo jest wybierana. \\
-	Algorytm \textit{Tree-based clustering} dla pierwszego stanu z trójki definiującej tri-fon został zapisany w pseudokodzie \ref{alg:tree_based_clustering}. Pierwsza pętla w linii \ref{line:loop_Q} przechodzi po wszystkich stanach, które są aktualnie zdefiniowane w modelu akustycznym. Następnie wyliczany jest zbiór $P$ zawierający tri-fony dzielące pierwszy stan. W kolejnej pętli w linii \ref{line:loop_R} przechodzi się przez zdefiniowane reguły podziału. Przy pomocy wybranej reguły $r$ zbiór $P$ dzieli się na dwa podzbiory $P_l, P_r$. W liniach \ref{line:f_l} oraz \ref{line:f_r} wybierane są ramki, które podczas rozpoznawania zostały przyporządkowane do stanu $q_l$ i $q_r$. Warunek w linii \ref{line:if_n} sprawdza, czy oba zbiory są odpowiednio liczne. Następnie korzystając z wyznaczonych zbiorów trenuje się parametry rozkładów opisujących dwa nowe stany $q_l, q_r$. Ostatecznie wylicza się w linii \ref{line:r_prob} prawdopodobieństwo zbiorów $f_l, f_r$, które stanowią ocenę reguły podziału. Wyliczona ocena jest dodawana do zbioru $X$. Po przejściu przez wszystkie stany z pętli w linii \ref{line:loop_Q} wybiera się regułę o najlepszej ocenie. Reguła ta będzie następnie wykorzystania do rozbudowy modelu akustycznego o nowy stan. \\
+	Algorytm \textit{Tree-based clustering} został zapisany w pseudokodzie \ref{alg:tree_based_clustering}. Kod uwzględnia tylko podziały lewego stanu spośród trójki definiującej tri-fon. Linie od \ref{line:iter_begin} do \ref{line:iter_end} opisują jedną iterację, w wyniku której wybierany jest najkorzystniejsza reguła. Wraz z każdą iteracją, zwiększa się liczba stanów w zbiorze $Q$, a jednocześnie zmniejsza się liczba tri-fonów współdzielących ten sam stan. Najbardziej zewnętrzna pętla wykonywana jest dopóki istnieje jakiś dzielący podział. Pętla w linii \ref{line:loop_Q} przechodzi po wszystkich stanach, które są aktualnie zdefiniowane w modelu akustycznym. Następnie wyliczany jest zbiór $P$ zawierający tri-fony współdzielące pierwszy stan. W kolejnej pętli z linii \ref{line:loop_R} przechodzi się przez zdefiniowane reguły podziału. Przy pomocy wybranej reguły $r$ zbiór $P$ dzieli się na dwa podzbiory $P_l, P_r$. W liniach \ref{line:f_l} oraz \ref{line:f_r} wybierane są ramki, które podczas rozpoznawania zostały przyporządkowane do stanu $q_l$ i $q_r$. Warunek w linii \ref{line:if_n} sprawdza, czy oba zbiory są odpowiednio liczne. Następnie korzystając z wyznaczonych zbiorów trenuje się parametry rozkładów opisujących dwa nowe stany $q_l, q_r$. Ostatecznie wylicza się w linii \ref{line:r_prob} prawdopodobieństwo zbiorów $f_l, f_r$, które stanowią ocenę reguły podziału. Wyliczona ocena jest dodawana do zbioru $X$. Po przejściu przez wszystkie stany z pętli w linii \ref{line:loop_Q} wybiera się regułę o najlepszej ocenie. Reguła ta jest następnie wykorzystania do rozbudowy modelu akustycznego o nowy stan w liniach \ref{line:q_ext} oraz \ref{line:p_eqt}. Na końcu działania, w linii \ref{line:return}, algorytm zwraca rozbudowany zbiór stanów $Q$ oraz definicji tr-fonów $Phones$.\\
 	Na rysunek \ref{fig:trr-based_clustering_example} znajduje się przykład działania opisanego algorytmu. Ilustruje on, jak podziały wpływają na współdzielenie stanów. Początkowo wszystkie trzy tri-fony dzielą te same stany. Odpowiada to sytuacji, gdy jeden z nich jest tri-fonem fizycznym, a pozostałe dwa wirtualnymi. W pierwszej iteracji wybrana została reguła dla pierwszego stanu, dzieląca fonemy na dwie grupy $\{a,w\},\{n\}$. W efekcie stan $s1$ został podzielony na dwa $s0,s1$. W kolejnej iteracji wybrano regułę dla stanu trzeciego dzielącą fonemy na grupy $\{z\},\{b\}$. Stany $s3$ został podzielony na dwa nowe $s3,s4$. W wyniku działania algorytmu powstały trzy tri-fony fizyczne, każdy z nich ma innych zbiór stanów, które go modelują. \\
-	Proces podziału jest iterowany tak długo, do póki nie osiągnie się kryterium stopu. Jednym z możliwych kryteriów jest \textit{minimalna liczba obserwacji}. W pseudokodzie \ref{alg:tree_based_clustering} warunek z linii \ref{line:if_n} jest związany właśnie tym kryterium, jednak sam pseudokod opisuje tylko jedną iterację procesu. Stosując ten warunek wymaga się, aby przy podziale na dwa nowe stany, oba z nich miały co najmniej $n$ obserwacji, gdzie $n$ jest zadanym parametrem. Iteruje się tak długo, jak długo w istnieje podział spełniający kryterium. Wraz z każdą iteracją algorytmu, zwiększa się liczba stanów w zbiorze $Q$, a jednocześnie zmniejsza się liczba tri-fonów współdzielących ten sam stan. Ustawiając wysoką liczbę wymaganych obserwacji można zdławić proces dzielenia się tri-fonów i otrzymać model o małej liczbie stanów. Analogicznie przesuwając prób w druga stronę można zbudować bardzo duży model. Warto zauważyć, że w przypadku tego algorytmu, nie ma sensu poddawać podziałowi środkowego stanu.  \\
+	Proces podziału jest iterowany tak długo, do póki nie osiągnie się kryterium stopu. Jednym z możliwych kryteriów jest \textit{minimalna liczba obserwacji}. W pseudokodzie \ref{alg:tree_based_clustering} warunek z linii \ref{line:if_n} jest związany właśnie tym kryterium. Stosując ten warunek wymaga się, aby przy podziale na dwa nowe stany, oba z nich miały co najmniej $n$ obserwacji, gdzie $n$ jest zadanym parametrem. Drugim kryterium jest \textit{poprawa prawdopodobieństwa obserwacji}, zapisane w linii \ref{line:if_p}. Wymaga się przy nim, aby po podziale prawdopodobieństwo obserwacji przypisanych do dzielonego stanu zwiększyło się o podany współczynnik $\lambda$. Wymóg ten jest opisany wzorem \ref{eqn:p_progress}, ze względów numerycznych stosuje się tu skalę logarytmiczną. Oznaczenia we wzorze są takie same, jak w pseudokodzie. Prawdopodobieństwo $P(o|q)$ jest wyliczane zgodnie z opisem w rozdziale \ref{sec:gmm_estimation}.
+	 
+	 \begin{equation}
+	 	\log{P(f_l | q_l)} + \log{P(f_r | q_r)} - \log{P(f_l | q)} - \log{P(f_r | q)} > \lambda
+	 	\label{eqn:p_progress}
+	 \end{equation}
+	 
+	Ustawiając wysoką liczbę wymaganych obserwacji oraz duży współczynnik poprawy można zdławić proces dzielenia się tri-fonów i otrzymać model o małej liczbie stanów. Analogicznie przesuwając parametry w druga stronę można zbudować bardzo duży model. Warto zauważyć, że w przypadku tego algorytmu, nie ma sensu poddawać podziałowi środkowego stanu.  \\
 	Rysunek \ref{fig:tree-based_clustering-tree} pokazuje zagłębianie się reguł nałożonych na pierwszy stan wraz z kolejnymi iteracjami. Początkowo wybierana jest reguła pytająca o spółgłoski zwarte, która dzieli tri-fony na dwie grupy. Następnie obie grupy dzielone są regułą odpytująca o fonemy nosowe. \\
 	Dodatkowo po wykonaniu podziałów stanów algorytmem \textit{Tree-based clustering}, można zastosować algorytm podobny do opisanego \textit{Data driven clustering} w celu połączenia podobnych stanów pochodzących z tri-fonów o różnym fonemie centralnym. Proces ten nazywa się \textit{Parameter Tying}.
 	
@@ -1459,25 +1506,36 @@
 			\REQUIRE {Zbiór tri-fonów $Phones$}
 			\REQUIRE {Zbiór ramek $F$}
 			
-			\STATE $X = \emptyset$
+			\WHILE{$TRUE$}
+				\STATE $X = \emptyset \label{line:iter_begin}$
 				\FOR{$q \in Q$ \label{line:loop_Q}}
-				\STATE $P = \Big\{(q_1, q_2, q_3) \in Phones: q_1 = q, q_2 \in Q, q_3 \in Q\Big\}$
-				\FOR {$r \in Rules \label{line:loop_R}$}
-					\STATE $(P_l, P_r) = r(P)$			
-					\STATE $q_l = P_{l,1}$
-					\STATE $q_r = P_{r,1}$
-					\STATE $f_l = F(q_l)$ \label{line:f_l}
-					\STATE $f_r = F(q_r)$ \label{line:f_r}
-					\IF {$|f_l| > n \AND |f_r| > n \label{line:if_n}$}
-						\STATE $q_l.params = estimate(f_l)$
-						\STATE $q_r.params = estimate(f_r)$
-						\STATE $prob = P(f_l | q_l) \cdot P(f_r | q_r)$
-						\STATE $X = X \cup (prob, r, q)$ \label{line:r_prob}
-					\ENDIF
-				\ENDFOR
-			\ENDFOR
-			
-			\RETURN $\argmax_{(prob, r, q)\in X}(prob)$;
+					\STATE $P = \Big\{\langle q_1, q_2, q_3\rangle \in Phones: q_1 = q, q_2 \in Q, q_3 \in Q\Big\}$
+					\FOR {$r \in Rules \label{line:loop_R}$}
+						\STATE $\langle P_l, P_r \rangle = r(P)$			
+						\STATE $q_l = P_{l,1}$
+						\STATE $q_r = P_{r,1}$
+						\STATE $f_l = F(q_l)$ \label{line:f_l}
+						\STATE $f_r = F(q_r)$ \label{line:f_r}
+						\IF {$|f_l| > n \AND |f_r| > n \label{line:if_n}$}
+							\STATE $q_l.params = estimate(f_l)$
+							\STATE $q_r.params = estimate(f_r)$
+							\IF {$\log{P(f_l | q_l)} + \log{P(f_r | q_r)} - \log{P(f_l | q)} - \log{P(f_r | q)} > \lambda$ \label{line:if_p}}
+								\STATE $prob = P(f_l | q_l) \cdot P(f_r | q_r)$
+								\STATE $X = X \cup \{\langle prob, r, q, r_l, q_r\rangle\}$ \label{line:r_prob}
+							\ENDIF
+						\ENDIF
+					\ENDFOR
+				\ENDFOR \label{line:iter_end}
+				
+				\IF{$X \neq \emptyset$}
+					
+					\STATE $\langle prob, r, q, q_l, q_r\rangle = \argmax_{\langle prob, r, q, r_l, q_r\rangle\in X}(prob)$;
+					\STATE $Q = Q \setminus {q} \cup \{q_l, q_r\} \label{line:q_ext}$
+					\STATE $Phones = rebuild(Phones, Q)\label{line:p_eqt}$
+				\ELSE
+					\RETURN{ $\langle Q, Phones \rangle \label{line:return}$}
+				\ENDIF
+			\ENDWHILE
 		\end{algorithmic}
 		
 		Zbiory $X$ przechowują pary $(parwdopodobieństwo, reguła, dzielony stan)$ 
@@ -2018,7 +2076,7 @@ W celu odrzucenia nagrań o niepoprawnej transkrypcji, przepuszczono je przez sy
 	\end{figure}
 
 	\subsection{Budowa modeli klasycznych}
-		Klasyczne modele Gaussowkie, zaznaczone w bloku \refBlock{model_acc} na schemacie \ref{fig:arch}, zostały zbudowane z wykorzystaniem pakietu \textit{HTK} oraz opakowującego go systemu \textit{Magic Scribe}. Do treningu użyto zbioru treningowego z korpusu \textit{Clarin}. Model akustyczny uczony był zgodnie z zaleceniami opisanymi w \textit{HTK Book}\cite{htkbook}.
+		Klasyczne modele Gaussowkie, zaznaczone w bloku \refBlock{model_acc} na schemacie \ref{fig:arch}, zostały zbudowane z wykorzystaniem pakietu \textit{HTK} oraz opakowującego go systemu \textit{Magic Scribe}. Do treningu użyto zbioru treningowego z korpusu \textit{Clarin}. Model akustyczny uczony był zgodnie z zaleceniami opisanymi w \textit{HTK Book}\cite{htkbook}, procedurę uczenia zapisano w pseudokodzie \ref{alg:acc_model_training}. Pierwszym krokiem procedury jest zainicjalizowanie parametrów prostego modelu uni-fonowego, w którym mikstury gaussowskie składają się z jednego komponentu. Następnie w pierwszej pętli wykonuje się po trzy iteracje re-estymacji parametrów, która przebiega zgodnie z algorytmem Bauma-Welcha opisanym w rozdziale \ref{sec:Baum_Welch} oraz \ref{sec:gmm_estimation}. Podczas re-estymacji przechodzi się przez wszystkie dane treningowe ze zbioru $S$. Podczas przechodzenia wyliczany jest \textit{Force alignment}, a następnie na jego podstawie estymowane są nowe parametry. Kolejne re-estymacje powodują zbieganie modelu do wytrenowanej postaci. Po trzech iteracjach, kiedy model ma już pewną wiedzę, rozbudowuje się mikstury Gaussowskie o nowe komponenty. Po zakończeniu pierwszej pętli następuje przekształcenie modelu uni-fonowego w tri-fonowy. Początkowo tri-fony o wspólnym centralnym fonie współdzielą te same stany. Dopiero w następnym kroku wykonuje się algorytm Tri-based clustering, w wyniku którego zwiększa się liczba stanów modelu akustycznego. W kolejnych krokach ponownie re-estymuje się parametry i rozbudowuje mikstury Gaussowskie. Łącznie wykonuje się $36$ iteracji re-estymacji parametrów. Na koniec zwracany jest wytrenowany model. Wszystkie modele tri-fonowe z tabeli \ref{acustic_models} zostały zbudowane zgodnie z procedurą \ref{alg:acc_model_training}.
 		
 		\begin{figure}
 			\begin{algorithmic}[1]
@@ -2052,7 +2110,7 @@ W celu odrzucenia nagrań o niepoprawnej transkrypcji, przepuszczono je przez sy
 
 	\subsection{ Szczegóły budowy modeli neuronowych}
 		\label{sec:nn_model_details}
-		Wspomniane w rozdziale \ref{sec:arch} modele neuronowe \refBlock{net} ze schematu \ref{fig:arch} składają się z dwóch części. Pierwszą jest zbiór stanów $Q$ oraz macierz $A$, opisująca prawdopodobieństwa przejść pomiędzy stanami. Drugą części jest natomiast sama sieć neuronowa, odpowiadająca rodzinie funkcji $B$ wyznaczającej prawdopodobieństwa obserwacji z definicji modelu Markowa przedstawionej w rozdziale \ref{sec:hmm_def}. Każdy model neuronowy jest budowany w oparciu o wcześniej wytrenowany klasyczny model Gaussowski. Z klasycznego modelu brane sa, beż żadnych modyfikacji, stany $Q$ oraz macierz $A$. Następnie w oparciu o zbiór $Q$ definiuje się liczbę neuronów w wrastwie wyjściowej sieci. Sieć ma pełnić rolę estymatora prawdopodobieństw obserwacji, zgodnie z opisem w rozdziale \ref{sec:ASR_NN}. Podczas uczenia sieci, pokazuje się jej pary wartości \textit{wektor cech} $\longrightarrow$ \textit{stan modelu Markova}, które tworzą zbiór treningowy sieci odpowiadający blokowi \refBlock{clarin_mfc} ze schematu \ref{fig:arch}. Każdy model neuronowy musi mieć swój zbiór treningowy, gdyż jest on uzależniony od modelu klasycznego, na podstawie, którego uczona jest sieć. Wynika to z faktu, że każdy model Gaussowski ma inne mapowanie tri-fonów na stany, co definiuje zbiór treningowy sieci. Opis mapowania tri-fonów na stany oraz jego wpływ na model akustyczny został opisany w rozdziale \ref{sec:tri-fone_mapping}.
+		Wspomniane w rozdziale \ref{sec:env} modele neuronowe \refBlock{net} ze schematu \ref{fig:arch} składają się z dwóch części. Pierwszą jest zbiór stanów $Q$ oraz macierz $A$, opisująca prawdopodobieństwa przejść pomiędzy stanami. Drugą części jest natomiast sama sieć neuronowa, odpowiadająca rodzinie funkcji $B$ wyznaczającej prawdopodobieństwa obserwacji z definicji modelu Markowa przedstawionej w rozdziale \ref{sec:hmm_def}. Każdy model neuronowy jest budowany w oparciu o wcześniej wytrenowany klasyczny model Gaussowski. Z klasycznego modelu brane sa, beż żadnych modyfikacji, stany $Q$ oraz macierz $A$. Następnie w oparciu o zbiór $Q$ definiuje się liczbę neuronów w wrastwie wyjściowej sieci. Sieć ma pełnić rolę estymatora prawdopodobieństw obserwacji, zgodnie z opisem w rozdziale \ref{sec:ASR_NN}. Podczas uczenia sieci, pokazuje się jej pary wartości \textit{wektor cech} $\longrightarrow$ \textit{stan modelu Markova}, które tworzą zbiór treningowy sieci odpowiadający blokowi \refBlock{clarin_mfc} ze schematu \ref{fig:arch}. Każdy model neuronowy musi mieć swój zbiór treningowy, gdyż jest on uzależniony od modelu klasycznego, na podstawie, którego uczona jest sieć. Wynika to z faktu, że każdy model Gaussowski ma inne mapowanie tri-fonów na stany, co definiuje zbiór treningowy sieci. Opis mapowania tri-fonów na stany oraz jego wpływ na model akustyczny został opisany w rozdziale \ref{sec:tri-fone_mapping}.
 	
 	\subsection{ Optymalizacja parametrów procesu dekodowania }
 		\label{sec:metadata_impact}
