@@ -67,11 +67,11 @@
 		\item offline, w którym system wczytuje zbiór nagrań dźwiękowych i dla każdego z nich generuje transkrypcję
 		\item online, w którym system na bieżąco rejestruję dźwięk i wypisuje transkrypcję.
 	\end{itemize}
-	Oba tryby wymagają możliwie najlepszej skuteczności rozpoznawania, jednak tryb online jest bardziej wymagający, gdyż dodatkowo wymaga szybkiego działania. Rozpoznawanie w trybie online powinno się odbywać w czasie zbliżony do rzeczywistego. 
+	Oba tryby wymagają możliwie najlepszej skuteczności rozpoznawania, jednak tryb online jest szczególnie wymagający, gdyż dodatkowo wymaga szybkiego działania. Rozpoznawanie w trybie online powinno się odbywać w czasie zbliżony do rzeczywistego. 
 	\\
 	Rozwój kart graficznych i pojawienie się technologii CUDA zaowocowało w ostatnim dziesięcioleciu szybkim rozwojem sieci neuronowych, które w wielu problemach klasyfikacji radzą sobie znacznie lepiej niż wcześniej stosowanie algorytmy. Coraz więcej badaczy próbuje stosować sieci neuronowe w celu poprawy jakości systemów rozpoznających mowę. Można spotkać wiele różnych konfiguracji, zarówno łączących konwencjonalne systemy, jaki i autonomiczne sieci rekurencyjne.
 	\\
-	Celem niniejszej pracy magisterskiej jest przetestowanie możliwości wykorzystania sieci neuronowych w procesie rozpoznawania mowy. Duży nacisk położony jest na możliwość rozpoznawanie trifonów z ograniczonym kontekstem, co jest moim rozwinięciem podejścia spotykanego w wielu publikacjach. W pracy zbadano wpływ liczby rozpoznawanych trifonów na skuteczność rozpoznawania mowy.
+	Celem niniejszej pracy magisterskiej jest przetestowanie możliwości wykorzystania sieci neuronowych w procesie rozpoznawania mowy. Duży nacisk położony jest na możliwość rozpoznawanie trifonów z ograniczonym kontekstem, co jest moim rozwinięciem podejścia spotykanego w wielu publikacjach. Podczas przeprowadzonych eksperymentów zbadano wpływ liczby rozpoznawanych trifonów na skuteczność rozpoznawania mowy.
 	
 \section{Omówienie istniejących podejść}
 	Klasyczne podejście do rozpoznawania mowy, opierające się na wykorzystaniu ukrytych modli markowa oraz wielowymiarowych mikstur gaussowskich, zostało opisane w \cite{book1}. 
@@ -125,10 +125,10 @@
 		\label{equation:ASR_definicja2}
 	\end{equation}
 	
-	Ostatnie przejście wynika, z faktu, że $P(O)$ się nie zmienia.
-	Implementując formułę \ref{equation:ASR_definicja2} możemy wydzielić 5 kluczowych etapów, są one zilustrowane na rysunku \ref{fig:ARM_schemat}. Opis poszczególnych etapów znajduje się w kolejnych podrozdziałach.
+	Ostatnie przejście wynika, z faktu, że $P(O)$ nie zależy od $W$, zatem możne jest pominąć.
+	Implementując formułę \ref{equation:ASR_definicja2} możemy wydzielić 5 kluczowych etapów, są one zilustrowane na rysunku \ref{fig:ARM_schemat}. Opis poszczególnych bloków ze schematu znajduje się w kolejnych podrozdziałach.
 	\\
-	Pierwszy etap, określony jako \textit{Zbieranie sygnału akustycznego} (blok \refBlock{zbieranie_sygnalu} na rysunku \ref{fig:ARM_schemat} ), jest realizowany sprzętowo poprzez peryferyjne urządzenia. Obejmuje analogowe przetwarzanie sygnału, cyfryzację oraz opcjonalny post-processing wykonywany przez kartę dźwiękową. Na tym etapie ważne jest, aby dostroić poziom dźwięku, tak aby uniknąć przesterowań, dobrać częstotliwość próbkowania i zakres częstotliwości. Niepoprawna konfiguracja tego etapu, może skutkować zakłóceniami oraz wycięciem cech, które mogą być istotne na kolejnym etapie, a w konsekwencji obniżeniem skuteczności rozpoznawania. W niniejszej pracy wykorzystany był gotowy, powszechnie dostępny korpus nagrań (patrz rozdział \ref{sec:opis_danych}), dlatego nie będę się skupiał na tym etapie.
+	Pierwszy etap, określony jako \textit{Zbieranie sygnału akustycznego} (blok \refBlock{zbieranie_sygnalu} na rysunku \ref{fig:ARM_schemat} ), jest realizowany sprzętowo poprzez peryferyjne urządzenia. Obejmuje analogowe przetwarzanie sygnału, cyfryzację oraz opcjonalny post-processing wykonywany przez kartę dźwiękową. Na tym etapie ważne jest, aby dostroić poziom dźwięku, tak aby uniknąć przesterowań, dobrać częstotliwość próbkowania i zakres częstotliwości. Niepoprawna konfiguracja tego etapu, może skutkować zakłóceniami oraz wycięciem informacji, które mogą być istotne na kolejnych etapach przetwarzania, a w konsekwencji obniżeniem skuteczności rozpoznawania. W niniejszej pracy wykorzystany był gotowy, powszechnie dostępny korpus nagrań (patrz rozdział \ref{sec:opis_danych}), dlatego nie będę się skupiał na tym etapie.
 
 	\subsection{ Fony }
 	\label{sec:Phones}
@@ -158,7 +158,7 @@
 			
 		\end{figure}
 
-		Fony są podstawową koncepcją przy modelowaniu dźwięków w mowie, będącą rozszerzeniem pojęcia głoski. Typowo rozróżniają dźwięczne i bezdźwięczne warianty głosek oraz wprowadzają nowe dźwięki, takie jak przykładowo \textit{cisza}. W tabeli \ref{tab:phone_list} znajduje się lista fonów zamodelowanych w wykorzystanych modelach akustycznych, łącznie jest ich 40. Każdy zamodelowany fonem ma swój zestaw parametrów, które go opisują. Parametry te tworzą \textit{model akustyczny} odpowiadający blokowi \ref{model_akustyczny} z rysunku \ref{fig:ARM_schemat}. Słowa, które mają być rozpoznawane przez system, muszą mieć przypisaną transkrypcję na fony. Lista słów wraz z transkrypcją znajduje się w \textit{słowniku}, który odpowiada blokowi \refBlock{slownik} na rysunku \ref{fig:ARM_schemat}. Aby umożliwić poprane rozpoznawanie, każda forma gramatyczne danego słowa musi się znaleźć w słowniku, gdyż jest traktowana, jak niezależne słowo. Konsekwencją tego, jest bardzo duża liczba wpisów w słownikach dla języków o rozbudowanej fleksji, takich jak język polski. 
+		Fony są podstawową koncepcją przy modelowaniu dźwięków w mowie, będącą rozszerzeniem pojęcia głoski. Typowo rozróżniają dźwięczne i bezdźwięczne warianty głosek oraz wprowadzają nowe dźwięki, takie jak przykładowo \textit{cisza}. W tabeli \ref{tab:phone_list} znajduje się lista fonów zamodelowanych w wykorzystanych modelach akustycznych, łącznie jest ich 40. Każdy zamodelowany fonem ma swój zestaw parametrów, które go opisują. Parametry te tworzą \textit{model akustyczny} odpowiadający blokowi \ref{model_akustyczny} z rysunku \ref{fig:ARM_schemat}. Słowa, które mają być rozpoznawane przez system, muszą mieć przypisaną transkrypcję na fony. Lista słów wraz z transkrypcją znajduje się w \textit{słowniku}, który odpowiada blokowi \refBlock{slownik} na rysunku \ref{fig:ARM_schemat}. Aby umożliwić poprawne rozpoznawanie, każda forma gramatyczne danego słowa musi się znaleźć w słowniku, gdyż jest traktowana jak niezależne słowo. Konsekwencją tego, jest bardzo duża liczba wpisów w słownikach dla języków o rozbudowanej fleksji, takich jak język polski. 
 		W wykorzystanym słowniku, zawierającym $1209017$ wpisów, transkrypcje zostały zbudowane na podstawie zasad sformułowanych przez Marię Steffen-Batogową w książce \textit{Automatyzacja transkrypcji fonematycznej tekstów polskich} \cite{transkrypcja}. Zasady te nie są jednak jednoznaczne i w sytuacji, gdy dla jednego słowa można wyprowadzić wiele różnych transkrypcji, wszystkie zostają umieszczone w słowniku. Przykładem wyrazu o wielu transkrypcjach jest słowo \textit{wystrzygł}, które zgodnie z regułami, zapisuje się jako \textit{v y s t sz y k} lub \textit{v y s t sz y k ł}.  
 
 		\begin{figure}
@@ -201,10 +201,10 @@
 		
 	\subsection{ Ekstrakcja cech }
 
-	 Ekstrakcja cech, odpowiadająca blokowi \refBlock{ekstrakcja_cech} z rysunku \ref{fig:ARM_schemat}, polega na zamianie sygnału akustycznego na ciąg wektorów, które mogą być następnie sklasyfikowane na kolejnym etapie. 
+	 Ekstrakcja cech, odpowiadająca blokowi \refBlock{ekstrakcja_cech} z rysunku \ref{fig:ARM_schemat}, polega na zamianie sygnału akustycznego na ciąg wektorów, które mogą być następnie sklasyfikowane na kolejnym etapie. Porównanie powszechnie stosowanych metod ekstrakcji cech takich jak \textit{MFCC} czy \textit{PLP} zostało opisane w artykule \cite{feature_comparision}.
 	 \subsubsection{Cechy \textit{MFCC}}
 	 \label{sec:Feature_vec_mfcc}
-	 Przy rozpoznawaniu mowy najczyściej wykorzystuje się cechy \textit{MFCC}, które składają się z 5 etapów przetwarzania:
+	 Przy rozpoznawaniu mowy najczyściej wykorzystuje się cechy \textit{MFCC} zaproponowane przez \textit{S. Davisa} i \textit{P. Mermelsteina} \cite{mfcc}, składające się z 5 etapów przetwarzania:
 	 
 	 \begin{itemize}
 	 	\item Podział sygnału akustycznego.
@@ -214,11 +214,11 @@
 	 	\item Dyskretna transformata kosinusowa.
 	 \end{itemize}
  
-	 Pierwszym etapem ekstrakcji jest podzielenie sygnału na fragmenty zwane \textit{ramkami}. Typowo ramki mają $25ms$ i są przesunięte co $10ms$. Ramki o takiej długości zawierają wystarczająco dużo informacji, a jednocześnie można założyć, że są stochastycznie stacjonarne. 
+	 Pierwszym etapem ekstrakcji jest podzielenie sygnału na fragmenty zwane \textit{ramkami}. Typowo ramki mają $25ms$ i są przesunięte co $10ms$, przez co nachodzą na siebie. Ramki o takiej długości zawierają wystarczająco dużo informacji, a jednocześnie można założyć, że są stochastycznie stacjonarne. 
 	 
-	 W drugim etapie każdą ramkę poddaje się transformacie Fouriera. W tej operacji efekcie otrzymuje się widmo sygnału akustycznego, opisujące ilość energii w zależności o częstotliwości.
+	 W drugim etapie każdą ramkę poddaje się transformacie Fouriera. W efekcie tej operacji, otrzymuje się widmo sygnału akustycznego, opisujące ilość energii w zależności o częstotliwości.
 	 
-	 W trzecim etapie na widmo nakłada się zestaw filtrów trójkątnych. Filtry się przesunięte względem siebie, każdy kolejny filer jest coraz szerszy, co odpowiada ludzkiej percepcji. Ludzie dobrze rozróżniają sygnały o małej częstotliwości, natomiast te o wysokiej są podobnie odbierane przez ludzkie ucho. Aby określić zestaw filtrów należy podać ich liczbę, niech będzie nią $N$ oraz zdefiniować $N+1$ częstotliwości, które wyznaczają zakresy filtrów. Załóżmy, że częstotliwości sa zapisane w ciągu $f(1), f(2), \ldots f(N+1)$, wtedy $m$-ty filtr jest zdefiniowany równaniem \ref{eqn:filter}. Na rysunku \ref{fig:filter_bank} zwizualizowano $4$ kolejne filtry. Efektem nałożenia filtrów jest nowy ciąg wartości $v_1, v_2, \ldots v_N$, które stanowy wejście do kolejnego etapu przetwarzania.
+	 W trzecim etapie na widmo nakłada się zestaw filtrów trójkątnych, zwanych \textit{MEL-owym zestawem filtrów}. Filtry te są przesunięte względem siebie, każdy kolejny filer jest coraz szerszy, co odpowiada ludzkiej percepcji. Ludzie dobrze rozróżniają sygnały o małej częstotliwości, natomiast te o wysokiej są podobnie odbierane przez ludzkie ucho. Aby określić zestaw filtrów należy podać ich liczbę, niech będzie nią $N$ oraz zdefiniować $N+1$ częstotliwości, które wyznaczają zakresy filtrów. Załóżmy, że częstotliwości sa zapisane w ciągu $f(1), f(2), \ldots f(N+1)$, wtedy $m$-ty filtr jest zdefiniowany równaniem \ref{eqn:filter}. Na rysunku \ref{fig:filter_bank} zwizualizowano $4$ kolejne filtry. Efektem nałożenia filtrów jest nowy ciąg wartości $v_1, v_2, \ldots v_N$, które stanowy wejście do kolejnego etapu przetwarzania.
 	 
 	 \begin{equation}
 		 H_m(x)= 
@@ -279,9 +279,9 @@
 	 	
 	 \end{figure}
 	 
-	 Czwartym etapem przetwarzania jest nałożenia logarytmu na wektor cech otrzymany w poprzednim etapie. Ma to również związek z percepcją człowieka, gdyż ludzkie zmysły, w szczególności słuch", odbierają bodźce w skali logarytmicznej. 
+	 Czwartym etapem przetwarzania jest nałożenia logarytmu na wektor cech otrzymany w poprzednim etapie. Ma to również związek z percepcją człowieka, gdyż ludzkie zmysły, w szczególności słuch, odbierają bodźce w skali logarytmicznej. 
 	 
-	 Piąty etap tworzenia cech \textit{MFCC} polega na nałożeniu dyskretnej transformaty kosinusowej, zgodnie z równaniami \ref{eqn:DCT}. W efekcie jej działania otrzymamy ciąg wartości $W=(w_1, w_2, \ldots, w_N)$. Celem tego etapu jest dekorelacja wcześniej otrzymanych wartości, wynikająca z nakładania się na siebie filtrów z etapu trzeciego oraz samej natury sygnału akustycznego, zawierającego składowe harmoniczne dźwięków.
+	 Piąty etap tworzenia cech \textit{MFCC} polega na nałożeniu dyskretnej transformaty kosinusowej, zgodnie z równaniami \ref{eqn:DCT}. W efekcie jej działania otrzymamy ciąg wartości $W=(w_1, w_2, \ldots, w_N)$. Celem tego etapu jest dekorelacja wcześniej otrzymanych wartości, wynikająca z nakładania się na siebie ramek, filtrów z etapu trzeciego oraz samej natury sygnału akustycznego, zawierającego kolejne składowe harmoniczne dźwięków.
 	 
 	 \begin{equation}
 		w_k = 
@@ -308,7 +308,7 @@
 	 	\label{eqn:energy}
 	 \end{equation}
 	 
-	 Ostatecznie, wektor cech jest składany z $M$ pierwszych wartości ciągu $W$, całkowitej energii sygnału akustycznego $\epsilon$ liczonej według wzory \ref{eqn:energy} oraz pierwszej i drugiej pochodnej tych wartości liczonych według wzorów \ref{eqn:d1} oraz \ref{eqn:d2}. Łącznie otrzymuje się wektor cech o $3(M+1)$ elementach. Rysunek \ref{fig:feature_vector} pokazuje ostateczną formę wektora cech na $t$-tej ramki.
+	 Ostatecznie, wektor cech jest składany z $M$ pierwszych wartości ciągu $W$, całkowitej energii sygnału akustycznego $\epsilon$ liczonej według wzory \ref{eqn:energy} oraz pierwszej i drugiej pochodnej wspomnianych wartości liczonych według wzorów \ref{eqn:d1} oraz \ref{eqn:d2}. Łącznie otrzymuje się wektor cech o $3(M+1)$ elementach. Rysunek \ref{fig:feature_vector} pokazuje ostateczną formę wektora cech dla $t$-tej ramki.
 	 
 	\begin{figure}[H]
 		\begin{center}
@@ -384,12 +384,9 @@
 		 	\mathbf{q_0, q_F}				  & && \text{stany początkowy i końcowy}
 	    \end{align*}
 	    
-    	
-	    	
-	   \subsubsection{Modele Markova}
 	   \subsubsection{Algorytmy Viterbiego}
 		   \label{sec:Viterbi}
-		   Algorytmy Viterbiego sa dynamicznymi algorytmami do znajdowania najbardziej prawdopodobnej ścieżki w automacie oraz prawdopodobieństwa stanu $s_i$ po $t$ krokach. 
+		   Algorytmy Viterbiego sa dynamicznymi algorytmami do znajdowania najbardziej prawdopodobnej ścieżki w automacie oraz prawdopodobieństwa stanu $s_i$ po $t$ krokach. Sa wykorzystywane również w algorytmie \textit{Bauma-Welcha} służącym estymacji parametrów modelu, opisanym w rozdziale \ref{sec:Baum_Welch}.
 		   
 		   \begin{itemize}
 			   	\item Aby znaleźć najbardziej prawdopodobną ścieżkę, należy skorzystać z rekurencyjnego równania \ref{equation:viterbi_path}.
@@ -406,7 +403,7 @@
 		   \label{equation:viterbi_node}
 		   \end{equation}
 		   
-		  Oba równania (\ref{equation:viterbi_path} oraz \ref{equation:viterbi_node}) odwołując się jedynie do wartości z poprzedniej iteracji, zatem stosując techniki programowania dynamicznego można wyznaczyć najbardziej prawdopodobną ścieżkę stosując algorytm \ref{alg:viterbi}. Algorytm ten przechodzi przez wszystkie ramki czasowe $T$, w najbardziej zewnętrznej pętli. Następnie dla każdego stany $q1$, w najbardziej wewnętrznej pętli, wyszukuje przejścia o największym prawdopodobieństwie, które doprowadziło ze stanu $q2$ do $q1$. Rysunek \ref{fig:viterbi} ilustruje jedną iterację zewnętrznej pętli. Pod koniec działania algorytmu zwracany jest końcowy stan najbardziej prawdopodobnej ścieżki. \\
+		  Oba równania (\ref{equation:viterbi_path} oraz \ref{equation:viterbi_node}) odwołując się jedynie do wartości z poprzedniej iteracji, zatem stosując techniki programowania dynamicznego można wyznaczyć najbardziej prawdopodobną ścieżkę stosując algorytm \ref{alg:viterbi}. Algorytm ten przechodzi przez wszystkie ramki czasowe $T$, w najbardziej zewnętrznej pętli. Następnie dla każdego stany $q1$, wyszukuje przejścia o największym prawdopodobieństwie, które doprowadziło ze stanu $q2$ do $q1$. Rysunek \ref{fig:viterbi} ilustruje jedną iterację zewnętrznej pętli. Pod koniec działania algorytmu zwracany jest końcowy stan najbardziej prawdopodobnej ścieżki. \\
 		  Algorytm \ref{alg:viterbi2} pokazuje analogiczny sposób znajdowania najbardziej prawdopodobnego stanu.
 		
 		  \begin{figure}
@@ -415,17 +412,17 @@
 					   	\REQUIRE {tablica obserwacji $O$ o rozmiarze T}
 					   	\REQUIRE {macierz przejścia $A$ o rozmiarze $|Q| \times |Q|$}
 					   	
-					   	\STATE $T_a[0 \ldots Q] = 1$;
+					   	\STATE $T_a[0 \ldots |Q|] = 1$;
 					   	\COMMENT {inicjalizacja pierwszej tablicy pomocniczej}
-					   	\STATE $T_b[0 \ldots Q] = 0$;
+					   	\STATE $T_b[0 \ldots |Q|] = 0$;
 					   	\COMMENT {inicjalizacja drugiej tablicy pomocniczej}
 					   	
 					   	\FOR{$t=1$ to $T$}
 						   	\FOR{$q1=1$ to $|Q|$}
 							   	\STATE $p_{tmp} = 0$;
 							   	\FOR{$q2=1$ to $|Q|$}
-								   	\IF {$ \bigg( T_a[q2]\cdot a_{q,w}\cdot b_q(O_t) \bigg) > p_{tmp}$}
-									   	\STATE $p_{tmp} = \bigg( T_a[q2]\cdot a_{q,w}\cdot b_q(O_t) \bigg)$;
+								   	\IF {$ \bigg( T_a[q2]\cdot a_{q2,q1}\cdot b_{q1}(O_t) \bigg) > p_{tmp}$}
+									   	\STATE $p_{tmp} = \bigg( T_a[q2]\cdot a_{q2,q1}\cdot b_{q1}(O_t) \bigg)$;
 								   	\ENDIF
 							   	\ENDFOR
 							   	\STATE $T_b[q1] = p_{tmp}$
@@ -445,20 +442,21 @@
 		  		  \REQUIRE {tablica obserwacji $O$ o rozmiarze T}
 		  		  \REQUIRE {macierz przejścia $A$ o rozmiarze $|Q| \times |Q|$}
 		  		
-		  	  	  \STATE $T_a[0 \ldots Q] = 1$;
+		  	  	  \STATE $T_a[0 \ldots |Q|] = 1$;
 		  		  \COMMENT {inicjalizacja pierwszej tablicy pomocniczej}
-		  		  \STATE $T_b[0 \ldots Q] = 0$;
+		  		  \STATE $T_b[0 \ldots |Q|] = 0$;
 		  		  \COMMENT {inicjalizacja drugiej tablicy pomocniczej}
 		  		
 		  		  \FOR{$t=1$ to $T$}
 			  		  \FOR{$q1=1$ to $|Q|$}
 				  		  \STATE $T_b[q1] = 0$;
 				  		  \FOR{$q2=1$ to $|Q|$}
-					  		  \STATE $T_b[q1] += \bigg( T_a[q2]\cdot a_{q,w}\cdot b_q(O_t) \bigg)$					  		  
+					  		  \STATE $T_b[q1] += \bigg( T_a[q2]\cdot a_{q2,q1}\cdot b_{q1}(O_t) \bigg)$					  		  
 				  		  \ENDFOR
 				  		  \STATE $T_b[q1] = p_{tmp}$
 			  		  \ENDFOR
 			  		  \STATE $swap(T_a, T_b)$;
+			  		  \STATE $T_b[0 \ldots |Q|] = 0$;
 		  		  \ENDFOR
 		  		
 		  		  \RETURN $\argmax{T_a}$;
@@ -510,7 +508,7 @@
 		   
 	   \subsubsection{Algorytm Bauma-Welcha}
 	   \label{sec:Baum_Welch}
-	   Algorytm \textit{Bauma-Welcha} jest techniką klasy \textit{Expectation-Maximization} służącą estymacji prawdopodobieństw przejścia pomiędzy stanami $A$ oraz funkcji emisji $b$. Został on zaproponowany przez Leonard E. Bauma, szczegółowy opis teorii dotyczącej algorytmu znajduje się w artykule \cite{BaumWelch_tutorial}. Koncepcyjnie, podczas treningu wykorzystującego \textit{algorytm Bauma-Welcha}, w $i-tej$ iteracji, rozpoznaje się zbiór treningowy z wykorzystaniem modelu $M_i$, otrzymując w efekcie dopasowanie stanów do obserwacji. Następnie buduje się nowy model $M_{i+1}$, maksymalizujący wcześniej dopasowane obserwacje. Wraz z kolejnym iteracjami parametry modelu powinny zbiegać do sub-optymalnych wartości.
+	   Algorytm \textit{Bauma-Welcha} jest techniką klasy \textit{Expectation-Maximization} służącą estymacji prawdopodobieństw przejścia pomiędzy stanami $A$ oraz funkcji emisji $b$. Został on zaproponowany przez Leonard E. Bauma, szczegółowy opis teorii dotyczącej algorytmu znajduje się w artykule \cite{BaumWelch_tutorial}. Koncepcyjnie, podczas treningu wykorzystującego \textit{algorytm Bauma-Welcha}, w $i-tej$ iteracji, rozpoznaje się zbiór treningowy z wykorzystaniem modelu $M_i$, otrzymując w efekcie dopasowanie stanów do obserwacji. Następnie buduje się nowy model $M_{i+1}$, maksymalizujący wcześniej dopasowane obserwacje. Wraz z kolejnymi iteracjami parametry modelu powinny zbiegać do sub-optymalnych wartości.
 	   
 	   Chcą wyznaczyć prawdopodobieństwo przejścia $q_i \rightarrow q_j$ należy policzyć:
 	   \begin{equation}
