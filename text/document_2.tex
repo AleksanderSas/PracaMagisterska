@@ -535,7 +535,7 @@
 	   \begin{equation}
 		   P(O|M) = \sum_{i=1}^{|Q|}\alpha_t(i)\beta_t(i)
 	   \end{equation}
-	   Dodatkowo, zdefiniujemy $\hat{\xi}$ zgodnie ze wzorem \ref{eqn:quite_ksi}, które jest prawie tym samym co $\xi$. Korzystając ze wzory Bayesa w postaci \ref{eqn:bayes2} przejdziemy zgodnie z równaniem \ref{eqn:quite_ksi_2_ksi} do interesującego nas $\xi$.
+	   Dodatkowo, zdefiniujemy $\hat{\xi}$ zgodnie ze wzorem \ref{eqn:quite_ksi}, które jest prawie tym samym co $\xi$. Korzystając ze wzory Bayesa w postaci \ref{eqn:bayes2}, przejdziemy zgodnie z równaniem \ref{eqn:quite_ksi_2_ksi} do interesującego nas $\xi$.
 	   \begin{equation}
 	       \hat{\xi} = P(q_{i,t}, q_{j,t+1},O|M)
 	       \label{eqn:quite_ksi}
@@ -545,20 +545,85 @@
 	        \label{eqn:bayes2}
 	   \end{equation}
 	   \begin{equation}
-			\xi_t(i,j)=P(q_{i,t}, q_{j,t+1}|O,M) = \frac{P(q_{i,t}, q_{j,t+1},O|M)}{P(O|M)}= \frac{\hat{\xi_t(i,j)}}{P(O|M)}
+			\xi_t(i,j)=P(q_{i,t}, q_{j,t+1}|O,M) = \frac{P(q_{i,t}, q_{j,t+1},O|M)}{P(O|M)}= \frac{\hat{\xi_t}(i,j)}{P(O|M)}
 			\label{eqn:quite_ksi_2_ksi}
 		\end{equation}
 		
-		Następnie wykorzystując \ref{eqn:alfa} oraz \ref{eqn:beta} zapiszemy $\hat{\xi_t(i,j)}$ w następujący sposób:
+		Następnie wykorzystując \ref{eqn:alfa} oraz \ref{eqn:beta} zapiszemy $\hat{\xi_t}(i,j)$ w następujący sposób:
 		\begin{equation}
-			hat{\xi_t(i,j)} = \alpha_t(i) a_{i,j} b_j(o_{t+1}) \beta_{t+1}(j)
+			\hat{\xi_t}(i,j) = \alpha_t(i) a_{i,j} b_j(o_{t+1}) \beta_{t+1}(j)
 		\end{equation}
 		
-		Powyższe równości dają pozwalają nam skutecznie wyznaczać prawdopodobieństwo przejścia $q_i \rightarrow q_j$ zw wzory \ref{eqn:qi_qj}.
+		Powyższe równości pozwalają nam skutecznie wyznaczać prawdopodobieństwo przejścia $q_i \rightarrow q_j$ ze wzory \ref{eqn:qi_qj}. Kolejną rzeczą potrzebną w \textit{algorytmie Bauma-Welcha} jest prawdopodobieństwo bycia w stanie $j$ w momencie $t$ opisane wzorem \ref{eqn:gamma}. Jest ono potrzebne do wyznaczenia funkcji emisji obserwacji. W uproszczonym modelu, gdzie występuje z ograniczona liczba różnych obserwacji, funkcję $b$ można policzyć zgodnie ze wzorem \ref{eqn:b}.
+		\begin{equation}
+			\gamma_t(j) = P(q_{t,j}|O,M) = \frac{P(q_{t,j},O|M)}{P(O|M)} = \frac{\aleph_t(j)\beta_t(j)}{P(O|M)}
+			\label{eqn:gamma}
+		\end{equation}
+		\begin{equation}
+			b_j(o)=\frac{\text{oczekiwana liczba obserwacji $o$ w stanie $j$}}{\text{oczekiwana liczba odwiedzeń stanu $j$}} = \frac{\sum_{t=1,o_t=o}^T\gamma_t(j)}{\sum_{t=1}^T\gamma_t(j)}
+			\label{eqn:b}
+		\end{equation}
+		
+		Składając razem wszystkie otrzymane równości dostajemy algorytm \ref{alg:Baum_Welch}. W uzyskanym algorytmie linie \ref{line:E_begin}, \ref{line:E_end} odpowiadają fazie estymacji, natomiast \ref{line:M_begin}, \ref{line:M_end} odpowiadają fazie maksymalizacji. $K$ określa liczbę epok treningu.
+		
+		\begin{figure}
+			\begin{algorithmic}[1]				
+				\STATE $\langle A, B\rangle \leftarrow \text{zainicjalizuj}$
+				
+				\FOR{$k = (1\ldots K)$}
+					\STATE $\forall_{t,j} \gamma_t(j) = \frac{\alpha_t(j)\beta_t(j)}{P(O|M)} \label{line:E_begin}$
+					\STATE $\forall_{t,i,j} \xi_t(i,j) = \frac{\aleph_t(i)a_{i,j}b_j(o_{t+1})\beta_{t+1}(j)}{P(O|M)} \label{line:E_end}$
+					\STATE
+					\STATE $\forall_{i,j} \xi_t(i,j) a_{i,j} = \frac{\sum_{t=1}^T 	\xi_t(i,j)}{\sum_{t=1}^T \sum_{k=1}^{|Q|}	\xi_t(i,k)} \label{line:M_begin}$
+					\STATE $\forall_{j,o} 	b_j(o) = \frac{\sum_{t=1,o_t=o}^T\gamma_t(j)}{\sum_{t=1}^T\gamma_t(j)} \label{line:M_end}$
+				\ENDFOR							
+				
+				\RETURN $\langle A, B\rangle$;
+			\end{algorithmic}
+	
+			\caption{Algorytmy Bauma-Welcha}
+			\label{alg:Baum_Welch}
+		\end{figure}	
 		
 	   \subsubsection{Estymacja parametrów rozkładu normalnego}
 	   \label{sec:gmm_estimation}
-	
+	   W rozdziale \ref{sec:Baum_Welch} posłużono się uproszczeniem zakładającym, że zbiór obserwacji jest skończony i dyskretny. W rzeczywistości przy rozpoznawaniu mowy do określania $b_i(o)$ wykorzystuje się \textit{wielowymiarowe mikstury Gaussowkie} będące sumą kilku rozkładów normalnych. Mikstura opisane jest wzorem \ref{eqn:GMM}, w którym $D$ oznacza liczbę wymiarów wektora cech, $\mu$ jest wektorem średnich, natomiast $\Sigma$ macierzą kowariancji. Korzystając z nisko skorelowanych cech \textit{MFCC} opisanych w rozdziale \ref{sec:Feature_vec_mfcc}, można założyć, że macierz kowariancji $\Sigma$ jest diagonalna. Uproszczenie to znacząco przyśpiesza obliczenia, które nie wymagają kosztownego odwracania macierzy oraz liczenie jej wyznacznika. Ponadto wzór na rozkład normalny upraszcza się do postaci \ref{eqn:normal_distribution_simple}
+	   
+	   \begin{equation}
+		   	b_j(o) = \sum_{m=1}^N c_j N_{j,m}(o)
+		   	\label{eqn:GMM}
+	   \end{equation}
+	   \begin{equation}
+		   N_{j,m}(o)=\frac{1}{(2\pi)^{\frac{D}{2}}||\Sigma_{j,m}|^{\frac{1}{2}}}\exp\bigg( -\frac{1}{2}(o-\mu_{j,m})^T\Sigma_{j,m}^{-1}(o-\mu_{j,m}) \bigg)
+		   \label{eqn:normal_distribution}
+	   \end{equation}	
+	   \begin{equation}
+		   N_{j,m}(o)\simeq\frac{1}{(2\pi)^{\frac{D}{2}}(\prod_{i=1}^D\sigma_{j,m,i})^{\frac{1}{2}}}\exp\bigg( -\frac{1}{2}\sum_{i=1}^D(o_i-\mu_{j,m,i})^2\sigma_{j,m,i} \bigg)
+	   \label{eqn:normal_distribution_simple}
+	   \end{equation}
+	   
+	   W celu wytrenowania parametrów mikstur Guassowkich należy zmodyfikować wzór \ref{eqn:b}. Teraz zamiast liczyć bezpośrednio prawdopodobieństwo obserwacji pod warunkiem stanu, wyznaczać będziemy średnie, macierze kowariancji oraz wagi komponentów tworzących miksturę Gaussowską. Do wyznaczania tych wartości posłużymy się wzorami \ref{eqn:b_u_c}, \ref{eqn:b_s_c} oraz \ref{eqn:b_c_c}. Występujący w nich symbol $\delta_{j,m}$ oznacza prawdopodobieństwo bycia w stanie $j$ i komponencie Gaussowskim $m$. W prostym przypadku, gdy korzystamy z tylko jednego komponentu $\delta_{j,m} \equiv \gamma_j$, gdzie $\gamma_j$ jest zdefiniowana wzorem \ref{eqn:gamma}. W przypadku wielu komponentów do wyznaczania $\gamma_j$ skorzystamy z równanie \ref{eqn:delta}, warto zauważyć, że jest to wzór bardzo podobny do końcowej definicji $\xi _t(i,j)$ zapisane w \ref{line:E_end} linii algorytmu \ref{alg:Baum_Welch}. W rzeczywistości wylicza on szansę przejścia do stanu $q_j$ z emisja obserwacji w stanie $q_j$ przez $m-ty$ komponent, pod warunkiem całej obserwacji $O$ i aktualnie wyestymowanego modelu.
+	   
+	   \begin{equation}
+	   \mu_{j,m}=\frac{\sum_{t=1}^T\delta_{t,m}(j)o_t}{\sum_{t=1}^T\sum_{m=1}^M\delta_{t,m}(j)}
+	   \label{eqn:b_u_c}
+	   \end{equation}
+	   
+	   \begin{equation}
+	   \Sigma_{j,m}=\frac{\sum_{t=1}^T\delta_{t,m}(j)(o_t-\mu_{j,m})(o_t-\mu_{j,m})^T}{\sum_{t=1}^T\sum_{m=1}^M\delta_{t,m}(j)}
+	   \label{eqn:b_s_c}
+	   \end{equation}
+	   
+	   \begin{equation}
+	   c_{j,m}=\frac{\sum_{t=1}^T\delta_{t,m}(j)}{\sum_{t=1}^T\sum_{m=1}^M\delta_{t,m}(j)}
+	   \label{eqn:b_c_c}
+	   \end{equation}
+	   
+	   \begin{equation}
+	   \delta_t(j)= \frac{\sum_{i=1}^{|Q|}\aleph_{t-1}(j)a_{i,j}c_{j,m}N_{j,m}(o_{t})\beta_{t}(j)}{P(O|M)}
+	   \label{eqn:delta}
+	   \end{equation}
+	   
     \subsection{Modelowanie fonetyki z wykorzystaniem HMM }
     W klasycznych systemach rozpoznających mowę, wykorzystujących ukryte modele Markova, zbiór stanów reprezentuje fony. Każdy fon ma trzy stany w HMM, tak jak opisano w rozdziale \ref{sec:Phones}. Zbiorem obserwacji są wektory cech wyznaczane zgodnie z opisem w rozdziale \ref{sec:Feature_vec_mfcc}. Przejścia pomiędzy stanami jednego fonemu są zgodne z opisem z rozdziału \ref{sec:Phones}, natomiast przejścia pomiędzy różnymi fonami są tworzone na podstawie słownika (blok \refBlock{slownik} na rysunku \ref{fig:ARM_schemat}). Dla każdego słowa generowany jest ciąg stanów odpowiadający kolejnym fonemom, z których składa się słowo. \\
     Na rysunku \ref{fig:AutomatExample} zamieszczono przykład automatu dla słowa \textit{jabłko}. Zgodnie z wykorzystanymi regułami leksykalnymi słowo \textit{jabłko} zapisuje się za pomocą fonemów jako $[j a p ł k o]$. \\
