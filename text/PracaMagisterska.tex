@@ -30,7 +30,7 @@
 \selectlanguage{polish}
 
 \author{Aleksander Sas}
-\title{Szkic artykułu}
+\title{Wykorzystanie sieci neuronowych rozpoznających trifony w procesie analizy mowy}
 \frenchspacing
 
 \newcolumntype{K}[1]{>{\centering\arraybackslash}p{#1}}
@@ -584,8 +584,49 @@
 		\end{figure}	
 		
 	   \subsubsection{Estymacja parametrów rozkładu normalnego}
+	   	   
+	   \begin{figure}[H]
+	   \begin{tikzpicture}
+	   \begin{axis}[
+	   axis lines = left
+	   ]
+	   %Below the red parabola is defined
+	   \addplot [
+	   domain=0:20, 
+	   samples=100, 
+	   color=red,
+	   ]
+	   {0.3 * 1/(2.5 * 2) * e ^ (-(x - 5)^2 / (2 * 2 ^ 2))};
+	    
+	   \addplot [
+	   domain=0:20, 
+	   samples=100, 
+	   color=blue,
+	   ]
+	   {0.3 * 1/(2.5 * 4) * e ^ (-(x - 17)^2 / (2 * 4 ^ 2))};
+	   
+	   \addplot [
+	   domain=0:20, 
+	   samples=100, 
+	   color=yellow,
+	   ]
+	   {0.4 * 1/(2.5 * 1.5) * e ^ (-(x - 10)^2 / (2 * 1.5 ^ 2))};
+	   
+	   \addplot [
+	   domain=0:20, 
+	   samples=100, 
+	   color=black,
+	   ]
+	   {0.3 * 1/(2.5 * 2) * e ^ (-(x - 5)^2 / (2 * 2 ^ 2)) + 0.3 * 1/(2.5 * 4) * e ^ (-(x - 17)^2 / (2 * 4 ^ 2)) + 0.4 * 1/(2.5 * 1.5) * e ^ (-(x - 10)^2 / (2 * 1.5 ^ 2))};
+	   
+	   \end{axis}
+	   \end{tikzpicture}
+	   \label{fig:gmm}
+	   \caption{Jednowymiarowa mikstura Gaussowska składająca się z trzech komponentów.}
+	\end{figure}
+	   
 	   \label{sec:gmm_estimation}
-	   W rozdziale \ref{sec:Baum_Welch} posłużono się uproszczeniem zakładającym, że zbiór obserwacji jest skończony i dyskretny. W rzeczywistości przy rozpoznawaniu mowy do określania $b_i(o)$ wykorzystuje się \textit{wielowymiarowe mikstury Gaussowkie} będące sumą kilku rozkładów normalnych. Mikstura opisane jest wzorem \ref{eqn:GMM}, w którym $D$ oznacza liczbę wymiarów wektora cech, $\mu$ jest wektorem średnich, natomiast $\Sigma$ macierzą kowariancji. Korzystając z nisko skorelowanych cech \textit{MFCC} opisanych w rozdziale \ref{sec:Feature_vec_mfcc}, można założyć, że macierz kowariancji $\Sigma$ jest diagonalna. Uproszczenie to znacząco przyśpiesza obliczenia, które nie wymagają kosztownego odwracania macierzy oraz liczenie jej wyznacznika. Ponadto wzór na rozkład normalny upraszcza się do postaci \ref{eqn:normal_distribution_simple}
+	   W rozdziale \ref{sec:Baum_Welch} posłużono się uproszczeniem zakładającym, że zbiór obserwacji jest skończony i dyskretny. W rzeczywistości przy rozpoznawaniu mowy do określania $b_i(o)$ wykorzystuje się \textit{wielowymiarowe mikstury Gaussowkie} będące sumą kilku rozkładów normalnych. Mikstura opisane jest wzorem \ref{eqn:GMM}, w którym $D$ oznacza liczbę wymiarów wektora cech, $\mu$ jest wektorem średnich, natomiast $\Sigma$ macierzą kowariancji. Rysunek \ref{fig:gmm} pokazuje przykład jednowymiarowej mikstury Gaussowskiej składającej się z trzech komponentów. Korzystając z nisko skorelowanych cech \textit{MFCC} opisanych w rozdziale \ref{sec:Feature_vec_mfcc}, można założyć, że macierz kowariancji $\Sigma$ jest diagonalna. Uproszczenie to znacząco przyśpiesza obliczenia, które nie wymagają kosztownego odwracania macierzy oraz liczenie jej wyznacznika. Ponadto wzór na rozkład normalny upraszcza się do postaci \ref{eqn:normal_distribution_simple}
 	   
 	   \begin{equation}
 		   	b_j(o) = \sum_{m=1}^N c_j N_{j,m}(o)
@@ -2389,11 +2430,11 @@ W celu odrzucenia nagrań o niepoprawnej transkrypcji, przepuszczono je przez sy
 		\begin{figure}[H]
 			\centering
 			\begin{tikzpicture}			
-			\begin{axis}[axis lines = left,	xlabel = {Liczba neuronów [$x\cdot300$]} , ylabel = {WER [\%]},xmin=0,xmax=9,ymin=80,ymax=85,]
+			\begin{axis}[axis lines = left,	xlabel = {Liczba neuronów} , ylabel = {WER [\%]},xmin=0,xmax=2500,ymin=80,ymax=85,]
 			
 			\addplot[color=red,mark=square,]
 			coordinates {
-				(1,81.36)(2,82.01)(4,83.10)(8, 83.02)
+				(300,81.36)(600,82.01)(1200,83.10)(2400, 83.02)
 			};
 			
 			\end{axis}			
