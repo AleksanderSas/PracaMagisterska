@@ -40,8 +40,8 @@
 	\smash{\raisebox{15pt}{\refstepcounter{BlockCounter}\hypertarget{#1}{}\label{#1}}}%
 	(\theBlockCounter)%
 }
-\newcommand{\refBlock}[1]{%
-	\hyperref[#1]{\ref*{#1}}% (see p. 18 of the hyperref manual)
+\newcommand{\refBlock}[1]{
+	\hyperref[#1]{\ref*{#1}}
 }
 
 \begin{document}
@@ -70,15 +70,9 @@
 	Oba tryby wymagają możliwie najlepszej skuteczności rozpoznawania, jednak tryb online jest szczególnie wymagający, gdyż dodatkowo wymaga szybkiego działania. Rozpoznawanie w trybie online powinno się odbywać w czasie zbliżony do rzeczywistego. 
 	\\
 	Rozwój kart graficznych i pojawienie się technologii CUDA zaowocowało w ostatnim dziesięcioleciu szybkim rozwojem sieci neuronowych, które w wielu problemach klasyfikacji radzą sobie znacznie lepiej niż wcześniej stosowanie algorytmy. Coraz więcej badaczy próbuje stosować sieci neuronowe w celu poprawy jakości systemów rozpoznających mowę. Można spotkać wiele różnych konfiguracji, zarówno łączących konwencjonalne systemy, jaki i autonomiczne sieci rekurencyjne.
+	Jedną z pierwszych skutecznych prób zastosowania sieci neuronowych przy rozpoznawaniu mowy zaprezentowano w artykule \cite{NN_ASR_monophones}. Autorzy wykorzystują w nim klasyczną sieć typy \textit{feed-forward} do estymacji prawdopodobieństw uni-fonów. W kolejnych latach zaproponowano zastąpienie klasycznych sieci, architekturą splotową oraz zamianę szeroko stosowanych cech \textit{MFCC} na \textit{MFSC}. W artykule \cite{article1} zaprezentowano właśnie takie podejście. Autorzy inspirując się wykorzystaniem głębokich splotowych sieci neuronowych przy rozpoznawaniu obrazów proponują przeniesie tej samej architektury do systemów rozpoznających mowę.
 	\\
-	Celem niniejszej pracy magisterskiej jest przetestowanie możliwości wykorzystania sieci neuronowych w procesie rozpoznawania mowy. Duży nacisk położony jest na możliwość rozpoznawanie trifonów z ograniczonym kontekstem, co jest moim rozwinięciem podejścia spotykanego w wielu publikacjach. Podczas przeprowadzonych eksperymentów zbadano wpływ liczby rozpoznawanych trifonów na skuteczność rozpoznawania mowy.
-	
-\section{Omówienie istniejących podejść}
-	Klasyczne podejście do rozpoznawania mowy, opierające się na wykorzystaniu ukrytych modli markowa oraz wielowymiarowych mikstur gaussowskich, zostało opisane w \cite{book1}. 
-	\\
-	Autorzy \cite{article1} wykorzystali konwolucyjne sieci neuronowe oraz bramki LSTM do modelowania fonów. W tym podejściu, wyjście sieci rozpoznającej wszystkie trifony jest traktowane, jako wejście do modelu Markova. 
-	
-	Tutaj znajdzie się krótki spis książek i publikacji dotyczących podobnych zagadnień.
+	Celem niniejszej pracy magisterskiej jest przetestowanie możliwości wykorzystania sieci neuronowych w procesie rozpoznawania mowy. Duży nacisk położony jest na możliwość rozpoznawanie trifonów, co jest rozwinięciem podejścia proponowanego w publikacji \cite{NN_ASR_monophones}. Przeprowadzono szereg eksperymentów w celu sprawdzenia możliwości poprawy skuteczności rozpoznawania mowy, poprzez zastosowanie sieci neuronowych rozpoznających ograniczony zbiór tri-fonów. Pokazano jak liczba tri-fonów wpływa na skuteczność oraz porównano otrzymane wyniki z klasycznymi modelami gaussowskimi oraz sieciami neuronowymi rozpoznającymi uni-fony.
 
 \section{Proces automatycznego rozpoznawania mowy (ARM) }
 
@@ -1979,109 +1973,13 @@ W celu odrzucenia nagrań o niepoprawnej transkrypcji, przepuszczono je przez ze
 	\caption{Wytrenowane modele akustyczne}
 	\end{figure}
 
-	 \begin{figure}
-	 \begin{adjustwidth}{-1cm}{}
-	\begin{tabular}{|c|c|c|c|c|c|c|} \hline
-		
-		Nazwa modelu & Liczba wyjść & Kontekst & \vtop{\hbox{\strut Parametry}\hbox{\strut pierwszego}\hbox{\strut przejścia}}  & 
-		\vtop{\hbox{\strut Parametry}\hbox{\strut drugiego}\hbox{\strut przejścia}} & \vtop{\hbox{\strut Skuteczność}\hbox{\strut corr}} & \vtop{\hbox{\strut Skuteczność}\hbox{\strut acc}} \\
-		\hline
-		\multirow{7}{*}{Model 240424} &
-		\multirow{7}{*}{-}            &
-		\multirow{7}{*}{5}            & 13 -8 & 13 -9 & 84.88 & 81.09 \\	
-									  &&& \textbf{12 -7} & \textbf{15 -9} & \textbf{85.47} & \textbf{81.55}\\
-									  &&& 12 -7 & 12 -7 & 85.31 & 81.32 \\
-									  &&& 11 -7 & 11 -7 & 85.16 & 81.03 \\
-									  &&& 10 -7 & 10 -7 & 84.98 & 80.72 \\
-									  &&& 7 -8  & 7 -8  & 82.8  & 78.19 \\
-									  &&& 5 -8  & 5 -8  & 78.98 & 73.37 \\
-		\hline
-		\multirow{8}{*}{Model 268154} &
-		\multirow{7}{*}{122}            &
-		\multirow{8}{*}{5}          & \textbf{13 -8} & \textbf{13 -9} & \textbf{85.56} & \textbf{81.69} \\
-									  &&& 12 -7 & 15 -9 & 86.92 & 81.48 \\
-									  &&& 12 -7 & 12 -7 & 85.71 & 81.61 \\
-									  &&& 11 -7 & 11 -7 & 85.72 & 81.50 \\
-									  &&& 10 -7 & 10 -7 & 85.57 & 81.23 \\
-									  &&& 7 -8  & 7 -8  & 83.24 & 78.47 \\
-									  &&& 5 -8  & 5 -8  & 79.62 & 73.9  \\
-									  &&& 18 -7 & 16 -12& 82.33 & 79.04 \\
-		\hline					
-		\multirow{7}{*}{Model 268151} &	
-		\multirow{7}{*}{214}            &	  
-		\multirow{7}{*}{5}          & 13 -8 & 13 -9 & 85.19 & 81.44 \\
-									  &&& \textbf{12 -7} & \textbf{15 -9} & \textbf{88.58} & \textbf{83.39} \\
-									  &&& 12 -7.5 & 15 -9.5&  88.44 & 83.33 \\
-									  &&& 12 -7 16& -9.5   & 88.78  & 83.04 \\
-									  &&& 12 -7 12& -7  & 84.98 & 81.09 \\ 
-									  &&& 11 -7 11& -7  & 84.54 & 80.61 \\
-									  &&& 18 -7 16& -12 & 82.88 & 79.76 \\
-		\hline					
-		\multirow{5}{*}{Model 268148} &	
-		\multirow{7}{*}{304}            &	  
-		\multirow{5}{*}{5} & 13 -8 & 13 -9 & 64.85 & 54.30 \\
-									  &&& \textbf{12 -7} & \textbf{15 -9} & \textbf{71.22} & \textbf{57.42} \\
-									  &&& 12 -7 & 12 -7 & 64.07 & 52.58 \\
-									  &&& 7 -8  & 7 -8  & 54.39 & 39.58 \\
-									  &&& 18 -7 & 16 -12& 62.64 & 55.14 \\
-		\hline
-		
-	\end{tabular}
-	\caption{\label{tab:text1}Wyniki cz.1}
-	\end{adjustwidth}
-	\end{figure}
-
-	\begin{figure}
-	\begin{adjustwidth}{-3.8cm}{}
-	\begin{tabular}{|c|c|c|c|c|c|c|} \hline
-		Nazwa modelu & Liczba wyjść & Kontekst & \vtop{\hbox{\strut Parametry}\hbox{\strut pierwszego}\hbox{\strut przejścia}}  & 
-		\vtop{\hbox{\strut Parametry}\hbox{\strut drugiego}\hbox{\strut przejścia}} & \vtop{\hbox{\strut Skuteczność}\hbox{\strut corr}} & \vtop{\hbox{\strut Skuteczność}\hbox{\strut acc}} \\
-		\hline
-		\multirow{9}{*}{Model 268159} &
-		\multirow{7}{*}{231}            &
-		\multirow{9}{*}{5}          & 18 -7 & 16 -12 & 83.43 & 79.90 \\
-		&&& 12 -7 & 15 -9  & 89.25 & 83.37 \\
-		&&& 12 -7 & 15 -9  & 89.11 & 83.40 \\
-		&&& \textbf{12 -10}& \textbf{15 -10} & \textbf{88.80} & \textbf{83.48} \\
-		&&& 13 -10& 15 -10 & 88.10 & 83.37 \\
-		&&& 7 -8  & 7 -8   & 79.79 & 74.63 \\
-		&&& 12 -7 & 12 -7  & 85.22 & 80.68 \\
-		&&& 13 -11& 15 -11 & 87.92 & 83.34 \\
-		&&& 14 -12& 15 -12 & 86.24 & 82.19 \\
-		\hline
-		\multirow{7}{*}{Model 268158} &
-		\multirow{7}{*}{147}            &
-		\multirow{7}{*}{5}          & 18 -7 & 16 -12 & 82.88 & 79.64 \\
-		&&& 12 -7 & 15 -9  & 88.56 & 83.18 \\
-		&&& \textbf{12 -10}& \textbf{15 -10} & \textbf{88.17} & \textbf{83.24} \\
-		&&& 7 -8  & 7 -8   & 73.31 & 78.59 \\
-		&&& 11 -10& 11 -10 & 84.95 & 81.12 \\
-		&&& 11 -9 & 11 -9  & 85.32 & 81.32 \\
-		&&& 12 -9 & 12 -9  & 85.51 & 81.55 \\
-		\hline
-		MODEL\_CL\_33000, rectify        & 231 & 5 & 12 -10 & 15 -10 & 88.84 & 83.50 \\
-		\hline
-		MODEL\_CL\_33000, leaky\_rectify & 231 & 5 & 12 -10 & 15 -10 & 89.19 & 83.89 \\
-		\hline
-		MODEL\_CL\_33000, leaky\_rectify & 231 & 7 & 12 -10 & 15 -10 & 88.95 & 83.56 \\
-		\hline
-		MODEL\_CL\_33000, leaky\_rectify & 231 & 9 & 12 -10 & 15 -10 & 88.90 & 83.49 \\
-		\hline
-		MODEL\_CL\_33000, leaky\_rectify & 231 & 2 & 12 -10 & 15 -10 & 89.24 & 83.64 \\
-		\hline
-		
-	\end{tabular}
-	\end{adjustwidth}
-	\caption{\label{tab:text2}Wyniki cz.2}
-	\end{figure}
-
 	Wiele badań i publikacji pokazało, że stosując \textit{tri-fonowe modele akustyczne} można znacząco poprawić skuteczność rozpoznawania. Niestety przejście z modeli \textit{uni-fonowych} do \textit{tri-fonowych} wiąże się ze zwiększeniem stopnia skomplikowania całego systemu, procesu uczenia, jak i wydłużeniem samego czasu rozpoznawania. Ponadto, w przypadku zastosowania sieci neuronowej, duża liczba stanów modelu tri-fonowego wymaga jednoczesnej estymacji wielu prawdopodobieństw, co z kolei może utrudnić proces trenowania sieć. Kompromisem pomiędzy modelami czysto tri-fonowymi, które modelują wszystkie występujące trifony, a uni-fonowymi oferującymi przeciętną jakość rozpoznawania, są właśnie \textit{modele tri-fonowe z ograniczonym kontekstem} budowane zgodnie z koncepcją opisane w rozdziale \ref{sec:state_red}. Modele te łączą zwiększoną zdolność gromadzenia wiedzy klasycznych modeli tri-fonowych ze zmniejszoną liczbą parametrów, które trzeba wyuczyć w klasycznym modelu uni-fonowych. Ponadto w przeciągu kilku ostatnich lat, pojawiło się wiele publikacji na temat zastosowania sieci neuronowych, jako estymatorów prawdopodobieństwa stanów model Markova >> DODAC CYTATY <<. Chcą sprawdzić możliwości połączenia obu wspomnianych podejść, \textit{modeli z ograniczonym kontekstem} oraz \textit{sieci neuronowych} estymujących prawdopodobieństwa stanów, zgodnie z opisem w rozdziale \ref{sec:ASR_NN}, przeprowadzono szereg eksperymentów, mających sprawdzić wpływ ograniczania kontekstu na skuteczność sieci neuronowej. Dodatkowo porównano skuteczność klasycznego podejścia opisanego w rozdziale \ref{sec:ASR_HMM} z proponowanym podejściem. Przeprowadzone eksperymenty dały możliwość zweryfikowania głównej tezy niniejszej pracy, zgodnie z która: \textbf{Trifonowe modele o ograniczonym kontekście umożliwiają poprawę skuteczności rozpoznawania, względem klasycznych Gaussowkich modeli akustycznych.}
 	
 	
 	\subsection{ Środowisko sprzętowo-programisytyczne }
 	\label{sec:env}
 	
-	W celu przeprowadzenia eksperymentów wykorzystany został szereg ogólnodostępnych pakietów i bibliotek oraz komercyjny system do rozpoznawania mowy \textit{Magic Scribe} firmy \textit{Unikkon} z Wrocławia. W skład ogólnodostępnych, wykorzystanych pakietów wchodzi \textit{HTK} (\url{http://htk.eng.cam.ac.uk/}) oferujący zestaw narzędzi do budowy klasycznych modeli akustycznych oraz językowych. Kolejnym wykorzystanym narzędziem jest \textit{Julius} (\url{http://julius.osdn.jp/en_index.php}) będący dekoderem w pełni kompatybilnym z pakietem HTK. Julius jest jednym z kilku open-sourcowych dekoderów. Pomimo, że nie oferuje on najwyższej skuteczności rozpoznawani, o czym można przeczytać w artykule \cite{asr_toolkit_cmp}, zdecydowałem się na to narzędzie ponieważ mam doświadczenie w pracy z nim. Ponadto Julius uchodzi za szybki dekoder, co też jest istotne z punktu widzenia użytkownika systemu rozpoznającego mowę. Do budowy sieci neuronowych wykorzystano bibliotekę \textit{Lasagne} \url{http://lasagne.readthedocs.io/en/latest/}, napisaną w języku Python. Zapewnia ona wygodny interfejs do środowiska \textit{Theano}. Lasagne oferuje zestaw metod do budowy sieci składających się z warstw klasycznych, splotowych, dropout, max-pull itd. \textit{Theano} (\url{http://deeplearning.net/software/theano/}) jest z kolei biblioteką umożliwiającą wykonywanie współbieżnych obliczeń na karcie graficznej. Z wykorzystaniem tej biblioteki oraz GPU udało się znacząco przyśpieszyć trening sieci neuronowych w stosunku do treningu na CPU. Schemat zależności pomiędzy użytymi komponentami oraz budowanymi w trakcie eksperymentów modelami, znajduje się na rysunku \ref{fig:arch}. 
+	W celu przeprowadzenia eksperymentów wykorzystany został szereg ogólnodostępnych pakietów i bibliotek oraz komercyjny system do rozpoznawania mowy \textit{Magic Scribe} firmy \textit{Unikkon} z Wrocławia. W skład ogólnodostępnych, wykorzystanych pakietów wchodzi \textit{HTK} (\url{http://htk.eng.cam.ac.uk/}) oferujący zestaw narzędzi do budowy klasycznych modeli akustycznych oraz językowych. Kolejnym wykorzystanym narzędziem jest \textit{Julius} (\url{http://julius.osdn.jp/en_index.php}) będący dekoderem w pełni kompatybilnym z pakietem HTK. Julius jest jednym z kilku open-sourcowych dekoderów. Pomimo, że nie oferuje on najwyższej skuteczności rozpoznawani, o czym można przeczytać w artykule \cite{asr_toolkit_cmp}, zdecydowałem się na to narzędzie ponieważ mam doświadczenie w pracy z nim. Ponadto Julius uchodzi za szybki dekoder, działający w czasie zbliżonym do rzeczywistego, co też jest istotne z punktu widzenia użytkownika systemu rozpoznającego mowę. W artykule \cite{julius} twórcy \textit{juliusa} opisują swój system oraz zastosowane algorytmy i struktury danych umożliwiające osiągnięcie wysokiej szybkości rozpoznawania. Do budowy sieci neuronowych wykorzystano bibliotekę \textit{Lasagne} \url{http://lasagne.readthedocs.io/en/latest/}, napisaną w języku Python. Zapewnia ona wygodny interfejs do środowiska \textit{Theano}. Lasagne oferuje zestaw metod do budowy sieci składających się z warstw klasycznych, splotowych, dropout, max-pull itd. \textit{Theano} (\url{http://deeplearning.net/software/theano/}) jest z kolei biblioteką umożliwiającą wykonywanie współbieżnych obliczeń na karcie graficznej. Z wykorzystaniem tej biblioteki oraz GPU udało się znacząco przyśpieszyć trening sieci neuronowych w stosunku do treningu na CPU. Schemat zależności pomiędzy użytymi komponentami oraz budowanymi w trakcie eksperymentów modelami, znajduje się na rysunku \ref{fig:arch}. 
 	
 	Punktem wyjścia stworzonej architektury jest korpus językowy \textit{Clarin} przedstawiony w rozdziale \ref{sec:opis_danych}, na schemacie \ref{fig:arch} odpowiada mu blok \refBlock{clarin_wav}. Na podstawie transkrypcji zawartych w korpusie, zbudowano model językowy wraz ze słownikiem \refBlock{lang_model_clarin}, wykorzystując do tego pakiet HTK oraz system Magic Scribe z bloku \refBlock{htk_ms}. Do budowy modelu językowego i słownika \refBlock{lang_model_clarin} wykorzystano wszystkie wypowiedzi ze zbioru treningowego, walidacyjnego i testowego. Tak powstały model językowy został wykorzystany wraz z zewnętrznym modelem akustycznym \refBlock{model_acc_ms} do rozpoznania wypowiedzi z korpusu \refBlock{clarin_wav} i stworzenia plików \textit{mfc} oraz \textit{out} tworzących korpus \refBlock{clarin_mfc}. Każdej z oryginalnych wypowiedzi znajdujących się w korpusie \refBlock{clarin_wav} przypisano w zbiorze \refBlock{clarin_mfc}, plik \textit{mfc} zawierający kolejne wektory cech oraz plik \textit{out} z zapisanym mapowaniem tri-fonu wraz z numerem stanu na ramkę. Pliki \textit{out} wygenerował dekoder \refBlock{julius} podczas procesu rozpoznawania. Dzięki dobremu zewnętrznemu  modelowi akustycznemu \refBlock{model_acc_ms} oraz modelowi językowemu \refBlock{lang_model_clarin} uzyskano bardzo wysoką skuteczność rozpoznawania <<<??>>>, dzięki czemu dopasowanie ramek do stanów w korpusie \refBlock{clarin_mfc} jest bardzo precyzyjne. Wysoka skuteczność jest w znacznej mierze efektem budowy słownika \refBlock{lang_model_clarin} na zbiorze, który został nim później rozpoznany. Słownik z modelu \refBlock{lang_model_clarin} zawiera jedynie słowa, które mają się pojawić w wyniku rozpoznawania. Na podstawie korpusu \refBlock{clarin_mfc} przygotowano narzędziem \refBlock{data_processor} dane do treningu sieci neuronowej. Efektem działania narzędzia \refBlock{data_processor} jest plik z mapowaniem \textit{wektor cech} $\longrightarrow$ \textit{stan modelu Markova}. Podczas tego etapu dokonana została normalizacja wektorów cech dla każdej frazy zgodnie z opisem w rozdziale \ref{sec:Feature_vec_mfcc}. Wykorzystując stworzone mapowanie oraz wspomnianą powyżej bibliotekę \textit{Lasagne} i \textit{Theano} w kroku \refBlock{net_build} wytrenowano szereg sieci neuronowych \refBlock{net}. Ostatecznie uruchomiono rozpoznawanie \textit{zbioru testowego} dekoderem \refBlock{julius3} korzystającym z sieci neuronowych \refBlock{net}. W efekcie otrzymano skuteczności rozpoznawania \refBlock{results2}. Należy dodać, że dekoder \refBlock{julius3} jest oryginalnym dekoderem \textit{Julius} rozbudowanym o własnoręcznie dopisany moduł pobierający prawdopodobieństwa stanów modelu Markowa z sieci neuronowej, zamiast z klasycznego modelu Gaussowskiego. Równocześnie korzystając z pakietu HTK i systemu Magic Scribe (\refBlock{htk_ms}) wyuczono szereg klasycznych modeli akustycznych \refBlock{model_acc4}, modele te zostały wytrenowane jedynie na \textit{zbiorze treningowym} z korpusu \refBlock{clarin_wav}. Następnie wykorzystując te modele dokonano testów skuteczności rozpoznawania \textit{zbioru testowego} z korpusu \refBlock{clarin_wav} dekoderem \refBlock{julius2}. W efekcie otrzymano skuteczność \refBlock{results1}.
 	
@@ -2611,9 +2509,10 @@ W celu odrzucenia nagrań o niepoprawnej transkrypcji, przepuszczono je przez ze
 	\end{figure}
 		
 	\subsection{ Wpływ głębokości/architektury sieci na skuteczność rozpoznawania }
-		Celem tego eksperymentu jest sprawdzenie, jak architektura sieci, w tym liczba neuronów wpływa na skuteczność rozpoznawania. W pierwszej części eksperymentu zbudowano szereg modeli neuronowych bazujących na jednym modelu Gaussowskim o $231$ stanach. Modele miały taki sam kontekst równy $5$ oraz tę samą liczbę i kształt filtrów. Sieci miały taką sama architekturę jak w rozdziale \ref{sec:q-num_impact}. Jedynym parametrem, jaki uległ zmianie, była liczba neuronów w środkowej, pełnej warstwie. 
+		Celem tego eksperymentu jest sprawdzenie, jak architektura sieci, w tym liczba neuronów wpływa na skuteczność rozpoznawania. W pierwszej części eksperymentu zbudowano szereg modeli neuronowych bazujących na jednym modelu Gaussowskim o $231$ stanach. Modele miały taki sam kontekst równy $5$ oraz tę samą liczbę i kształt filtrów. Sieci miały taką sama architekturę jak w rozdziale \ref{sec:q-num_impact}. Jedynym parametrem, jaki uległ zmianie, była liczba neuronów w środkowej, pełnej warstwie. 		
 		
-		Otrzymane wyniki zamieszczono w tabeli \ref{tab:n_impact} i zilustrowano wykresem \ref{fig:n_impact}. Przeprowadzone testy pokazały, że liczba neuronów w warstwie ukrytej ma wpływ na skuteczność. Optymalną wartością wydaje się $1200$ neuronów, dalsze rozszerzanie warstwy jedynie utrudnia trening sieci.
+		Otrzymane wyniki zamieszczono w tabeli \ref{tab:n_impact} i zilustrowano wykresem \ref{fig:n_impact}. Przeprowadzony test pokazał, że liczba neuronów w warstwie ukrytej ma wpływ na skuteczność. Optymalną wartością wydaje się $1200$ neuronów, dalsze rozszerzanie warstwy jedynie utrudnia trening sieci.
+		
 		
 		\begin{figure}
 			\begin{tabular}{|c|c|c|c|c|c|} \hline
@@ -2645,6 +2544,136 @@ W celu odrzucenia nagrań o niepoprawnej transkrypcji, przepuszczono je przez ze
 			\label{fig:n_impact}
 			\caption{Wpływ liczby neuronów warstwy ukrytej na skuteczność rozpoznawania.}
 		\end{figure}
+	
+	W drugiej części zbudowano dwie kolejne sieci o innej architekturze. Pierwsza z nich była uproszczona, nie zawierała ukrytej warstwy pełnej, miała 24 filtry. Druga sieć miła dodatkową warstwę splotową, obie warstwy splotowe miały po 24 filtry, warstwa pełna miała 600 neuronów. Zmniejszenie szerokości warstwo podyktowane było czasem treningu. Schemat \ref{fig:arch_exp} przedstawia obie architektury.
+	W przeprowadzonym eksperymencie uproszczona siec uzyskała $77.38 \%$ skuteczności, natomiast rozbudowana $82.35 \%$. Oba wyniki są gorsze od najlepszej wartości z pierwszego eksperymentu, wynoszącej $83.10\%$, co sugeruje że przyjęta w poprzednich eksperymentach architektura ze schematu \ref{fig:arch_q_num_impact}, wydaje się być optymalną. Sieci o mniejszej liczbie warstw nie dysponują wystarczająca pojemnością wiedzy, a modele bardziej rozbudowane są zbyt trudne do wyuczenia. 
+	
+		\begin{figure}[H]
+		\centering
+		\begin{tikzpicture}
+		
+		\begin{scope}
+		
+		\tikzstyle{conv_layer} = [fill=black,fill=gray!20,draw=black, text centered]
+
+		//------------------------ siec 1 -----------------------------------
+				
+		\node at (-3.75,2.4){$24$ filtry};
+		
+		\def\w{1.2}		
+		
+		\def\x{-4.5}	
+		\def\y{0.5}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \w};
+		\draw [fill=black,fill=gray!20,draw=black] (\x,\y) rectangle (\X,\Y);
+		
+		
+		\def\x{-4.25}	
+		\def\y{0.25}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \w};
+		\draw [fill=black,fill=gray!20,draw=black] (\x,\y) rectangle (\X,\Y);
+		
+		\def\x{-4.0}	
+		\def\y{0.0}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \w};
+		\draw [fill=black,fill=gray!20,draw=black] (\x,\y) rectangle (\X,\Y) node [black,midway] {$11\times6$};
+		
+		\def\w{0.6}	
+		\def\h{1.2}	
+		\def\x{-1.75}	
+		\def\y{0.25}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \h};
+		\draw [fill=black,fill=gray!20,draw=black] (\x,\y) rectangle (\X,\Y) node [black,midway, rotate=90] {$231$};
+		
+		\draw (-3.3,1.7) -- (-1.75,1.0);
+		\draw (-2.8,0.0) -- (-1.75,1.0);
+		
+		//------------------------ siec 2 -----------------------------------
+		//splot 1
+		\def\w{1.2}	
+		
+		\node at (0.5,2.4){$24$ filtry};
+		
+		\def\x{0.0}	
+		\def\y{0.5}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \w};
+		\draw [fill=black,fill=gray!20,draw=black] (\x,\y) rectangle (\X,\Y);
+		
+		
+		\def\x{0.25}	
+		\def\y{0.25}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \w};
+		\draw [fill=black,fill=gray!20,draw=black] (\x,\y) rectangle (\X,\Y);
+		
+		\def\x{0.5}	
+		\def\y{0.0}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \w};
+		\draw [fill=black,fill=gray!20,draw=black] (\x,\y) rectangle (\X,\Y) node [black,midway] {$6\times5$};
+		
+		//splot2
+		\node at (2.5,2.4){$24$ filtry};
+		
+		\draw (1.2,1.7) -- (2.25,1.0);
+		\draw (1.7,0.0) -- (2.25,1.0);
+		
+		\def\x{2.25}	
+		\def\y{0.5}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \w};
+		\draw [fill=black,fill=gray!20,draw=black] (\x,\y) rectangle (\X,\Y);
+		
+		
+		\def\x{2.5}	
+		\def\y{0.25}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \w};
+		\draw [fill=black,fill=gray!20,draw=black] (\x,\y) rectangle (\X,\Y);
+		
+		\def\x{2.75}	
+		\def\y{0.0}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \w};
+		\draw [fill=black,fill=gray!20,draw=black] (\x,\y) rectangle (\X,\Y) node [black,midway] {$6\times5$};
+		
+		//pelna srodkowa	
+		
+		\draw (3.45,1.7) -- (5.0,1.0);
+		\draw (3.95,0.0) -- (5.0,1.0);
+		
+		\def\w{0.6}	
+		\def\h{1.7}	
+		\def\x{5.0}	
+		\def\y{0.0}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \h};
+		\draw [fill=black,fill=gray!20,draw=black] (\x,\y) rectangle (\X,\Y) node [black,midway, rotate=90] {$600$};
+
+		
+		\def\w{0.6}	
+		\def\h{1.2}	
+		\def\x{6.5}	
+		\def\y{0.25}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \h};
+		\draw [fill=black,fill=gray!20,draw=black] (\x,\y) rectangle (\X,\Y) node [black,midway, rotate=90] {$231$};
+		
+		\draw (5.6,1.7) -- (6.5,1.0);
+		\draw (5.6,0.0) -- (6.5,1.0);
+		
+		\end{scope}
+		
+		\end{tikzpicture}
+		\label{fig:arch_exp}
+		\caption{Architektura sieci przy badaniu wpływu architektury na skuteczność rozpoznawania mowy.}
+	\end{figure}
+	
 	
 	\subsection{ Wpływ szerokości kontekstu na skuteczność rozpoznawania }
 		Typowa szybkość mówienia wynosi $12-14$ głosek na sekundę, w konsekwencji przeciętna głoska zajmuje $7-8$ ramek. W związku z tym, uzasadnione wydaje się przekazywanie do wektora cech wielu kolejnych ramek. W tym eksperymencie sprawdzono wpływ liczby ramek, z których budowany jest wektor cech na skuteczność rozpoznawania mowy z wykorzystaniem sieci neuronowych. Architektura wykorzystanej siec była podobna do architektury z eksperyment opisanego w rozdziale \ref{sec:q-num_impact}. Jednak teraz liczba neuronów w warstwie wyjściowej była ustalona, gdyż bazowano na jednym modelu akustycznym o $231$ stanach. Liczba filtrów pozostała taka sama i wyniosła $64$. Zmieniał się natomiast kształt filtrów, który wynosił $kontekst \cdot 2 + 1 \times 6$. Ponadto zamiast funkcji nieliniowości \textit{rectify} wykorzystano funkcję \textit{leaky rectify} opisana wzorem $\max(x, 0.01x)$. Wykres \ref{fig:fig_ctx_impact} przedstawia wyniki przeprowadzonych eksperymentów. 
