@@ -62,20 +62,20 @@
 		\item online, w którym system na bieżąco rejestruję dźwięk i wypisuje transkrypcję.
 	\end{itemize}
 	Oba tryby wymagają możliwie najlepszej skuteczności rozpoznawania, jednak tryb online jest szczególnie wymagający, gdyż dodatkowo wymaga szybkiego działania. Rozpoznawanie w trybie online powinno się odbywać w czasie zbliżony do rzeczywistego. 
-	\\
+	
 	Rozwój kart graficznych i pojawienie się technologii CUDA zaowocowało w ostatnim dziesięcioleciu szybkim rozwojem sieci neuronowych, które w wielu problemach klasyfikacji radzą sobie znacznie lepiej niż wcześniej stosowanie algorytmy. Coraz więcej badaczy próbuje stosować sieci neuronowe w celu poprawy jakości systemów rozpoznających mowę. Można spotkać wiele różnych konfiguracji, zarówno łączących konwencjonalne systemy, jaki i autonomiczne sieci rekurencyjne.
 	Jedną z pierwszych skutecznych prób zastosowania sieci neuronowych przy rozpoznawaniu mowy zaprezentowano w artykule \cite{NN_ASR_monophones}. Autorzy wykorzystują w nim klasyczną sieć typy \textit{feed-forward} do estymacji prawdopodobieństw uni-fonów. W kolejnych latach zaproponowano zastąpienie klasycznych sieci architekturą splotową oraz zamianę szeroko stosowanych cech \textit{MFCC} na \textit{MFSC}. W artykule \cite{article1} zaprezentowano właśnie takie podejście. Autorzy inspirując się wykorzystaniem głębokich, splotowych sieci neuronowych przy rozpoznawaniu obrazów, proponują przeniesie tej samej architektury do systemów rozpoznających mowę.
-	\\
+	
 	Celem niniejszej pracy magisterskiej jest przetestowanie możliwości wykorzystania sieci neuronowych w procesie rozpoznawania mowy. Duży nacisk położony jest na możliwość rozpoznawanie tri-fonów, co jest rozwinięciem podejścia proponowanego w publikacji \cite{NN_ASR_monophones}. Przeprowadzono szereg eksperymentów w celu sprawdzenia możliwości poprawy skuteczności rozpoznawania mowy, poprzez zastosowanie sieci neuronowych rozpoznających ograniczony zbiór tri-fonów. Pokazano, jak liczba tri-fonów wpływa na skuteczność oraz porównano otrzymane wyniki z klasycznymi modelami gaussowskimi oraz sieciami neuronowymi rozpoznającymi uni-fony.
 
 \chapter{Proces automatycznego rozpoznawania mowy (ARM) }
 
 	\begin{figure}[H]
-		\centering
-		\begin{tikzpicture}[node distance = 2cm, auto]
+		\hspace*{-0.5cm}
+		\begin{tikzpicture}[node distance = 1.7cm, auto]
 		
-		\tikzstyle{ArmBlok} = [rectangle, draw, fill=blue!20, text width=10em, text centered, rounded corners, minimum height=4em]
-		\tikzstyle{model} = [ellipse, draw, fill=blue!20, text width=6em, text centered, rounded corners, minimum height=4em, node distance=5cm]
+		\tikzstyle{ArmBlok} = [rectangle, draw, fill=blue!20, text width=12em, text centered, rounded corners, minimum height=3em]
+		\tikzstyle{model} = [ellipse, draw, fill=blue!20, text width=7em, text centered, rounded corners, minimum height=3em, node distance=5cm]
 		\tikzstyle{data} = [draw, ellipse,fill=red!20, node distance=2cm,minimum height=2em]
 		
 		% Place nodes
@@ -1266,6 +1266,25 @@
 	\label{sec:ASR_NN}
 	W prezentowanym podejściu do rozpoznawania mowy z wykorzystaniem sieci neuronowych, sieć jest wykorzystywana do wyznaczania prawdopodobieństw stanów na podstawie wektora cech, co odpowiada blokwi \refBlock{klasyfikator} z rysunku \ref{fig:ARM_schemat}).
 	
+	\subsection{Splotowe sieci neuronowe}
+		
+		Splotowe sieci neuronowe, będące rozwinięciem klasycznych sieci, zostały pierwotnie zaprojektowane na potrzeby rozpoznawania obrazów. Zyskały szerokie uznanie po prezentacji sieci, opisanej w artykule \cite{alex_net}. Sieć składa się zarówno ze standardowych warstw, w których wyjście jest opisane wzorem \ref{eqn:nn_std}, jak i splotowych.
+		W klasycznej warstwie wejściem jest wektor $Input$, natomiast wyjściem wektor $Output$ przemnożony przez macierz $W$, które powstaje w wyniku treningu sieci i przechowuje zdobytą wiedzę. Dodatkowo na każdy z osobna element wektora wyjściowego, nakłada się nieliniową funkcję $f$ zwaną \textit{funkcją aktywacji}. Przykładowe funkcje aktywacji to $\max(0, x)$, $\max(0.0x, x)$ lub $\tanh(x)$. Więcej funkcji aktywacji wraz ze wzorami można znaleźć w dokumentacji biblioteki wykorzystanej w eksperymentach\footnote{http://lasagne.readthedocs.io/en/latest/modules/nonlinearities.html}. 
+		
+		\begin{equation}
+			Output = f(Input \cdot W)
+			\label{eqn:nn_std}
+		\end{equation}
+		
+		Warstwa splotowa składa z zadanej parametrem $n$ liczby filtrów, o ustalonym kształci $a\times b$. Podczas treningu wyznaczane są współczynniki filtrów. Wejściem warstwy jest macierzy trójwymiarowa o wymiarach $x \times y \times k$, natomiast wyjściem jest macierz trójwymiarowa o wymiarach $x - a + 1 \times y - b + 1 \times n$. Podobnie jak przy klasycznych warstwach, tutaj również na wyjście nakłada się funkcje aktywacji $f$. Pojedyncze wyjście $Output_{p,q,m}$ opisane jest wzorem \ref{eqn:nn_conv}, gdzie $Input[p:p+a, q:q+b, i]$ jest podmacierzą, $W_m$ współczynnikami $m$-tego filtra, natomiast $\ast$ operacją splotu.
+		
+		\begin{equation}
+		Output_{p,q,m} = f\bigg(\sum_{i=1}^k Input[p:p+a, q:q+b, i] \ast W_m\bigg)
+		\label{eqn:nn_conv}
+		\end{equation}
+		
+		Sieć powstaje poprzez łączenie ze sobą wielu warstw, tak aby wyjście jednej było wejściem kolejnej warstwy. Trening sieci wykonywany jest za pomocą algorytmu \textit{back propagation} opisanego w artykule \cite{pack_propagation}. Podczas treningu pokazuje się sieci kolejno wektory wejściowe i modyfikuje współczynniki $W$, tak aby zminimalizować błąd wyjścia całej sieci.
+	
 	\subsection{Sieć jako estymator prawdopodobieństw stanów }
 	\label{sec:nn_estymator}
 		Sieć neuronowa wykorzystywana jako klasyfikator, dostaje na wejściu $k$-elementowy wektor cech $v \in \mathbb{R}^k$, natomiast na wyjściu zwraca $n$-elementowy wektor $w \in \mathbb{R}_+^n$, gdzie $n$ jest liczbą rozpoznawanych klas. W idealnym klasyfikatorze $w \in \{0,1\}^n$ i dokładnie jeden element ma wartość $1$, a pozostałe $0$. W praktyce, klasyfikatory nie udzielają tak idealnych odpowiedzi, dlatego uznajemy, że klasyfikator wybiera klasę o największej wartości w wektorze wyjściowym. Aby nadać wyjściu klasyfikatora charakter prawdopodobieństwa, należy nałożyć na niego funkcję \textit{softmax} opisaną równaniem \ref{eqn:softmax}. Po złożeniu z funkcją \ref{eqn:softmax} klasyfikator będzie wyznaczał $P(w_i|v)$, czyli prawdopodobieństwo $i$-tej klasy pod warunkiem wektora wejściowego $v$.
@@ -1510,7 +1529,13 @@
 	
 	\subsection{ Definicja modelu z ograniczonym kontekstem }
 		\label{sec:tri-fone_mapping}
-		Korzystając ze spostrzeżenia, że tylko niektóre tri-fony o wspólnym środkowym fonemie istotnie się różnią, można zastosować mechanizm współdzielenia \textit{fizycznych modeli} przez wiele tri-fonów. Poprzez \textit{fizyczne tri-fony} będziemy tu rozumieć modele, które mają bezpośrednio zdefiniowane parametry, czyli przypisane stany modelu Markowa oraz macierz przejścia pomiędzy nimi. Poprzez \textit{tri-fony wirtualne} będziemy rozumieć modele, które są zdefiniowane poprzez jakiś tri-fon fizyczny. Innymi słowy, istnieje mapowanie z tri-fonu wirtualnego na tri-fon fizyczny. Tri-fony fizyczne stanowią reprezentantów całej grupy, która jest na nie mapowana. Rysunek \ref{fig:virtual_phisical_tri-phones} pokazuje przykładowe mapowanie. Oznaczenia tri-fonów z rysunku są zgodne z konwencją przedstawioną w rozdziale \ref{sec:trifones_definition}. Znajdujące się na nim tri-fony $d-b+d$, $k-l+m$ oraz $u-y+t$ sa fizyczne, natomiast $d-b+e$, $a-b+c$, $x-y+z$ oraz $d-y+t$ sa wirtualne. Stany z których zbudowane są tri-fony fizyczne mogą być współdzielone. Oba mechanizmy, współdzielenie pojedynczych stanów oraz całych konfiguracji umożliwia bardzo skuteczne ograniczenie liczby parametrów, które trzeba wyliczyć podczas procesu rozpoznawania i treningu modelu akustycznego. W tabeli \ref{tab:acustic_models} umieszczono zestawienie modeli akustycznych, wytrenowanych na potrzeby eksperymentu, w kolumnie \textit{Liczba stanów} wpisano liczbę stanów, do jakiej ograniczono modele tri-fonowe, korzystając z opisanego mechanizmu. \\
+		Korzystając ze spostrzeżenia, że tylko niektóre tri-fony o wspólnym środkowym fonemie istotnie się różnią, można zastosować mechanizm współdzielenia modeli przez wiele tri-fonów, tworząc tym samym \textit{klasy abstrakcji}. Grupa tri-fonów należeć będzie do tej samej klasy abstrakcji, jeśli opisana jest takimi samymi parametrami, w skład których wchodzą stany tworzące fonem oraz prawdopodobieństwa przejść pomiędzy nimi. Z przyczyn implementacyjno-techniczny każda klasa abstrakcji będzie miała swojego reprezentanta, zwanego \textit{tri-fonem fizycznym}. Rysunek \ref{fig:virtual_phisical_tri-phones} pokazuje przykładowe klasy abstrakcji. Oznaczenia tri-fonów z rysunku są zgodne z konwencją przedstawioną w rozdziale \ref{sec:trifones_definition}. Schemat przedstawia trzy klasy abstrakcji 
+		\begin{itemize}
+			\item $(d-b+e) \equiv (a-b+c) \equiv (c-b+d)$
+			\item $(k-l+m)$ 
+			\item $(x-y+z) \equiv (w-y+z) \equiv (u-y+t)$
+		\end{itemize} 
+		Każda z nich jest zaznaczona ramką. Reprezentantem jest tri-fon z którego wychodzą bezpośrednie przejścia do stanów. Stany z których zbudowani są reprezentanci klas abstrakcji mogą być współdzielone. Oba mechanizmy, współdzielenie pojedynczych stanów oraz całych konfiguracji, umożliwia bardzo skuteczne ograniczenie liczby parametrów, które trzeba wyliczyć podczas procesu rozpoznawania i treningu modelu akustycznego. W tabeli \ref{tab:acustic_models} umieszczono zestawienie modeli akustycznych, wytrenowanych na potrzeby eksperymentu, w kolumnie \textit{Liczba stanów} wpisano liczbę stanów, do jakiej ograniczono modele tri-fonowe, korzystając z opisanego mechanizmu. \\
 		Poprzez \textit{Model z ograniczonym kontekstem} będziemy rozumieć akustyczny model tri-fonowy, w którym ograniczono liczbę stanów modelu Markowa poprzez oba opisane powyżej sposoby.
 		
 		
@@ -1525,6 +1550,10 @@
 			\def\z{\x * 2}
 			\def\y{1.4}
 			\def\j{2.0}
+			
+			\draw[dotted] (-1,-4) rectangle (3.2,1);
+			\draw[dotted] (4,-4) rectangle (6.3,1);
+			\draw[dotted] (6.75,-4) rectangle (10.85,1);
 			
 			\node [hmm] (p1) {d-b+e};
 			\node [hmm, right = \x cm of p1] (p2) {a-b+c};
@@ -1563,7 +1592,7 @@
 			\end{scope}
 			
 			\end{tikzpicture}
-			\caption{Mapowanie tri-fonów wirtualnych na tri-fony fizyczne}
+			\caption{Współdzielenie modeli przez klasy abstrakcji.}
 			\label{fig:virtual_phisical_tri-phones}
 			
 		\end{figure}
@@ -1572,9 +1601,9 @@
 	\label{sec:state_red}
 	Wykorzystany do budowy modeli akustycznych pakiet \textit{HTK} oferuje dwie metody ograniczania liczby stanów. Pierwsza metoda o nazwie \textit{Data driven clustering} zakłada, że na wejściu dostaje się zbiór tri-fonów. Każdy z tri-fonów ma przypisane trzy stany, zgodnie z opisem w rozdziale \ref{sec:Phones}. Następnie porównuje się zróżnicowanie w obrębie pierwszych, drugich i trzecich stanów. Jeśli dwa stany są podobne, łączy się je. W efekcie, wraz z każdą iteracją algorytmu, otrzymuje się mniejszy zbiór stanów wykorzystywanych przez zbiór tri-fonów. Jako miarę podobieństwa pomiędzy stanami wykorzystuje się odległość Euklidesową średnich z rozkładów normalnych modelujących stan. Wadą tej metody jest niemożność obsłużenia tri-fonów, które nie wystąpiły w zbiorze treningowym.
 	
-	Drugą metodą z pakietu \textit{HTK}, która została wykorzystana podczas eksperymentów, jest \textit{Tree- based clustering}. Twórcy \textit{Tree- based clustering} opisali swój algorytm w artykule \cite{tree_based_clustring}. W przeciwieństwie do \textit{Data driven clustering}, ta metoda obsługuje również tri-fony, które nie pojawiły się w zbiorze treningowym. Metoda ta wymaga wczytania zbioru reguł, opisujących zależności pomiędzy fonemami. Reguły powinny odzwierciedlać fizyczne podobieństwa w wymowie fonemów. Ponadto, każda z reguł powinna dzielić cały zbiór zdefiniowanych fonemów na dwa podzbiory. Przykładowymi regułami są \textit{Czy fonem x jest nosowy?} oraz \textit{Czy fonem x jest spółgłoską zwartą}. Zbiór wykorzystanych reguł >>>> SKAD ZOSTAL WZIETY?<<<<.  Na podstawie reguł odbywa się dzielenie tri-fonów. Po wczytaniu zbioru tri-fonów współdzielących lewy lub prawy stan, wszystkie zdefiniowane reguły są uruchamiane. W efekcie dostaje się zbiór hipotetycznych podziałów, z których wybierany jest jeden. Aby zdecydować, który podział jest najlepszy, dla każdego z nich, liczy się prawdopodobieństwo zbiory treningowego. Reguła maksymalizująca prawdopodobieństwo jest wybierana. \\
+	Drugą metodą z pakietu \textit{HTK}, która została wykorzystana podczas eksperymentów, jest \textit{Tree- based clustering}. Twórcy \textit{Tree- based clustering} opisali swój algorytm w artykule \cite{tree_based_clustring}. W przeciwieństwie do \textit{Data driven clustering}, ta metoda obsługuje również tri-fony, które nie pojawiły się w zbiorze treningowym. Metoda ta wymaga wczytania zbioru reguł, opisujących zależności pomiędzy fonemami. Reguły powinny odzwierciedlać fizyczne podobieństwa w wymowie fonemów. Ponadto, każda z reguł powinna dzielić cały zbiór zdefiniowanych fonemów na dwa podzbiory. Przykładowymi regułami są \textit{Czy fonem x jest nosowy?} oraz \textit{Czy fonem x jest spółgłoską zwartą}. Zbiór wykorzystanych reguł został zbudowany na podstawie zaleceń z \textit{HTK Book}\cite{htkbook} oraz ogólnodostępnych dostępnych zasad polskiej fonetyki. Na podstawie reguł odbywa się dzielenie tri-fonów. Po wczytaniu zbioru tri-fonów współdzielących lewy lub prawy stan, wszystkie zdefiniowane reguły są uruchamiane. W efekcie dostaje się zbiór hipotetycznych podziałów, z których wybierany jest jeden. Aby zdecydować, który podział jest najlepszy, dla każdego z nich, liczy się prawdopodobieństwo zbiory treningowego. Reguła maksymalizująca prawdopodobieństwo jest wybierana. \\
 	Algorytm \textit{Tree-based clustering} został zapisany w pseudokodzie \ref{alg:tree_based_clustering}. Kod uwzględnia tylko podziały lewego stanu spośród trójki definiującej tri-fon. Linie od \ref{line:iter_begin} do \ref{line:iter_end} opisują jedną iterację, w wyniku której wybierana jest najkorzystniejsza reguła. Wraz z każdą iteracją, zwiększa się liczba stanów w zbiorze $Q$, a jednocześnie zmniejsza się liczba tri-fonów współdzielących ten sam stan. Najbardziej zewnętrzna pętla wykonywana jest dopóki istnieje jakiś  podział spełniający wymagane kryteria. Pętla w linii \ref{line:loop_Q} przechodzi po wszystkich stanach, które są aktualnie zdefiniowane w modelu akustycznym. Następnie wyliczany jest zbiór $P$ zawierający tri-fony współdzielące pierwszy stan. W kolejnej pętli z linii \ref{line:loop_R} przechodzi się przez zdefiniowane reguły podziału. Przy pomocy wybranej reguły $r$ zbiór $P$ dzieli się na dwa podzbiory $P_l, P_r$. W liniach \ref{line:f_l} oraz \ref{line:f_r} wybierane są ramki, które podczas rozpoznawania zostały przyporządkowane do stanu $q_l$ i $q_r$. Warunek w linii \ref{line:if_n} sprawdza, czy oba zbiory są odpowiednio liczne. Następnie korzystając z wyznaczonych zbiorów trenuje się parametry rozkładów opisujących dwa nowe stany $q_l, q_r$. Ostatecznie wylicza się w linii \ref{line:r_prob} prawdopodobieństwo zbiorów $f_l, f_r$, które stanowią ocenę reguły podziału. Wyliczona ocena jest dodawana do zbioru $X$. Po przejściu przez wszystkie stany z pętli w linii \ref{line:loop_Q} wybiera się regułę o najlepszej ocenie. Reguła ta jest następnie wykorzystania do rozbudowy modelu akustycznego o nowy stan w liniach \ref{line:q_ext} oraz \ref{line:p_eqt}. Na końcu działania, w linii \ref{line:return}, algorytm zwraca rozbudowany zbiór stanów $Q$ oraz definicji tr-fonów $Phones$.\\
-	Na rysunku \ref{fig:trr-based_clustering_example} znajduje się przykład działania opisanego algorytmu. Ilustruje on, jak podziały wpływają na współdzielenie stanów. Początkowo wszystkie trzy tri-fony dzielą te same stany. Odpowiada to sytuacji, gdy jeden z nich jest tri-fonem fizycznym, a pozostałe dwa wirtualnymi. W pierwszej iteracji wybrana została reguła dla pierwszego stanu, dzieląca fonemy na dwie grupy $\{a,w\},\{n\}$. W efekcie stan $s1$ został podzielony na dwa $s0,s1$. W kolejnej iteracji wybrano regułę dla stanu trzeciego dzielącą fonemy na grupy $\{z\},\{b\}$. Stany $s3$ został podzielony na dwa nowe $s3,s4$. W wyniku działania algorytmu powstały trzy tri-fony fizyczne, każdy z nich ma inny zbiór stanów, które go modelują. \\
+	Na rysunku \ref{fig:trr-based_clustering_example} znajduje się przykład działania opisanego algorytmu. Ilustruje on, jak podziały wpływają na współdzielenie stanów. Początkowo wszystkie trzy tri-fony dzielą te same stany. Odpowiada to sytuacji, gdy mamy tylko jedną klasę abstrakcji. W pierwszej iteracji wybrana została reguła dla pierwszego stanu, dzieląca fonemy na dwie grupy $\{a,w\},\{n\}$. W efekcie stan $s1$ został podzielony na dwa $s0,s1$. W kolejnej iteracji wybrano regułę dla stanu trzeciego dzielącą fonemy na grupy $\{z\},\{b\}$. Stan $s3$ został podzielony na dwa nowe $s3,s4$. W wyniku działania algorytmu powstały trzy klasy abstrakcji, każda z nich ma inny zbiór stanów, które ją modelują. \\
 	Proces podziału w algorytmie \textit{tree-based clustering} jest iterowany tak długo, do póki nie osiągnie się kryterium stopu. Jednym z możliwych kryteriów jest \textit{minimalna liczba obserwacji}. W pseudokodzie \ref{alg:tree_based_clustering} warunek z linii \ref{line:if_n} jest związany właśnie tym kryterium. Stosując ten warunek wymaga się, aby przy podziale na dwa nowe stany, oba z nich miały co najmniej $n$ obserwacji, gdzie $n$ jest zadanym parametrem. Drugim kryterium jest \textit{poprawa prawdopodobieństwa obserwacji}, zapisana w linii \ref{line:if_p}. Wymaga się przy nim, aby po podziale prawdopodobieństwo obserwacji przypisanych do dzielonego stanu zwiększyło się o podany współczynnik $\lambda$. Wymóg ten jest opisany wzorem \ref{eqn:p_progress}, ze względów numerycznych stosuje się tu skalę logarytmiczną. Oznaczenia we wzorze są takie same, jak w pseudokodzie. Prawdopodobieństwo $P(o|q)$ jest wyliczane zgodnie z opisem w rozdziale \ref{sec:gmm_estimation}.
 	 
 	 \begin{equation}
@@ -2377,7 +2406,7 @@
 			\caption{\label{tab:metadata_impact}Wyniki cz.2}
 		\end{figure}
 		
-	\section{Wpływ liczby fizycznych stanów na skuteczność rozpoznawania }
+	\section{Wpływ liczby stanów na skuteczność rozpoznawania }
 		\label{sec:q-num_impact}
 	
 		W celu zweryfikowania głównej tezy niniejszej pracy przeprowadzono porównanie modeli o różnym stopniu zdławienia, dokonanym zgodnie z opisem w rozdziale \ref{sec:state_red}. Manipulując liczba obserwacji wymaganych do podziału tri-fonu zbudowano serię klasycznych modeli akustycznych o różnej liczbie stanów. Następnie dla każdego z nich wytrenowano sieć neuronową zgodnie z filozofią opisaną w rozdziale \ref{sec:ASR_NN}. Wszystkie wykorzystane w tym eksperymencie siec neuronowe miały taką samą architekturę. Składały się z jednej warstwy splotowej zbudowanej z $64$ filtrów, filtry były trzy kanałowe i miały wymiary $11\times6$, co było związane w szerokością kontekstu i odpowiada $kontekst \cdot 2 + 1\times6$. Następnie dodano jedną klasyczną warstwę ukrytą, składającą się z $2400$ neuronów oraz warstwę wyjściową, której szerokość była równa liczbie stanów danego modelu akustycznego. Warstwa środkowa miała dodatkowo dropout w współczynniku $0.5$. Funkcją aktywacji było \textit{rectify} opisane wzorem $\max(x,0)$, ostatnia warstwa miała funkcję \textit{softmax}, aby nadać wyjściu sieci charakter prawdopodobieństwa. Każda ze zbudowanych sieci neuronowych jest kompatybilna z jednym modelem klasycznym, zgodnie z opisem w rozdziale \ref{sec:nn_model_details}. Schemat \ref{fig:arch_q_num_impact} obrazuje architekturę sieci. Powstałe pary modeli akustycznych przebadano na testowym podzbiorze korpusu językowego \textit{Clarin}. Podczas procesu dekodowania wykorzystano wartości \textit{wagi} oraz \textit{kary} równe optymalnym parametrom z eksperymentu opisanego w rozdziale \ref{sec:metadata_impact}. Otrzymane wyniki zamieszczono w tabeli \ref{fig:tab_q_num_impact}. Wykres \ref{fig:fig_q_num_impact} obrazuje, w sposób graficzny, wpływ liczby stanów na skuteczność rozpoznawania dla modeli neuronowych oraz klasycznych.
