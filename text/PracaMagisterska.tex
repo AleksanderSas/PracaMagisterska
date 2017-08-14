@@ -25,7 +25,9 @@
 \polishtitle{Wykorzystanie sieci neuronowych rozpoznających trifony w procesie analizy mowy}
 \englishtitle{Using neural network recognizing triphones in speech analyze}
 \advisor{dr Paweł Rychlikowski}
-\polishabstract{To bedzie krótkie streszczenie pracy}
+\polishabstract{W niniejszej pracy magisterskiej przedstawiono nowe podejście do wykorzystanie splotowych sieci neuronowych przy 		rozpoznawaniu mowy. W pierwszej części omówiono klasyczne metody wykorzystujące wielowymiarowe mikstury Gaussowskie do estymacji prawdopodobieństwo stanów modelu Markowa. W drugiej zaproponowano i opisano podejście, w którym mikstury są zastąpione splotową siecią neuronową rozpoznającą bardzo mocno ograniczony zbiór tri-fonów. Przedstawiono zarówno sposób pozyskiwania danych do treningu sieci, jak i metodą budowania wektorów cech, będących wejściem sieci. W ostatniej części zaprezentowano wyniki przeprowadzonych eksperymentów. Główny nacisk położono na przebadanie wpływu liczby rozpoznawanych przez sieć stanów na skuteczność rozpoznawania mowy}
+
+\englishabstract{The following paper presents a new approach to using neural networks in speech recognition. In the first part classic approach, using multidimensional Gaussian mixture to estimate probability of hidden Markov states, is described. The second part presents new method using convolutional neural network recognizing limited set of triphones, instead of Gaussian mixture. Both, method to generate training data and building of input feature vector for network are described. In the last part, experiment results are presented. The main focus in experiments is on examination impact of number of recognized states to speech recognition accuracy.}
 
 \newcolumntype{K}[1]{>{\centering\arraybackslash}p{#1}}
 \DeclareMathOperator*{\argmax}{\arg\max}   % rbp
@@ -146,6 +148,7 @@
 		W wykorzystanym słowniku, zawierającym $1209017$ wpisów, transkrypcje zostały zbudowane na podstawie zasad sformułowanych przez Marię Steffen-Batogową w książce \textit{Automatyzacja transkrypcji fonematycznej tekstów polskich} \cite{transkrypcja}. Zasady te nie są jednak jednoznaczne i w sytuacji, gdy dla jednego słowa można wyprowadzić wiele różnych transkrypcji, wszystkie zostają umieszczone w słowniku. Przykładem wyrazu o wielu transkrypcjach jest słowo \textit{wystrzygł}, które zgodnie z regułami, zapisuje się jako \textit{v y s t sz y k} lub \textit{v y s t sz y k ł}.  
 
 		\begin{figure}
+			\centering
 			\begin{tabular}{|K{1cm}K{1cm}K{1cm}K{1cm}K{1cm}K{1cm}K{1cm}K{1cm}|}
 				\hline
 				a  & o\~ & b & c & cz & ć & d & dz \\ 
@@ -571,43 +574,44 @@
 	   \subsection{Estymacja parametrów rozkładu normalnego}
 	   	   
 	   \begin{figure}[H]
-	   \begin{tikzpicture}
-	   \begin{axis}[
-	   axis lines = left
-	   ]
-	   %Below the red parabola is defined
-	   \addplot [
-	   domain=0:20, 
-	   samples=100, 
-	   color=red,
-	   ]
-	   {0.3 * 1/(2.5 * 2) * e ^ (-(x - 5)^2 / (2 * 2 ^ 2))};
-	    
-	   \addplot [
-	   domain=0:20, 
-	   samples=100, 
-	   color=blue,
-	   ]
-	   {0.3 * 1/(2.5 * 4) * e ^ (-(x - 17)^2 / (2 * 4 ^ 2))};
-	   
-	   \addplot [
-	   domain=0:20, 
-	   samples=100, 
-	   color=yellow,
-	   ]
-	   {0.4 * 1/(2.5 * 1.5) * e ^ (-(x - 10)^2 / (2 * 1.5 ^ 2))};
-	   
-	   \addplot [
-	   domain=0:20, 
-	   samples=100, 
-	   color=black,
-	   ]
-	   {0.3 * 1/(2.5 * 2) * e ^ (-(x - 5)^2 / (2 * 2 ^ 2)) + 0.3 * 1/(2.5 * 4) * e ^ (-(x - 17)^2 / (2 * 4 ^ 2)) + 0.4 * 1/(2.5 * 1.5) * e ^ (-(x - 10)^2 / (2 * 1.5 ^ 2))};
-	   
-	   \end{axis}
-	   \end{tikzpicture}
-	   \label{fig:gmm}
-	   \caption{Jednowymiarowa mikstura Gaussowska składająca się z trzech komponentów.}
+		   \centering
+		   \begin{tikzpicture}
+			   \begin{axis}[
+			   axis lines = left
+			   ]
+			   %Below the red parabola is defined
+			   \addplot [
+			   domain=0:20, 
+			   samples=100, 
+			   color=red,
+			   ]
+			   {0.3 * 1/(2.5 * 2) * e ^ (-(x - 5)^2 / (2 * 2 ^ 2))};
+			    
+			   \addplot [
+			   domain=0:20, 
+			   samples=100, 
+			   color=blue,
+			   ]
+			   {0.3 * 1/(2.5 * 4) * e ^ (-(x - 17)^2 / (2 * 4 ^ 2))};
+			   
+			   \addplot [
+			   domain=0:20, 
+			   samples=100, 
+			   color=yellow,
+			   ]
+			   {0.4 * 1/(2.5 * 1.5) * e ^ (-(x - 10)^2 / (2 * 1.5 ^ 2))};
+			   
+			   \addplot [
+			   domain=0:20, 
+			   samples=100, 
+			   color=black,
+			   ]
+			   {0.3 * 1/(2.5 * 2) * e ^ (-(x - 5)^2 / (2 * 2 ^ 2)) + 0.3 * 1/(2.5 * 4) * e ^ (-(x - 17)^2 / (2 * 4 ^ 2)) + 0.4 * 1/(2.5 * 1.5) * e ^ (-(x - 10)^2 / (2 * 1.5 ^ 2))};
+			   
+			   \end{axis}
+		   \end{tikzpicture}
+		   \label{fig:gmm}
+		   \caption{Jednowymiarowa mikstura Gaussowska składająca się z trzech komponentów.}
 	\end{figure}
 	   
 	   \label{sec:gmm_estimation}
@@ -2084,7 +2088,7 @@
 	\end{figure}
 
 	\section{Budowa modeli klasycznych}
-		Klasyczne modele Gaussowkie, zaznaczone w bloku \refBlock{model_acc4} na schemacie \ref{fig:arch}, zostały zbudowane z wykorzystaniem pakietu \textit{HTK} oraz opakowującego go systemu \textit{Magic Scribe}. Do treningu użyto zbioru treningowego z korpusu \textit{Clarin}. Model akustyczny uczony był zgodnie z zaleceniami opisanymi w \textit{HTK Book}\cite{htkbook}, procedurę uczenia zapisano w pseudokodzie \ref{alg:acc_model_training}. Pierwszym krokiem procedury jest zainicjalizowanie parametrów prostego modelu uni-fonowego, w którym mikstury gaussowskie, zgodne z opisem w rozdziale \ref{sec:gmm_estimation}, składają się z jednego komponentu. Następnie w pierwszej pętli wykonuje się po trzy iteracje re-estymacji parametrów, która przebiega zgodnie z algorytmem Bauma-Welcha opisanym w rozdziale \ref{sec:Baum_Welch} oraz \ref{sec:gmm_estimation}. Podczas re-estymacji przechodzi się przez wszystkie dane treningowe ze zbioru $S$. Podczas przechodzenia wyliczany jest \textit{Force alignment}, a następnie na jego podstawie estymowane są nowe parametry. \textit{Force alignment} polega na dopasowaniu ramek do zadanego ciągu stanów. Ciąg ten odpowiada transkrypcji, którą dostaje się podczas treningu razem z nagraniem. W praktyce \textit{Force alignment} polega na wymuszeniu przejścia, w fazie E algorytmu \textit{Buma-Welcha}, przez automat odpowiadający transkrypcji nagrania. Schemat \ref{fig:AutomatExampleForFA} pokazuje przykład automatu dla zdania \textit{Ola ma kota} wymuszającego przejście przez odpowiednie stany. Automat ten jest jednym łańcuchem i w przeciwieństwie do automatu ze schematu \ref{fig:Graph_complex}, wykorzystywanego przez dekoder, uniemożliwia swobodny wybór kolejnych słów. Kolejne re-estymacje powodują zbieganie modelu do wytrenowanej postaci. Po trzech iteracjach, kiedy model ma już pewną wiedzę, rozbudowuje się mikstury Gaussowskie o nowe komponenty. Po zakończeniu pierwszej pętli następuje przekształcenie modelu uni-fonowego w tri-fonowy. Początkowo tri-fony o wspólnym centralnym fonemie współdzielą te same stany. Dopiero w następnym kroku wykonuje się algorytm \textit{Tree-based clustering} z rozdziału \ref{sec:state_red}, w wyniku którego zwiększa się liczba stanów modelu akustycznego. W kolejnych krokach ponownie re-estymuje się parametry i rozbudowuje mikstury Gaussowskie. Łącznie wykonuje się $36$ iteracji re-estymacji parametrów. Na koniec zwracany jest wytrenowany model. Wszystkie modele tri-fonowe z tabeli \ref{tab:acustic_models} zostały zbudowane zgodnie z procedurą \ref{alg:acc_model_training}. Wyjątek stanowi \textit{M\_UNI}, które jest modelem unifonowym, budowanym według uproszczonej procedury. \textit{M\_TRI} oraz \textit{M\_TRI\_AOPT} to te same modele, ale $M\_TRI\_AOPT$ odpowiada wynikowi otrzymanemu dla najlepszych, znalezionych parametrów dekodowania. Opis parametrów dekodowania znajduje się w rozdziale \ref{sec:meta_params}.
+		Klasyczne modele Gaussowkie, zaznaczone w bloku \refBlock{model_acc4} na schemacie \ref{fig:arch}, zostały zbudowane z wykorzystaniem pakietu \textit{HTK} oraz opakowującego go systemu \textit{Magic Scribe}. Do treningu użyto zbioru treningowego z korpusu \textit{Clarin}. Model akustyczny uczony był zgodnie z zaleceniami opisanymi w \textit{HTK Book}\cite{htkbook}, procedurę uczenia zapisano w pseudokodzie \ref{alg:acc_model_training}. Pierwszym krokiem procedury jest zainicjalizowanie parametrów prostego modelu uni-fonowego, w którym mikstury gaussowskie, zgodne z opisem w rozdziale \ref{sec:gmm_estimation}, składają się z jednego komponentu. Następnie w pierwszej pętli wykonuje się po trzy iteracje re-estymacji parametrów, która przebiega zgodnie z algorytmem Bauma-Welcha opisanym w rozdziale \ref{sec:Baum_Welch} oraz \ref{sec:gmm_estimation}. Podczas re-estymacji przechodzi się przez wszystkie dane treningowe ze zbioru $S$. Podczas przechodzenia wyliczany jest \textit{Force alignment}, a następnie na jego podstawie estymowane są nowe parametry. \textit{Force alignment} polega na dopasowaniu ramek do zadanego ciągu stanów. Ciąg ten odpowiada transkrypcji, którą dostaje się podczas treningu razem z nagraniem. W praktyce \textit{Force alignment} polega na wymuszeniu przejścia, w fazie E algorytmu \textit{Buma-Welcha}, przez automat odpowiadający transkrypcji nagrania. Schemat \ref{fig:AutomatExampleForFA} pokazuje przykład automatu dla zdania \textit{Ola ma kota} wymuszającego przejście przez odpowiednie stany. Automat ten jest jednym łańcuchem i w przeciwieństwie do automatu ze schematu \ref{fig:Graph_complex}, wykorzystywanego przez dekoder, uniemożliwia swobodny wybór kolejnych słów. Kolejne re-estymacje powodują zbieganie modelu do wytrenowanej postaci. Po trzech iteracjach, kiedy model ma już pewną wiedzę, rozbudowuje się mikstury Gaussowskie o nowe komponenty. Po zakończeniu pierwszej pętli następuje przekształcenie modelu uni-fonowego w tri-fonowy. Początkowo tri-fony o wspólnym centralnym fonemie współdzielą te same stany. Dopiero w następnym kroku wykonuje się algorytm \textit{Tree-based clustering} z rozdziału \ref{sec:state_red}, w wyniku którego zwiększa się liczba stanów modelu akustycznego. W kolejnych krokach ponownie re-estymuje się parametry i rozbudowuje mikstury Gaussowskie. Łącznie wykonuje się $36$ iteracji re-estymacji parametrów. Na koniec zwracany jest wytrenowany model. Wszystkie modele tri-fonowe z tabeli \ref{tab:acustic_models} zostały zbudowane zgodnie z procedurą \ref{alg:acc_model_training}. Wyjątek stanowi \textit{M\_UNI}, które jest modelem unifonowym, budowanym według uproszczonej procedury. \textit{M\_TRI} oraz \textit{M\_TRI\_AOPT} to te same modele, ale $M\_TRI\_AOPT$ odpowiada wynikowi otrzymanemu dla najlepszych, znalezionych parametrów dekodowania, które wynoszą 20 -15 20 -15. Opis parametrów dekodowania znajduje się w rozdziale \ref{sec:meta_params}.
 		
 		\begin{figure}[H]
 			\centering
@@ -2532,14 +2536,15 @@
 		
 		
 		\begin{figure}
-			\begin{tabular}{|c|c|c|c|c|c|} \hline
-				Nazwa modelu & \vtop{\hbox{\strut Liczba neuronów}\hbox{\strut w warstwie ukrytej}}  & 
+			\centering
+			\begin{tabular}{|c|c|c|c|c|} \hline
+				\vtop{\hbox{\strut Liczba neuronów}\hbox{\strut w warstwie ukrytej}}  & 
 				\vtop{\hbox{\strut Liczba }\hbox{\strut filtrów}} & \vtop{\hbox{\strut Skuteczność}\hbox{\strut corr}} & \vtop{\hbox{\strut Skuteczność}\hbox{\strut acc}} \\
 				\hline
-				Siec\_19 & 2400 & 32 & 88.36 & 83.02 \\
-				Siec\_16 & 1200 & 32 & 88.54 & 83.10 \\
-				Siec\_17 & 600 & 32 & 87.52 & 82.01 \\
-				Siec\_18 & 300 & 32 & 86.90 & 81.36 \\
+				2400 & 32 & 88.36 & 83.02 \\
+				1200 & 32 & 88.54 & 83.10 \\
+				600 & 32 & 87.52 & 82.01 \\
+				300 & 32 & 86.90 & 81.36 \\
 				\hline
 				
 			\end{tabular}
@@ -2715,14 +2720,14 @@
 		\end{figure}
 
 	\section{ Inne czynniki wpływające na skuteczność rozpoznawania }
-		Oprócz wspomnianych we wcześniejszych rozdziałach parametrach, sprawdzono jaki wpływ na skuteczność rozpoznawania ma funkcja aktywacji oraz pomieszanie danych uczących. 
+		\label{sec:impact_other}
+		Oprócz parametrów wspomnianych we wcześniejszych rozdziałach, sprawdzono jaki wpływ na skuteczność rozpoznawania ma funkcja aktywacji oraz pomieszanie danych uczących. 
 		
-		W eksperymencie opisanym w rozdziale \ref{sec:q-num_impact} wykorzystano funkcję nieliniowości opisaną wzorem $\max(x,0)$. Celem tego eksperymentu jest sprawdzenie czy funkcja \textit{leaky rectify} opisana wzorem $\max(x, 0.01x)$ umożliwia wytrenowanie, skuteczniejszej sieci. W założeniach czynniki $0.01x$ daje sieci informację z neuronów o negatywnym pobudzeniu. Jest to różnica w stosunku do funkcji \textit{rectify}, która zwraca wtedy zawsze $0$ i nie propaguje żadnej informacji. 
+		W eksperymencie opisanym w rozdziale \ref{sec:q-num_impact} wykorzystano funkcję aktywacji opisaną wzorem $\max(x,0)$. Celem tego eksperymentu jest sprawdzenie czy funkcja \textit{leaky rectify} opisana wzorem $\max(x, 0.01x)$ umożliwia wytrenowanie skuteczniejszej sieci. W założeniach czynniki $0.01x$ daje sieci informację z neuronów o negatywnym pobudzeniu. Jest to różnica w stosunku do funkcji \textit{rectify}, która zwraca wtedy zawsze $0$ i nie propaguje żadnej informacji. 
 		
 		W wcześniejszych eksperymentach dane treningowe były ułożone w uporządkowany sposób. Wektory cech pochodzące od jednego mówcy następowały po sobie. Podobnie, wektory dla kolejnych ramek pochodzących z jednej wypowiedzi, też  ułożone było kolejno po sobie. Celem eksperymentu jest sprawdzenie czy po przemieszaniu wektorów cech można uzyskać lepszą skuteczność. Efektem przemieszania, kolejne, podobne wektory nie są razem pokazywane sieci podczas treningu.
 		
-		Oba czynniki testowane były przy takich samych architekturach, ale innych liczbach neuronów. Tabele \ref{fig:tab_other_impact} pokazuje wyniki eksperymentu. Okazało się, że zarówno stosowanie funkcji \textit{leaky rectify}, jak i mieszanie danych treningowych poprawia skuteczność. Funkcja \textit{leaky rectify} dała względna poprawę o $2.97\%$, natomiast mieszanie danych dało $3.2\%$.
-		
+		Oba czynniki testowane były przy takich samych architekturach, ale innych liczbach neuronów. Tabele \ref{fig:tab_other_impact} pokazuje wyniki eksperymentu. Okazało się, że zarówno stosowanie funkcji \textit{leaky rectify}, jak i mieszanie danych treningowych poprawia skuteczność. Funkcja \textit{leaky rectify} dała względną poprawę o $2.97\%$, natomiast mieszanie danych dało $3.2\%$ poprawy. Na skutek pozytywnych wyników eksperymentu, zbudowano jeszcze jedną sieć, łączącą w sobie oba badane elementy. Powstały model agreguje wszystkie obserwacji uzyskane z przeprowadzonych testach i stanowi najlepsza uzyskaną konfigurację. Ma $64$ filtry, $2400$ neuronów w warstwie ukrytej, funkcję aktywacji \textit{leaky rectify} oraz architekturę z rysunku \ref{fig:arch_q_num_impact}. Sieć uzyskała $84.71\%$ skuteczności, co stanowi najlepszy wynik spośród wszystkich modeli, zarówno neuronowych, jak i Gaussowkich. Jest to wynik lepszy o $ 1.27$ punkt procentowego ($7.67\%$ względnej poprawy) względem najlepszego modelu klasycznego \textit{M\_TRI\_AOPT}.
 		\begin{figure}[H]
 			\centering
 			\begin{tabular}{|l|c|c|c|c|} \hline
@@ -2734,14 +2739,17 @@
 				leaky rectify &  nie & 32 & 1200 & 83.10 \\
 				leaky rectify &  tak & 32 & 1200 & 83.64\\
 				\hline
-				
+			    leaky rectify &  tak & 64 & 2400 & 84.71\\
+				\hline				
 			\end{tabular}
 			\label{fig:tab_other_impact}
 			\caption{Wpływ liczby stanów na skuteczność rozpoznawania mowy.}
 		\end{figure}
 	
 \section{ Podsumowanie }
-	Na podstawie przeprowadzonych eksperymentów, można jednoznacznie potwierdzić tezę niniejszej pracy magisterskiej. \textbf{Wykorzystując splotowe sieci neuronowe rozpoznające \textit{tri-fony}, jako estymator prawdopodobieństw stanów modelu Markowa, można uzyskać poprawę skuteczności, względem analogicznego podejścia wykorzystującego \textit{uni-fony}.} W eksperymencie \ref{sec:q-num_impact} uzyskano $1.93\%$ punktu procentowego poprawy względem sieci neuronowej uni-fonowej, co odpowiada $12.49\%$ względnej poprawy. Nieoczekiwany okazał się gwałtowny spadek skuteczności dla modeli neuronowych o więcej niż $231$ stanach. Efekt ten można uzasadnić zbyt duża liczbą neuronów w warstwie wyjściowej, reagujących na bardzo podobne wektory wejściowe, czego konsekwencją jest nieumiejętność rozróżnienia, przez sieć, podobnych tri-fonów. W przeprowadzonych eksperymentach nie uzyskano poprawy, przy zwiększaniu liczby warstw względem proponowanej architektury ze schematu \ref{fig:arch_q_num_impact}. <<<<<< Tu jeszcze bedzie o najlepszej uzyskanej sieci, ale sie jeszcze liczy>>>>>>.
+	Na podstawie przeprowadzonych eksperymentów, można jednoznacznie potwierdzić tezę niniejszej pracy magisterskiej. \textbf{Wykorzystując splotowe sieci neuronowe rozpoznające \textit{tri-fony}, jako estymator prawdopodobieństw stanów modelu Markowa, można uzyskać poprawę skuteczności, względem analogicznego podejścia wykorzystującego \textit{uni-fony}.} W eksperymencie \ref{sec:q-num_impact} uzyskano $1.93\%$ punktu procentowego poprawy względem sieci neuronowej uni-fonowej, co odpowiada $10.46\%$ względnej poprawy. Ponadto, w eksperymencie \ref{sec:impact_other} udało się zbudować sieć uzyskującą $1.27$ punktu procentowego poprawy ($7.67\%$ względnej poprawy) względem najlepszego klasycznego modelu \textit{M\_TRI\_AOPT}. Nieoczekiwany okazał się gwałtowny spadek skuteczności dla modeli neuronowych o więcej niż $231$ stanach. Efekt ten można uzasadnić zbyt duża liczbą neuronów w warstwie wyjściowej, reagujących na bardzo podobne wektory wejściowe, czego konsekwencją jest nieumiejętność rozróżnienia przez sieć, podobnych tri-fonów. W przeprowadzonych eksperymentach nie uzyskano poprawy, przy zwiększaniu liczby warstw względem proponowanej architektury ze schematu \ref{fig:arch_q_num_impact}.
+	
+	Wyniki przeprowadzonych eksperymentów dały pozytywne rezultaty zachęcająca do dalszych badań. W przyszłości warto by było skupić się na budowie sieci uczonej na znacznie większym korpusie. Ponadto mają więcej danych uczących można powtórzyć próbę budowy sieci o głębszej architekturze lub sieci o większej liczbie wyjść.
    
    
 	\nocite{*}
