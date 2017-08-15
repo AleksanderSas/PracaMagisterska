@@ -1304,6 +1304,7 @@
 		 ,gdzie NN to sieć neuronowa rozumiana jako funkcja.
 		
 	\subsection{Prawdopodobieństwo stanów \textit{apriori} }
+		\label{sec:ppb_apriori}
 		W rozdziale \ref{sec:nn_estymator} opisano, jak wykorzystać sieć neuronową do wyznaczania prawdopodobieństw stanów, jednak wymaga to wcześniejszego wyznaczenia prawdopodobieństw stanów apriori, czyli $P(w_i)$ ze wzoru \ref{eqn:softmax2}. 
 		$P(w_i)$ może być łatwo wyznaczone podczas przygotowywani danych do uczenia sieci neuronowej. Na etapie generowania wektorów wyjściowych do treningu, możliwe jest zliczanie wystąpień stanu $q_i$.
 		Następnie wystarczy dla każdego stanu obliczyć:
@@ -1978,7 +1979,7 @@
 	\caption{Wytrenowane modele akustyczne}
 	\end{figure}
 
-	Wiele badań i publikacji pokazało, że stosując \textit{tri-fonowe modele akustyczne} można znacząco poprawić skuteczność rozpoznawania. Niestety przejście z modeli \textit{uni-fonowych} do \textit{tri-fonowych} wiąże się ze zwiększeniem stopnia skomplikowania całego systemu, procesu uczenia, jak i wydłużeniem samego czasu rozpoznawania. Ponadto, w przypadku zastosowania sieci neuronowej, duża liczba stanów modelu tri-fonowego wymaga jednoczesnej estymacji wielu prawdopodobieństw, co z kolei może utrudnić proces trenowania sieć. Kompromisem pomiędzy modelami czysto tri-fonowymi, które modelują wszystkie występujące trifony, a uni-fonowymi oferującymi przeciętną jakość rozpoznawania, są właśnie \textit{modele tri-fonowe z ograniczonym kontekstem} budowane zgodnie z koncepcją opisane w rozdziale \ref{sec:state_red}. Modele te łączą zwiększoną zdolność gromadzenia wiedzy klasycznych modeli tri-fonowych ze zmniejszoną liczbą parametrów, które trzeba wyuczyć w klasycznym modelu uni-fonowych. Ponadto w przeciągu kilku ostatnich lat, pojawiło się wiele publikacji na temat zastosowania sieci neuronowych, jako estymatorów prawdopodobieństwa stanów model Markowa >> DODAC CYTATY <<. Chcą sprawdzić możliwości połączenia obu wspomnianych podejść, \textit{modeli z ograniczonym kontekstem} oraz \textit{sieci neuronowych} estymujących prawdopodobieństwa stanów, zgodnie z opisem w rozdziale \ref{sec:ASR_NN}, przeprowadzono szereg eksperymentów, mających sprawdzić wpływ ograniczania kontekstu na skuteczność sieci neuronowej. Dodatkowo porównano skuteczność klasycznego podejścia opisanego w rozdziale \ref{sec:ASR_HMM} z proponowanym podejściem. Przeprowadzone eksperymenty dały możliwość zweryfikowania głównej tezy niniejszej pracy, zgodnie z która: \textbf{Trifonowe, neuronowe modele o ograniczonym kontekście umożliwiają poprawę skuteczności rozpoznawania, względem klasycznych Gaussowkich modeli akustycznych.}
+	Wiele badań i publikacji pokazało, że stosując \textit{tri-fonowe modele akustyczne} można znacząco poprawić skuteczność rozpoznawania. Niestety przejście z modeli \textit{uni-fonowych} do \textit{tri-fonowych} wiąże się ze zwiększeniem stopnia skomplikowania całego systemu, procesu uczenia, jak i wydłużeniem samego czasu rozpoznawania. Ponadto, w przypadku zastosowania sieci neuronowej, duża liczba stanów modelu tri-fonowego wymaga jednoczesnej estymacji wielu prawdopodobieństw, co z kolei może utrudnić proces trenowania sieć. Kompromisem pomiędzy modelami czysto tri-fonowymi, które modelują wszystkie występujące trifony, a uni-fonowymi oferującymi przeciętną jakość rozpoznawania, są właśnie \textit{modele tri-fonowe z ograniczonym kontekstem} budowane zgodnie z koncepcją opisane w rozdziale \ref{sec:state_red}. Modele te łączą zwiększoną zdolność gromadzenia wiedzy klasycznych modeli tri-fonowych ze zmniejszoną liczbą parametrów, które trzeba wyuczyć w klasycznym modelu uni-fonowych. Ponadto w przeciągu kilku ostatnich lat, pojawiło się wiele publikacji na temat zastosowania sieci neuronowych, jako estymatorów prawdopodobieństwa stanów model Markowa, tak jak w artykule \cite{article1}. Chcą sprawdzić możliwości połączenia obu wspomnianych podejść, \textit{modeli z ograniczonym kontekstem} oraz \textit{sieci neuronowych} estymujących prawdopodobieństwa stanów, zgodnie z opisem w rozdziale \ref{sec:ASR_NN}, przeprowadzono szereg eksperymentów, mających sprawdzić wpływ ograniczania kontekstu na skuteczność sieci neuronowej. Dodatkowo porównano skuteczność klasycznego podejścia opisanego w rozdziale \ref{sec:ASR_HMM} z proponowanym podejściem. Przeprowadzone eksperymenty dały możliwość zweryfikowania głównej tezy niniejszej pracy, zgodnie z która: \textbf{Trifonowe, neuronowe modele o ograniczonym kontekście umożliwiają poprawę skuteczności rozpoznawania, względem klasycznych Gaussowkich modeli akustycznych.}
 	
 	\section{ Opis danych}
 	\label{sec:opis_danych}
@@ -2721,25 +2722,26 @@
 
 	\section{ Inne czynniki wpływające na skuteczność rozpoznawania }
 		\label{sec:impact_other}
-		Oprócz parametrów wspomnianych we wcześniejszych rozdziałach, sprawdzono jaki wpływ na skuteczność rozpoznawania ma funkcja aktywacji oraz pomieszanie danych uczących. 
+		Oprócz parametrów wspomnianych we wcześniejszych rozdziałach, sprawdzono jaki wpływ na skuteczność rozpoznawania ma funkcja aktywacji, pomieszanie danych uczących oraz uwzględnianie prawdopodobieństwo apriori opisanego w rozdziale \ref{sec:ppb_apriori}.
 		
 		W eksperymencie opisanym w rozdziale \ref{sec:q-num_impact} wykorzystano funkcję aktywacji opisaną wzorem $\max(x,0)$. Celem tego eksperymentu jest sprawdzenie czy funkcja \textit{leaky rectify} opisana wzorem $\max(x, 0.01x)$ umożliwia wytrenowanie skuteczniejszej sieci. W założeniach czynniki $0.01x$ daje sieci informację z neuronów o negatywnym pobudzeniu. Jest to różnica w stosunku do funkcji \textit{rectify}, która zwraca wtedy zawsze $0$ i nie propaguje żadnej informacji. 
 		
 		W wcześniejszych eksperymentach dane treningowe były ułożone w uporządkowany sposób. Wektory cech pochodzące od jednego mówcy następowały po sobie. Podobnie, wektory dla kolejnych ramek pochodzących z jednej wypowiedzi, też  ułożone było kolejno po sobie. Celem eksperymentu jest sprawdzenie czy po przemieszaniu wektorów cech można uzyskać lepszą skuteczność. Efektem przemieszania, kolejne, podobne wektory nie są razem pokazywane sieci podczas treningu.
 		
-		Oba czynniki testowane były przy takich samych architekturach, ale innych liczbach neuronów. Tabele \ref{fig:tab_other_impact} pokazuje wyniki eksperymentu. Okazało się, że zarówno stosowanie funkcji \textit{leaky rectify}, jak i mieszanie danych treningowych poprawia skuteczność. Funkcja \textit{leaky rectify} dała względną poprawę o $2.97\%$, natomiast mieszanie danych dało $3.2\%$ poprawy. Na skutek pozytywnych wyników eksperymentu, zbudowano jeszcze jedną sieć, łączącą w sobie oba badane elementy. Powstały model agreguje wszystkie obserwacji uzyskane z przeprowadzonych testach i stanowi najlepsza uzyskaną konfigurację. Ma $64$ filtry, $2400$ neuronów w warstwie ukrytej, funkcję aktywacji \textit{leaky rectify} oraz architekturę z rysunku \ref{fig:arch_q_num_impact}. Sieć uzyskała $84.71\%$ skuteczności, co stanowi najlepszy wynik spośród wszystkich modeli, zarówno neuronowych, jak i Gaussowkich. Jest to wynik lepszy o $ 1.27$ punkt procentowego ($7.67\%$ względnej poprawy) względem najlepszego modelu klasycznego \textit{M\_TRI\_AOPT}.
+		Oba czynniki testowane były przy takich samych architekturach, ale innych liczbach neuronów. Tabele \ref{fig:tab_other_impact} pokazuje wyniki eksperymentu. Okazało się, że zarówno stosowanie funkcji \textit{leaky rectify}, jak i mieszanie danych treningowych poprawia skuteczność. Funkcja \textit{leaky rectify} dała względną poprawę o $2.97\%$, natomiast mieszanie danych dało $3.2\%$ poprawy. Na skutek pozytywnych wyników eksperymentu, do ostatniej części testu zbudowano sieć łączącą w sobie oba badane elementy. Powstały model agreguje wszystkie obserwacji uzyskane z przeprowadzonych testach i stanowi najlepsza uzyskaną konfigurację. Ma $64$ filtry, $2400$ neuronów w warstwie ukrytej, funkcję aktywacji \textit{leaky rectify} oraz architekturę z rysunku \ref{fig:arch_q_num_impact}. W celu sprawdzenia wpływu prawdopodobieństwa apriori uruchomiono rozpoznawanie korzystające ze zbudowanej sieci z uwzględnieniem członu apriori oraz bez niego. Uzyskano odpowiednio $84.71\%$ oraz $85.75\%$ skuteczności. Oba wyniki sa lepsze niż najlepszy klasyczny model \textit{M\_TRI\_AOPT} o kolejno $1.27$ i $2.31$ punktu procentowego. Zaskakującym jest, że uwzględnianie członu apriori pogarsza skuteczność.
 		\begin{figure}[H]
 			\centering
-			\begin{tabular}{|l|c|c|c|c|} \hline
-				\vtop{\hbox{\strut Funkcja}\hbox{\strut nieliniowości}} & \vtop{\hbox{\strut Dane}\hbox{\strut przemieszane}} & \vtop{\hbox{\strut Liczba}\hbox{\strut filtrów}} & \vtop{\hbox{\strut Liczba}\hbox{\strut neuronów}} & Skuteczność \\
+			\begin{tabular}{|l|c|c|c|c|c|} \hline
+				\vtop{\hbox{\strut Funkcja}\hbox{\strut nieliniowości}} & \vtop{\hbox{\strut Dane}\hbox{\strut przemieszane}} & \vtop{\hbox{\strut Ppb}\hbox{\strut apriori}} & \vtop{\hbox{\strut Liczba}\hbox{\strut filtrów}} & \vtop{\hbox{\strut Liczba}\hbox{\strut neuronów}} & Skuteczność \\
 				\hline
-				recify        &  nie & 64 & 2400 & 83.50  \\
-				leaky rectify &  nie & 64 & 2400 & 83.89 \\
+				recify        &  nie & tak & 64 & 2400 & 83.50  \\
+				leaky rectify &  nie & tak & 64 & 2400 & 83.89 \\
 				\hline
-				leaky rectify &  nie & 32 & 1200 & 83.10 \\
-				leaky rectify &  tak & 32 & 1200 & 83.64\\
+				leaky rectify &  nie & tak &32 & 1200 & 83.10 \\
+				leaky rectify &  tak & tak &32 & 1200 & 83.64\\
 				\hline
-			    leaky rectify &  tak & 64 & 2400 & 84.71\\
+			    leaky rectify &  tak & tak & 64 & 2400 & 84.71\\
+                leaky rectify &  tak & nie & 64 & 2400 & 85.75\\
 				\hline				
 			\end{tabular}
 			\label{fig:tab_other_impact}
@@ -2747,12 +2749,11 @@
 		\end{figure}
 	
 \section{ Podsumowanie }
-	Na podstawie przeprowadzonych eksperymentów, można jednoznacznie potwierdzić tezę niniejszej pracy magisterskiej. \textbf{Wykorzystując splotowe sieci neuronowe rozpoznające \textit{tri-fony}, jako estymator prawdopodobieństw stanów modelu Markowa, można uzyskać poprawę skuteczności, względem analogicznego podejścia wykorzystującego \textit{uni-fony}.} W eksperymencie \ref{sec:q-num_impact} uzyskano $1.93\%$ punktu procentowego poprawy względem sieci neuronowej uni-fonowej, co odpowiada $10.46\%$ względnej poprawy. Ponadto, w eksperymencie \ref{sec:impact_other} udało się zbudować sieć uzyskującą $1.27$ punktu procentowego poprawy ($7.67\%$ względnej poprawy) względem najlepszego klasycznego modelu \textit{M\_TRI\_AOPT}. Nieoczekiwany okazał się gwałtowny spadek skuteczności dla modeli neuronowych o więcej niż $231$ stanach. Efekt ten można uzasadnić zbyt duża liczbą neuronów w warstwie wyjściowej, reagujących na bardzo podobne wektory wejściowe, czego konsekwencją jest nieumiejętność rozróżnienia przez sieć, podobnych tri-fonów. W przeprowadzonych eksperymentach nie uzyskano poprawy, przy zwiększaniu liczby warstw względem proponowanej architektury ze schematu \ref{fig:arch_q_num_impact}.
+	Na podstawie przeprowadzonych eksperymentów, można jednoznacznie potwierdzić tezę niniejszej pracy magisterskiej. \textbf{Wykorzystując splotowe sieci neuronowe rozpoznające \textit{tri-fony}, jako estymator prawdopodobieństw stanów modelu Markowa, można uzyskać poprawę skuteczności, względem analogicznego podejścia wykorzystującego \textit{uni-fony}.} W eksperymencie \ref{sec:q-num_impact} uzyskano $1.93\%$ punktu procentowego poprawy względem sieci neuronowej uni-fonowej, co odpowiada $10.46\%$ względnej redukcji błędu. Ponadto, w eksperymencie \ref{sec:impact_other} udało się zbudować sieć uzyskującą $2.31$ punktu procentowego poprawy ($13.95\%$ względnej redukcji błędu) względem najlepszego klasycznego modelu \textit{M\_TRI\_AOPT}. Nieoczekiwany okazał się gwałtowny spadek skuteczności dla modeli neuronowych o więcej niż $231$ stanach. Efekt ten można uzasadnić tym, że mając ograniczony i stosunkowo mały zbiór treningowy, sieć nie uzyskuje zdolności uogólniania wiedzy powyżej pewnej liczby wyjść. Zaskakujące również się okazało, że skuteczność pogarsza uwzględnianie prawdopodobieństwa apriori, dzięki któremu sieć zwracał takie prawdopodobieństwo, jakiego spodziewa się ukryty model Markowa. W przeprowadzonych eksperymentach nie uzyskano poprawy, przy zwiększaniu liczby warstw względem proponowanej architektury ze schematu \ref{fig:arch_q_num_impact}.
 	
-	Wyniki przeprowadzonych eksperymentów dały pozytywne rezultaty zachęcająca do dalszych badań. W przyszłości warto by było skupić się na budowie sieci uczonej na znacznie większym korpusie. Ponadto mają więcej danych uczących można powtórzyć próbę budowy sieci o głębszej architekturze lub sieci o większej liczbie wyjść.
+	Wyniki przeprowadzonych eksperymentów dały pozytywne rezultaty zachęcająca do dalszych badań. W przyszłości warto by było skupić się na budowie sieci uczonej na znacznie większym korpusie. Ponadto mają więcej danych treningowych można powtórzyć próbę budowy sieci o głębszej architekturze lub sieci o większej liczbie wyjść.
    
    
-	\nocite{*}
 	\bibliographystyle{plain}
 	\bibliography{bibliografia}
 \end{document}
