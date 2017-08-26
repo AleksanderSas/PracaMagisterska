@@ -1,0 +1,667 @@
+\documentclass[a4paper,11pt,onecolumn,twoside,openright,titlepage]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{changepage}
+\usepackage{pdflscape}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{algorithmic}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usetikzlibrary{arrows}
+\usetikzlibrary{shapes}
+\usepackage{pgfplots}
+\usetikzlibrary{decorations.pathreplacing}
+\selectlanguage{polish}
+
+\author{Aleksander Sas}
+\title{Rozpoznawanie mowy}
+\frenchspacing
+
+\DeclareMathOperator*{\argmax}{\arg\max}   % rbp
+\newcounter{BlockCounter}
+\newcommand{\labelBlock}[1]{%
+	\smash{\raisebox{15pt}{\refstepcounter{BlockCounter}\hypertarget{#1}{}\label{#1}}}%
+	(\theBlockCounter)%
+}
+\newcommand{\refBlock}[1]{
+	\hyperref[#1]{\ref*{#1}}
+}
+\tikzstyle{hmm0}=[circle,thick,draw=gray!50,fill=gray!13,minimum size=4mm]
+\tikzstyle{hmm}=[circle,thick,draw=gray!75,fill=gray!20,minimum size=6mm]
+\tikzstyle{line} = [draw, -latex']
+
+\RequirePackage{babel,titling,geometry}
+\geometry{margin=3cm,bindingoffset=1cm,a4paper,onecolumn,twoside}
+
+\begin{document}
+	
+	\maketitle
+	\newpage
+	
+	Automatyczne rozpoznawanie mowy jest techniką coraz częściej wykorzystywaną w przemyśle i zastosowaniach komercyjnych takich jak diagnostyka medyczna, motoryzacja, wspomaganie urządzeń mobilnych czy transkrypcja obrad. Proces ten polega na rozpoznaniu i zapisaniu w języku naturalnym wypowiedzi, zarejestrowanej jako sygnał akustyczny.
+	
+	\section{Formalne definicje}
+	Formalnie \textbf{automatyczne rozpoznawanie mowy} można przedstawić jako problem optymalizacyjny, w którym maksymalizujemy prawdopodobieństwo ciągu słów $\hat{W}$ nad pewnym alfabetem $\Sigma$, pod warunkiem obserwacji $O$. Okazuje się jednak, że w praktyce znacznie wygodniej jest wyliczać $P(O|W)$ niż $P(W|O)$, dlatego korzystając ze wzoru Bayesa możemy przekształcić oryginalny problem zgodnie ze wzór \ref{equation:ASR_definicja}.
+	
+	\begin{equation}
+	\hat{W}=\argmax_{W \in \Sigma^{*}}{P(W \mid O)} = \argmax_{W \in \Sigma^{*}}{\frac{P(O \mid W)P(W)}{P(O)}} = \argmax_{W \in \Sigma^{*}}{P(O \mid W)P(W)}
+	\label{equation:ASR_definicja}
+	\end{equation}
+	
+	Ponadto na potrzeby późniejszych rozdziałów zdefiniujemy \textit{ukryty model Markowa} jako krotkę \ref{equation:HMM_def}.
+	
+	\begin{equation}
+		HMM = (Q, O, A, B, q_0, q_F)
+		\label{equation:HMM_def}
+	\end{equation}
+	gdzie
+	\begin{align*}
+		\mathbf{Q}=\{q_1, q_2,\ldots,q_n\} & &&  \text{Zbiór stanów automatu} \\
+		\mathbf{O}=\{o_1, o_2,\ldots,o_k\} & &&  \text{Zbiór obserwacji} \\
+		\mathbf{A} =
+		\left| \begin{array}{ccc}
+		a_{1,1} & \ldots & a_{1,n} \\
+		\vdots  & \ddots & \vdots\\
+		a_{n,1} & \ldots & a_{n,n}
+		\end{array} \right|
+		& &&  \text{Macierz przejścia pomiędzy stanami} \\
+		& && \\
+		\mathbf{B}=\{B_1(o),\ldots,B_n(o)\},o \in O & && \text{zbiór rozkłądów prawdopodobieństwa emisji} \\ 
+		& && \text{obsetwacji \textit{o} w stanie \textit{i}} \\
+		\mathbf{q_0, q_F}				  & && \text{stany początkowy i końcowy}
+	\end{align*}
+
+	\section{Modelowanie mowy}
+		\textit{Fonemy} są podstawową koncepcją przy modelowaniu mowy, będącą rozszerzeniem pojęcia głoski. Rozróżniają one dźwięczne i bezdźwięczne formy wymowy głosek oraz dodają nowe dźwięki, takie jak przykładowo \textit{cisza}. W mowie polskiej występuje około 40 różnych fonemów. Każdy fonem modelowany jest za pomocą 3 stanów z modelu Markowa z definicji \ref{equation:HMM_def}. Stany połączone są ze sobą zgodnie z schematem na rysunki \ref{fig:fon_hmm}. Przejście pomiędzy stanami mają przypisane prawdopodobieństwa, zgodnie z definicją modelu Markowa. Ponadto dzięki przejściu zwrotnemu ze stanu do samego siebie możliwe jest modelowanie dźwięków o różnej długości. Całe słowa, składające się z wielu fonemów, tworzą łańcuchy stanów. Na rysunku \ref{fig:AutomatExample} znajduje się przykładowy łańcuch dla słowa \textit{jabłko}, które zgodnie z przyjętymi regułami transkrypcji zapisuje się za pomocą fonemów jako \textit{j a p ł k o}. Wszystkie słowa , które mają być rozpoznawane przez system, wraz z transkrypcją na fonemy znajdują się w \textit{słowniku}, któremu odpowiada blok \refBlock{slownik} z rysunku \ref{fig:ARM_schemat}.
+		
+		\begin{figure}[H]
+			\centering
+			\begin{tikzpicture}[node distance=1.7cm]
+			
+			\begin{scope}
+			\node [hmm] (hmm1) {$s_1$};
+			\node [hmm, right of=hmm1] (hmm2) {$s_2$};
+			\node [hmm, right of=hmm2] (hmm3) {$s_2$};
+			
+			\draw[thick,->,shorten >=1pt] (hmm1) to [out=0,in=180] (hmm2);
+			\draw[thick,->,shorten >=1pt] (hmm2) to [out=0,in=180] (hmm3);
+			
+			\draw[thick,->] (hmm1.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm2.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm3.70) arc (-60:245:4mm);
+			
+			\draw[thick,<-,shorten <=1pt] (hmm1) -- +(180:1cm);
+			\draw[thick,->,shorten <=1pt] (hmm3) -- +(0:1cm);
+			\end{scope}
+			
+			\end{tikzpicture}
+			\caption{Reprezentacja fonemów}
+			\label{fig:fon_hmm}
+			
+		\end{figure}
+	
+	\begin{figure}[H]
+		\centering
+		\begin{tabular}{|c|}
+			\hline
+			\textit{jabłko} = [j a p ł k o] \\ 
+			\hline \\
+			
+			\begin{tikzpicture}[node distance=1.7cm]
+			
+			\begin{scope}
+			
+			\def\x{0.65}
+			\def\y{1.0}
+			\def\z{2.5}
+			
+			\node [hmm0] (hmm1) {};
+			\node [below] at (hmm1.south) {$j_1$};
+			
+			\node [hmm0, right = \x cm of hmm1] (hmm2) {};
+			\node [below] at (hmm2.south) {$j_2$};
+			
+			\node [hmm0, right = \x cm of hmm2] (hmm3) {};
+			\node [below] at (hmm3.south) {$j_3$};
+			
+			
+			\node [hmm0, right = \y cm of hmm3] (hmm4) {};
+			\node [below] at (hmm4.south) {$a_1$};
+			
+			\node [hmm0, right = \x cm of hmm4] (hmm5) {};
+			\node [below] at (hmm5.south) {$a_2$};
+			
+			\node [hmm0, right = \x cm of hmm5] (hmm6) {};
+			\node [below] at (hmm6.south) {$a_3$};
+			
+			
+			\node [hmm0, right = \y cm of hmm6] (hmm7) {};
+			\node [below] at (hmm7.south) {$p_1$};
+			
+			\node [hmm0, right = \x cm of hmm7] (hmm8) {};
+			\node [below] at (hmm8.south) {$p_2$};
+			
+			\node [hmm0, right = \x cm of hmm8] (hmm9) {};
+			\node [below] at (hmm9.south) {$p_3$};
+			
+			
+			
+			
+			\node [hmm0, below = \z cm of hmm9] (hmm10) {};
+			\node [below] at (hmm10.south) {$ł_1$};
+			
+			\node [hmm0, left = \x cm of hmm10] (hmm11) {};
+			\node [below] at (hmm11.south) {$ł_2$};
+			
+			\node [hmm0, left = \x cm of hmm11] (hmm12) {};
+			\node [below] at (hmm12.south) {$ł_3$};
+			
+			
+			\node [hmm0, left = \y cm of hmm12] (hmm13) {};
+			\node [below] at (hmm13.south) {$k_1$};
+			
+			\node [hmm0, left = \x cm of hmm13] (hmm14) {};
+			\node [below] at (hmm14.south) {$k_2$};
+			
+			\node [hmm0, left = \x cm of hmm14] (hmm15) {};
+			\node [below] at (hmm15.south) {$k_3$};
+			
+			
+			\node [hmm0, left = \y cm of hmm15] (hmm16) {};
+			\node [below] at (hmm16.south) {$o_1$};
+			
+			\node [hmm0, left = \x cm of hmm16] (hmm17) {};
+			\node [below] at (hmm17.south) {$o_2$};
+			
+			\node [hmm0, left = \x cm of hmm17] (hmm18) {};
+			\node [below] at (hmm18.south) {$o_3$};
+			
+			
+			
+			\draw[thick,->,shorten >=1pt] (hmm1) to [out=0,in=180] (hmm2);
+			\draw[thick,->,shorten >=1pt] (hmm2) to [out=0,in=180] (hmm3);
+			
+			\draw[thick,->,shorten >=1pt] (hmm3) to [out=0,in=180] (hmm4);
+			
+			\draw[thick,->,shorten >=1pt] (hmm4) to [out=0,in=180] (hmm5);
+			\draw[thick,->,shorten >=1pt] (hmm5) to [out=0,in=180] (hmm6);
+			
+			\draw[thick,->,shorten >=1pt] (hmm6) to [out=0,in=180] (hmm7);
+			
+			\draw[thick,->,shorten >=1pt] (hmm7) to [out=0,in=180] (hmm8);
+			\draw[thick,->,shorten >=1pt] (hmm8) to [out=0,in=180] (hmm9);
+			
+			\draw[thick,->,shorten >=1pt] (hmm9) to [out=0,in=0,looseness=1.1] (hmm10);
+			
+			\draw[thick,->,shorten >=1pt] (hmm10) to [out=180,in=0] (hmm11);
+			\draw[thick,->,shorten >=1pt] (hmm11) to [out=180,in=0] (hmm12);
+			
+			\draw[thick,->,shorten >=1pt] (hmm12) to [out=180,in=0] (hmm13);
+			
+			\draw[thick,->,shorten >=1pt] (hmm13) to [out=180,in=0] (hmm14);
+			\draw[thick,->,shorten >=1pt] (hmm14) to [out=180,in=0] (hmm15);
+			
+			\draw[thick,->,shorten >=1pt] (hmm15) to [out=180,in=0] (hmm16);
+			
+			\draw[thick,->,shorten >=1pt] (hmm16) to [out=180,in=0] (hmm17);
+			\draw[thick,->,shorten >=1pt] (hmm17) to [out=180,in=0] (hmm18);
+			
+			
+			\draw[thick,->] (hmm1.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm2.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm3.70) arc (-60:245:4mm);
+			
+			\draw[thick,->] (hmm4.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm5.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm6.70) arc (-60:245:4mm);
+			
+			\draw[thick,->] (hmm7.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm8.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm9.70) arc (-60:245:4mm);
+			
+			
+			
+			\draw[thick,->] (hmm10.110) arc (240:-65:4mm);
+			\draw[thick,->] (hmm11.110) arc (240:-65:4mm);
+			\draw[thick,->] (hmm12.110) arc (240:-65:4mm);
+			
+			\draw[thick,->] (hmm13.110) arc (240:-65:4mm);
+			\draw[thick,->] (hmm14.110) arc (240:-65:4mm);
+			\draw[thick,->] (hmm15.110) arc (240:-65:4mm);
+			
+			\draw[thick,->] (hmm16.110) arc (240:-65:4mm);
+			\draw[thick,->] (hmm17.110) arc (240:-65:4mm);
+			\draw[thick,->] (hmm18.110) arc (240:-65:4mm);
+			
+			\draw[thick,<-,shorten <=1pt] (hmm1) -- +(180:1cm);
+			\draw[thick,->,shorten <=1pt] (hmm18) -- +(180:1cm);
+			\end{scope}			
+			\end{tikzpicture} \\
+			
+			\hline
+		\end{tabular}
+		\caption{Automat dla słowa \textit{jabłko}}
+		\label{fig:AutomatExample}
+		
+	\end{figure}
+
+	\section{Model językowy}
+	\label{sec:model_jezykowy}
+	
+	\textit{Model językowy}, odpowiadający blokowi \refBlock{n_gramy} z rysunku \ref{fig:ARM_schemat}, przechowuje informację o prawdopodobieństwie słów a priori. Odnosząc się do wzoru \ref{equation:ASR_definicja}, odpowiada ono członowi $P(W)$. W klasycznych systemach rozpoznających mowę, modele językowe wykorzystują \textit{N-gramy}. N-gram opisuje prawdopodobieństwo słowa $w_1$ pod warunkiem $n-1$ poprzednich słów. Formalnie można to zapisać jako $P(w_1|w_2, w_3, \cdots, w_n)$. Typowo modele językowe zawierają w sobie uni-gramy, bi-gramy oraz tri-gramy. Wyliczenie wyższych stopni wymaga zbyt wielu danych. N-gramy wyznacza się poprzez zliczanie kombinacji słów w pewnym korpusie, składającym się z tekstów. Chcą umożliwić rozpoznanie kombinacji słów, które nie wystąpiły w korpusie, stosuje się techniki zwane \textit{wygładzaniem}. Wygładzanie przypisuje kombinacjom, które nie wystąpiły, niezerowe prawdopodobieństwo. Przykładowymi algorytmami wygładzającymi są \textit{add-one} oraz \textit{Katz smoothing}.
+	
+	\section{Etapy rozpoznawania mowy}
+	
+	Proces wyznaczenia $\hat{W}$ składać się będzie z kilku etapów przedstawionych na rysunku \ref{fig:ARM_schemat}, których opis znajduje się w kolejnych rozdziałach.
+	
+	\begin{figure}
+		\centering
+		\scalebox{.8}{
+			\begin{tikzpicture}[node distance = 1.7cm, auto]
+			
+			\tikzstyle{ArmBlok} = [rectangle, draw, fill=blue!20, text width=12em, text centered, rounded corners, minimum height=3em]
+			\tikzstyle{model} = [ellipse, draw, fill=blue!20, text width=7em, text centered, rounded corners, minimum height=3em, node distance=5cm]
+			\tikzstyle{data} = [draw, ellipse,fill=red!20, node distance=2cm,minimum height=2em]
+			
+			% Place nodes
+			\node [data] (etap0) {Mowa};
+			\node [ArmBlok,  below of=etap0] (etap1) {\labelBlock{zbieranie_sygnalu}Zbieranie sygnału akustycznego};
+			\node [ArmBlok,  below of=etap1] (etap2) {\labelBlock{ekstrakcja_cech} Ekstrakcja cech};
+			\node [ArmBlok,  below of=etap2] (etap3) {\labelBlock{klasyfikator} Klasyfikacja stanów};
+			\node [ArmBlok,  below of=etap3] (etap4) {\labelBlock{lancuch_markova} Wyszukiwanie najlepszej ścieżki w modelu Markowa};
+			\node [model, right of=etap3] (etap5) {\labelBlock{n_gramy} Model językowy};
+			\node [model,    left  of=etap2] (model_akustyczny) {\labelBlock{model_akustyczny} Model akustyczny};
+			\node [data,     below of=etap4] (etap6) {Rozpoznanie};
+			\node [model,   right  of=etap6] (slownik) {\labelBlock{slownik} Słownik};
+			
+			\path [line] (etap0) -- (etap1);
+			\path [line] (etap1) -- (etap2);
+			\path [line] (etap2) -- (etap3);
+			\path [line] (etap3) -- (etap4);
+			\path [line, dashed] (etap5) |- (etap4);
+			\path [line] (etap4) -- (etap6);
+			\path [line, dashed] (slownik) |- (etap4);
+			\path [line, dashed] (model_akustyczny) |- (etap3);
+			\path [line, dashed] (model_akustyczny) |- (etap4);
+			
+			\end{tikzpicture}
+		}
+		\caption{Etapy automatycznego rozpoznawania mowy}
+		\label{fig:ARM_schemat}
+	\end{figure}
+	
+	\subsection{Zbieranie sygnały akustycznego}
+		Pierwszym etapem przy rozpoznawaniu mowy, odpowiadającemu blokowi \refBlock{zbieranie_sygnalu} z rysunku \ref{fig:ARM_schemat}, jest \textit{zbieranie sygnału akustycznego}. Na tym etapie analogowy sygnał akustyczny jest cyfryzowany przez kartę dźwiękową i udostępniany dalszemu oprogramowaniu. Należy tutaj uważać, aby sygnał nie został przesterowany, gdyż wiąże się to z utratą informacji wykorzystywanych w kolejnym etapie.
+		
+	\subsection{Ekstrakcja cech}
+		Ekstrakcja cech, odpowiadająca blokowi \refBlock{ekstrakcja_cech} z rysunku \ref{fig:ARM_schemat}, polega na zamianie scyfryzowanego sygnału akustycznego, będącego typowo ciągiem wartości z zakresu $[-127, 127]$, na ciąg wektorów cech. Najczęściej wykorzystywanymi cechami są \textit{MFCC}, \textit{MFSC} oraz \textit{PLP}, ale spotyka się również wiele cech będących ich wariacjami.
+		\\
+		Wyznaczanie cech \textit{MFSC} składa się z $6$-ciu kroków.
+		W pierwszym z nich sygnał akustyczny jest dzielony na \textit{ramki}, czyli nakładające się wzajemnie fragmenty o długości $25ms$. Zakłada się, że na tak krótkim fragmencie sygnał jest \textit{stacjonarny}, dzięki czemu zasadne jest wykonanie kolejnego etapu,
+		polegającego na wyliczeniu \textit{transformaty Fouriera} dla każdej z ramek.
+		W trzecim kroku na otrzymane wcześniej widma sygnału nakłada się $40$ filtrów trójkątnych, zwanych \textit{filtrami MELowymi}. W wyniku tego etapu, dostaje się dla każdej ramki wektor $40$-stu wartości. Kolejną czynnością jest zlogarytmowanie otrzymanego wektora. Ten etap związany jest z ludzką percepcją, która ma charakter logarytmiczny. W piątym kroku z $40$-stu wartości wektora liczy się transformatę kosinusową. Dzięki temu etapowi otrzymane cechy sa nisko skorelowane. Ostatecznie bierze się 12 pierwszych wartości transformaty wraz z całkowitą energią sygnału, a następnie przybliża się pierwsza i drugą pochodną każdej z liczb, otrzymując $39$-elementowy wektor cech.
+		
+	\subsection{Klasyfikacja}
+	
+		\begin{figure}[H]
+			\centering
+			\begin{tikzpicture}
+			\begin{axis}[
+			axis lines = left
+			]
+			%Below the red parabola is defined
+			\addplot [
+			domain=0:20, 
+			samples=100, 
+			color=red,
+			]
+			{0.3 * 1/(2.5 * 2) * e ^ (-(x - 5)^2 / (2 * 2 ^ 2))};
+			
+			\addplot [
+			domain=0:20, 
+			samples=100, 
+			color=blue,
+			]
+			{0.3 * 1/(2.5 * 4) * e ^ (-(x - 17)^2 / (2 * 4 ^ 2))};
+			
+			\addplot [
+			domain=0:20, 
+			samples=100, 
+			color=yellow,
+			]
+			{0.4 * 1/(2.5 * 1.5) * e ^ (-(x - 10)^2 / (2 * 1.5 ^ 2))};
+			
+			\addplot [
+			domain=0:20, 
+			samples=100, 
+			color=black,
+			]
+			{0.3 * 1/(2.5 * 2) * e ^ (-(x - 5)^2 / (2 * 2 ^ 2)) + 0.3 * 1/(2.5 * 4) * e ^ (-(x - 17)^2 / (2 * 4 ^ 2)) + 0.4 * 1/(2.5 * 1.5) * e ^ (-(x - 10)^2 / (2 * 1.5 ^ 2))};
+			
+			\end{axis}
+			\end{tikzpicture}
+			\label{fig:gmm}
+			\caption{Jednowymiarowa mikstura Gaussowska składająca się z trzech komponentów.}
+		\end{figure}
+
+		Klasyfikacja, odpowiadająca blokowi \refBlock{klasyfikator} z rysunku \ref{fig:ARM_schemat}, polega na wyznaczeniu prawdopodobieństwa obserwacji (wcześniej wyznaczonego wektora cech) pod warunkiem każdego ze stanów modelu Markowa. Korzystając z formalnego zapisu, wyznaczane jest $P(O|S)$. Typowo do liczenia $P(O|S)$ wykorzystuje się wielowymiarowe mikstury Gaussowskie opisane wzorem \ref{eqn:GMM}. Parametrami mikstury są \textit{średnia $\mu$}, \textit{wariancja $\Sigma$} oraz \textit{wagi komponentów $c$}. Każdy z stanów modelu Markowa ma swój zestaw parametrów. Rysunek \ref{fig:gmm} ilustruje przykład jednowymiarowej mikstury składającej się z trzech komponentów. 
+	
+		\begin{equation}
+			P(o|s_j)=b_j(o) = \sum_{m=1}^N c_{j,m} N_{j,m}(o)
+			\label{eqn:GMM}
+		\end{equation}
+		\begin{equation}
+			N_{j,m}(o)=\frac{1}{(2\pi)^{\frac{D}{2}}||\Sigma_{j,m}|^{\frac{1}{2}}}\exp\bigg( -\frac{1}{2}(o-\mu_{j,m})^T\Sigma_{j,m}^{-1}(o-\mu_{j,m}) \bigg)
+			\label{eqn:normal_distribution}
+		\end{equation}	
+	
+	\subsection{Przeszukiwanie grafu}
+		W poprzednich etapach, wczytaliśmy sygnał akustyczny, podzieliliśmy go na ramki i dla każdej ramki wyznaczyliśmy prawdopodobieństwo każdego ze stanów, zatem mamy $P(o|s), o \in O, s \in S$. W tym etapie szukać będziemy sekwencji stanów (i skojarzonego z nimi ciągu słów), która maksymalizuje  prawdopodobieństwo obserwacji i daje rozwiązanie problemu optymalizacyjnego z równania \ref{equation:ASR_definicja}. Łańcuchy dla wszystkich słów ze słownika łączone są w jeden spójny graf. Na rysunku \ref{fig:Graph_simple} znajduje się przykładowy graf, powstały dla słów \textit{kot}, \textit{kos}, \textit{kasa}, \textit{masa} oraz \textit{ma}. Widać na nim dwa dodatkowe stany \textit{start} oraz \textit{stop}, które odpowiadają stanom $q_0$ oraz $q_F$ z definicji \ref{equation:HMM_def}. Przejście \textit{stop} $\longrightarrow$ \textit{start} umożliwia powrót na początek grafu w celu rozpoczęcia kolejnego słowa. Graf przejść pomiędzy stanami można zmodyfikować, tak, aby słowa dzieliły wspólne prefiksy, zmniejsza to ilość pamięci oraz czas obliczeń potrzebne przy rozpoznawaniu. Problem znalezienie najlepszego rozpoznania, odpowiadający optymalnej ścieżce, można rozwiązać stosując dynamiczny \textit{algorytm Viterbiego}. Warto zauważyć, że przejścia o niezerowym prawdopodobieństwie (przejścia oznaczone strzałkami na rysunku \ref{fig:Graph_simple}) znajdują się pomiędzy bardzo niewielką liczbą par stanów. W związku z tym, przy szukaniu optymalnej ścieżki, znacznie lepiej spisuje się algorytm \textit{token passing}. 
+		\\
+		W algorytmie \textit{token passing} mamy żetony znajdujące się w wierzchołkach grafu, początkowo jedyny żeton ustawiony jest w stanie \textit{start}. Każdy żeton ma przypisaną oceną będącą prawdopodobieństwem łańcucha Markowa jaki przebył. Wraz z odczytaniem ramki, żetony są przesuwane do sąsiednich stanów, zgodnie z kierunkiem przejść. Jeśli z jakiegoś stanu wychodzi wiele krawędzi, żeton jest rozmnażany. Oceny żetonów są aktualizowane. Ponadto przechodząc na początek grafu, rozpoczynając rozpoznawanie nowego słowa, uwzględnia się prawdopodobieństwo z modelu językowego (opisanego w rozdziale \ref{sec:model_jezykowy}). Całkowita ocena żetony opisane jest wzorem \ref{eqn:h_score}, w którym $h$ jest hipotezą składającą się ze słów $w_1,w_2,\cdots, w_n$ przy obserwacji  $O=\overline{o_1,o_2,\cdots o_T}$ i przypisanym ciągu stanów $s_1,s_2,\cdots,s_T$. Po przeczytaniu wszystkich ramek, wybierany jest żeton o najwyższej ocenie, słowa jakie odwiedził są uznawane za końcowe rozpoznanie.
+		
+		\begin{equation}
+			P_{acc}(h) = P(o_1|s_1) \prod_{i=2}^T P(o_i|s_i) \cdot a_{s_{i-1},s_i}
+		\end{equation}
+		\begin{equation}
+			P_{lng}(h) = P(w_1)P(w_2|w_1)\prod_{i=3}^nP(w_i|w_{i-1},w_{i-2})
+		\end{equation}
+		\begin{equation}
+			P(h) = P_{acc}(h) \cdot P_{lng}(h)
+			\label{eqn:h_score}
+		\end{equation}
+		\\
+		Na rysunku \ref{fig:token_passing_example} znajduje się przykład działania algorytmu \textit{token passing} dla dwóch kolejnych momentów czasowych. Początkowo w momencie $t$ (lewy graf), mamy pojedynczy żeton zaznaczony na czerwono, z oceną $1.0$, na wierzchołku $k_3$. W wyniku działania klasyfikatora otrzymaliśmy prawdopodobieństwa stanów: $P(0_{t+1}|k_3)=0.1$, $P(0_{t+1}|a_1)=0.5$ oraz $P(0_{t+1}|u_1)=0.1$. Ze stanu $k_3$ są trzy przejścia: do $a_1$, $u_1$ oraz zwrotne do $k_3$, zatem żeton rozmnaża się na trzy i przechodzi do każdego z możliwych stanów. Nowe oceny wynoszą odpowiednio: 
+		
+		$k_3 \longrightarrow$ $1.0 \cdot 0.3 \cdot 0.1 = 0.03$
+		
+		$a_1 \longrightarrow$ $1.0 \cdot 0.2 \cdot 0.5 = 0.1$
+		
+		$u_1 \longrightarrow$ $1.0 \cdot 0.5 \cdot 0.1 = 0.05$
+		\\
+		Algorytm \textit{token passing} można poddawać wielu usprawnieniom. Jeśli po aktualizacji ocen, otrzymamy wiele żetonów stojących na jednym wierzchołku, możemy usunąć wszystkie poza najlepszym. To usprawnienie nie zmienia wyniku działania algorytmu. Innym znacznie przyśpieszającym usprawnieniem jest przycinanie całkowitej liczy żetonów, tak, aby w żadnej iteracji ich całkowita liczba nie przekraczała liczby zadanej parametrem (typowo jest to wartość z zakresu 500-8000). W przeciwieństwie do pierwszego usprawnienia, zbyt agresywne przycinanie może znacznie pogorszyć skuteczność.
+		
+		\begin{figure}
+			\centering
+			\vspace{-2.5cm}
+			\begin{tabular}{|c|}
+				\hline
+				\textit{kot} = [k o t],  \textit{kos} = [k o s],  \textit{kasa} = [k a s a], \textit{masa} = [m a s a], \textit{ma} = [m a]\\ 
+				\hline \\
+				
+				\begin{tikzpicture}[node distance=1.13cm]
+				
+				\begin{scope} 		
+				\def \h{1.5}
+				\def \t{3.2}
+				\def \d{0.7}
+				
+				\node [hmm] (hmm1) {$k_1$};
+				\node [hmm, above of=hmm1] (hmm2) {$k_2$};
+				\node [hmm, above of=hmm2] (hmm3) {$k_2$};
+				
+				\node [hmm, above = \d cm of hmm3] (hmm4) {$o_1$};
+				\node [hmm, above of=hmm4] (hmm5) {$o_2$};
+				\node [hmm, above of=hmm5] (hmm6) {$o_3$};
+				
+				\node [hmm, above = \d cm of hmm6] (hmm7) {$t_1$};
+				\node [hmm, above of=hmm7] (hmm8) {$t_2$};
+				\node [hmm, above of=hmm8] (hmm9) {$t_3$};
+				
+				
+				
+				\node [hmm, left = \h cm of hmm1] (hmm10) {$k_1$};
+				\node [hmm, above of=hmm10] (hmm11) {$k_2$};
+				\node [hmm, above of=hmm11] (hmm12) {$k_3$};
+				
+				\node [hmm, above = \d cm of hmm12] (hmm13) {$o_1$};
+				\node [hmm, above of=hmm13] (hmm14) {$o_2$};
+				\node [hmm, above of=hmm14] (hmm15) {$o_3$};
+				
+				\node [hmm, above = \d cm of hmm15] (hmm16) {$s_1$};
+				\node [hmm, above of=hmm16] (hmm17) {$s_2$};
+				\node [hmm, above of=hmm17] (hmm18) {$s_3$};
+				
+				
+				
+				\node [hmm, right = \h cm of hmm1] (hmm19) {$k_1$};
+				\node [hmm, above of=hmm19] (hmm20) {$k_2$};
+				\node [hmm, above of=hmm20] (hmm21) {$k_3$};
+				
+				\node [hmm, above = \d cm of hmm21] (hmm22) {$a_1$};
+				\node [hmm, above of=hmm22] (hmm23) {$a_2$};
+				\node [hmm, above of=hmm23] (hmm24) {$a_3$};
+				
+				\node [hmm, above = \d cm of hmm24] (hmm25) {$s_1$};
+				\node [hmm, above of=hmm25] (hmm26) {$s_2$};
+				\node [hmm, above of=hmm26] (hmm27) {$s_3$};
+				
+				\node [hmm, above = \d cm of hmm27] (hmm28) {$a_1$};
+				\node [hmm, above of=hmm28] (hmm29) {$a_2$};
+				\node [hmm, above of=hmm29] (hmm30) {$a_3$};
+				
+				
+				\node [hmm, right = \h cm of hmm19] (hmm31) {$m_1$};
+				\node [hmm, above of=hmm31] (hmm32) {$m_2$};
+				\node [hmm, above of=hmm32] (hmm33) {$m_3$};
+				
+				\node [hmm, above = \d cm of hmm33] (hmm34) {$a_1$};
+				\node [hmm, above of=hmm34] (hmm35) {$a_2$};
+				\node [hmm, above of=hmm35] (hmm36) {$a_3$};
+				
+				\node [hmm, above = \d cm of hmm36] (hmm37) {$s_1$};
+				\node [hmm, above of=hmm37] (hmm38) {$s_2$};
+				\node [hmm, above of=hmm38] (hmm39) {$s_3$};
+				
+				\node [hmm, above = \d cm of hmm39] (hmm40) {$a_1$};
+				\node [hmm, above of=hmm40] (hmm41) {$a_2$};
+				\node [hmm, above of=hmm41] (hmm42) {$a_3$};
+				
+				
+				\node [hmm, right = \h cm of hmm31] (hmm43) {$m_1$};
+				\node [hmm, above of=hmm43] (hmm44) {$m_2$};
+				\node [hmm, above of=hmm44] (hmm45) {$m_3$};
+				
+				\node [hmm, above = \d cm of hmm45] (hmm46) {$a_1$};
+				\node [hmm, above of=hmm46] (hmm47) {$a_2$};
+				\node [hmm, above of=hmm47] (hmm48) {$a_3$};
+				
+				
+				\node [hmm, below = 1.3 cm of hmm19] (start) {$start$};
+				\node [hmm, above = 1.3 cm of hmm30] (stop) {$stop$};
+				
+				\coordinate [right = \t cm of hmm42] (P1);
+				\coordinate [right of = hmm43] (P2);
+				\coordinate [right = 2.0 cm of hmm42] (P3);
+				\coordinate [left = 2.0 cm of hmm30] (P4);
+				\coordinate [left = 2.4 cm of P4] (P5);
+				%\coordinate [below of=hmm25] (P4);
+				
+				\draw[thick,->,shorten >=1pt] (hmm1) to [out=90,in=-90] (hmm2);
+				\draw[thick,->,shorten >=1pt] (hmm2) to [out=90,in=-90] (hmm3);
+				\draw[thick,->,shorten >=1pt] (hmm3) to [out=90,in=-90] (hmm4);
+				\draw[thick,->,shorten >=1pt] (hmm4) to [out=90,in=-90] (hmm5);
+				\draw[thick,->,shorten >=1pt] (hmm5) to [out=90,in=-90] (hmm6);
+				\draw[thick,->,shorten >=1pt] (hmm6) to [out=90,in=-90] (hmm7);
+				\draw[thick,->,shorten >=1pt] (hmm7) to [out=90,in=-90] (hmm8);
+				\draw[thick,->,shorten >=1pt] (hmm8) to [out=90,in=-90] (hmm9);
+				
+				\draw[thick,->,shorten >=1pt] (hmm10) to [out=90,in=-90] (hmm11);
+				\draw[thick,->,shorten >=1pt] (hmm11) to [out=90,in=-90] (hmm12);
+				\draw[thick,->,shorten >=1pt] (hmm12) to [out=90,in=-90] (hmm13);
+				\draw[thick,->,shorten >=1pt] (hmm13) to [out=90,in=-90] (hmm14);
+				\draw[thick,->,shorten >=1pt] (hmm14) to [out=90,in=-90] (hmm15);
+				\draw[thick,->,shorten >=1pt] (hmm15) to [out=90,in=-90] (hmm16);
+				\draw[thick,->,shorten >=1pt] (hmm16) to [out=90,in=-90] (hmm17);
+				\draw[thick,->,shorten >=1pt] (hmm17) to [out=90,in=-90] (hmm18);
+				
+				\draw[thick,->,shorten >=1pt] (hmm19) to [out=90,in=-90] (hmm20);
+				\draw[thick,->,shorten >=1pt] (hmm20) to [out=90,in=-90] (hmm21);
+				\draw[thick,->,shorten >=1pt] (hmm21) to [out=90,in=-90] (hmm22);
+				\draw[thick,->,shorten >=1pt] (hmm22) to [out=90,in=-90] (hmm23);
+				\draw[thick,->,shorten >=1pt] (hmm23) to [out=90,in=-90] (hmm24);
+				\draw[thick,->,shorten >=1pt] (hmm24) to [out=90,in=-90] (hmm25);
+				\draw[thick,->,shorten >=1pt] (hmm25) to [out=90,in=-90] (hmm26);
+				\draw[thick,->,shorten >=1pt] (hmm26) to [out=90,in=-90] (hmm27);
+				\draw[thick,->,shorten >=1pt] (hmm27) to [out=90,in=-90] (hmm28);
+				\draw[thick,->,shorten >=1pt] (hmm28) to [out=90,in=-90] (hmm29);
+				\draw[thick,->,shorten >=1pt] (hmm29) to [out=90,in=-90] (hmm30);
+				
+				\draw[thick,->,shorten >=1pt] (hmm31) to [out=90,in=-90] (hmm32);
+				\draw[thick,->,shorten >=1pt] (hmm32) to [out=90,in=-90] (hmm33);
+				\draw[thick,->,shorten >=1pt] (hmm33) to [out=90,in=-90] (hmm34);
+				\draw[thick,->,shorten >=1pt] (hmm34) to [out=90,in=-90] (hmm35);
+				\draw[thick,->,shorten >=1pt] (hmm35) to [out=90,in=-90] (hmm36);
+				\draw[thick,->,shorten >=1pt] (hmm36) to [out=90,in=-90] (hmm37);
+				\draw[thick,->,shorten >=1pt] (hmm37) to [out=90,in=-90] (hmm38);
+				\draw[thick,->,shorten >=1pt] (hmm38) to [out=90,in=-90] (hmm39);
+				\draw[thick,->,shorten >=1pt] (hmm39) to [out=90,in=-90] (hmm40);
+				\draw[thick,->,shorten >=1pt] (hmm40) to [out=90,in=-90] (hmm41);
+				\draw[thick,->,shorten >=1pt] (hmm41) to [out=90,in=-90] (hmm42);
+				
+				\draw[thick,->,shorten >=1pt] (hmm43) to [out=90,in=-90] (hmm44);
+				\draw[thick,->,shorten >=1pt] (hmm44) to [out=90,in=-90] (hmm45);
+				\draw[thick,->,shorten >=1pt] (hmm45) to [out=90,in=-90] (hmm46);
+				\draw[thick,->,shorten >=1pt] (hmm46) to [out=90,in=-90] (hmm47);				
+				\draw[thick,->,shorten >=1pt] (hmm47) to [out=90,in=-90] (hmm48);
+				
+				\draw[thick,->] (hmm1.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm2.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm3.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm4.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm5.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm6.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm7.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm8.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm9.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm10.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm11.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm12.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm13.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm14.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm15.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm16.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm17.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm18.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm19.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm20.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm21.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm22.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm23.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm24.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm25.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm26.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm27.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm28.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm29.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm30.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm31.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm32.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm33.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm34.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm35.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm36.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm37.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm38.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm39.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm40.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm41.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm42.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm43.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm44.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm45.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm46.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm47.160) arc (30:335:4mm);
+				\draw[thick,->] (hmm48.160) arc (30:335:4mm);
+				
+				\draw[thick,->,shorten >=1pt] (start) to [out=135,in=270] (hmm10);
+				\draw[thick,->,shorten >=1pt] (start) to [out=100,in=270] (hmm1);
+				\draw[thick,->,shorten >=1pt] (start) to [out=90,in=270] (hmm19);
+				\draw[thick,->,shorten >=1pt] (start) to [out=70,in=270] (hmm31);
+				\draw[thick,->,shorten >=1pt] (start) to [out=45,in=270] (hmm43);
+				
+				\draw[thick,->,shorten >=1pt] (hmm18) to [out=90,in=270] (P5);
+				\draw[thick,->,shorten >=1pt] (P5) to [out=90,in=225] (stop);
+				\draw[thick,->,shorten >=1pt] (hmm9) to [out=90,in=270] (P4);
+				\draw[thick,->,shorten >=1pt] (P4) to [out=90,in=250] (stop);
+				\draw[thick,->,shorten >=1pt] (hmm30) to [out=90,in=270] (stop);
+				\draw[thick,->,shorten >=1pt] (hmm42) to [out=90,in=300] (stop);
+				
+				\draw[thick,->,shorten >=1pt] (stop) to [out=45,in=90] (P1);
+				\draw[thick,->,shorten >=1pt] (P1) to [out=270,in=90] (P2);
+				\draw[thick,->,shorten >=1pt] (P2) to [out=270,in=315] (start);
+				
+				\draw[thick,->,shorten >=1pt] (hmm48) to [out=90,in=270] (P3);
+				\draw[thick,->,shorten >=1pt] (P3) to [out=90,in=-20] (stop);
+				%\draw[thick,->,shorten >=1pt] (P3) to [out=0,in=240] (stop);
+				
+				\end{scope}			
+				\end{tikzpicture} \\
+				
+				\hline
+			\end{tabular}
+			\caption{Automat dla słów: \textit{kot}, \textit{kos}, \textit{kasa}, \textit{masa} oraz \textit{ma}}
+			\label{fig:Graph_simple}
+			
+		\end{figure}
+	
+	\begin{figure}			
+		\begin{tikzpicture}[node distance=2.5cm]
+			\begin{scope} 		
+				\node at (2.0,4.3){$t=n$};
+				\node at (9.0,4.3){$t=n+1$};
+				
+				\node at (1.0,-2.0){$P(0_{t+1}|k_3)=0.1$};
+				\node at (1.0,-2.5){$P(0_{t+1}|a_1)=0.5$};
+				\node at (1.0,-3.0){$P(0_{t+1}|u_1)=0.1$};
+				
+				\node [hmm, fill=red!20] (hmm1) at (0,0) {$k_3$}; \node [below, red] at (hmm1.south) {$1.0$};
+				\node [hmm, right of=hmm1] (hmm2) {$a_1$};
+				\node [hmm, above of=hmm2] (hmm3) {$u_1$};
+				
+				\draw[thick,->] (hmm1.60) arc (-60:245:4mm) node [above,midway] {$0.3$};
+				\draw[thick,->] (hmm2.60) arc (-60:245:4mm);
+				\draw[thick,->] (hmm3.60) arc (-60:245:4mm);
+				
+				\draw[thick,->,shorten >=1pt] (hmm1) to [out=20,in=200] node[right] {0.5} (hmm3);
+				\draw[thick,->,shorten >=1pt] (hmm1) to [out=0,in=180] node[below] {0.2} (hmm2);
+				
+				\draw[thick,<-,shorten <=1pt] (hmm1) -- +(180:1.7cm);
+				\draw[thick,->,shorten <=1pt] (hmm2) -- +(0:1.7cm);
+				\draw[thick,->,shorten <=1pt] (hmm3) -- +(0:1.7cm);
+				
+				
+				
+				\node [hmm, fill=red!20] (hmm1) at (7,0) {$k_3$}; \node [below, red] at (hmm1.south) {$0.03$};
+				\node [hmm, right of=hmm1, fill=red!20] (hmm2) {$a_1$}; \node [below, red] at (hmm2.south) {$0.1$};
+				\node [hmm, above of=hmm2, fill=red!20] (hmm3) {$u_1$}; \node [below, red] at (hmm3.south) {$0.05$};
+				
+				\draw[thick,->] (hmm1.60) arc (-60:245:4mm) node [above,midway] {$0.3$};
+				\draw[thick,->] (hmm2.60) arc (-60:245:4mm);
+				\draw[thick,->] (hmm3.60) arc (-60:245:4mm);
+				
+				\draw[thick,->,shorten >=1pt] (hmm1) to [out=20,in=200] node[right] {0.5} (hmm3);
+				\draw[thick,->,shorten >=1pt] (hmm1) to [out=0,in=180] node[below] {0.2} (hmm2);
+				
+				\draw[thick,<-,shorten <=1pt] (hmm1) -- +(180:1.7cm);
+				\draw[thick,->,shorten <=1pt] (hmm2) -- +(0:1.7cm);
+				\draw[thick,->,shorten <=1pt] (hmm3) -- +(0:1.7cm);						
+			\end{scope}			
+		\end{tikzpicture}
+		\caption{Przykład działania algorytmu \textit{token passing}}
+		\label{fig:token_passing_example}
+	\end{figure}
+
+\end{document}
