@@ -356,7 +356,7 @@
 			\caption{Jednowymiarowa mikstura Gaussowska składająca się z trzech komponentów.}
 		\end{figure}
 
-		Klasyfikacja, odpowiadająca blokowi \refBlock{klasyfikator} z rysunku \ref{fig:ARM_schemat}, polega na wyznaczeniu prawdopodobieństwa obserwacji (wcześniej wyznaczonego wektora cech) pod warunkiem każdego ze stanów modelu Markowa. Korzystając z formalnego zapisu, wyznaczane jest $P(O|S)$. Typowo do liczenia $P(O|S)$ wykorzystuje się wielowymiarowe mikstury Gaussowskie opisane wzorem \ref{eqn:GMM}. Parametrami mikstury są \textit{średnia $\mu$}, \textit{wariancja $\Sigma$} oraz \textit{wagi komponentów $c$}. Każdy z stanów modelu Markowa ma swój zestaw parametrów. Rysunek \ref{fig:gmm} ilustruje przykład jednowymiarowej mikstury składającej się z trzech komponentów. 
+		Klasyfikacja, odpowiadająca blokowi \refBlock{klasyfikator} z rysunku \ref{fig:ARM_schemat}, polega na wyznaczeniu prawdopodobieństwa obserwacji (wcześniej wyznaczonego wektora cech) pod warunkiem każdego ze stanów modelu Markowa. Korzystając z formalnego zapisu, wyznaczane jest $P(O|S)$. Typowo do liczenia $P(O|S)$ wykorzystuje się wielowymiarowe mikstury Gaussowskie opisane wzorem \ref{eqn:GMM}. Korzystając z obserwacji, że cechy \textit{MFCC} sa nisko skorelowane, można założyć, że macierz wariancji $\Sigma$ jest diagonalna. Pozwala to na uproszczenie wzoru \ref{eqn:GMM} do postaci \ref{eqn:normal_distribution_simple}, które jest znacznie szybsza do obliczenia. Parametrami mikstury są \textit{średnia $\mu$}, \textit{wariancja $\Sigma$} oraz \textit{wagi komponentów $c$}. Każdy z stanów modelu Markowa ma swój zestaw parametrów, który zapisany jest w \textit{modelu akustycznym} odpowiadającym blokowi \refBlock{model_akustyczny} z rysunku \ref{fig:ARM_schemat}. Rysunek \ref{fig:gmm} ilustruje przykład jednowymiarowej mikstury składającej się z trzech komponentów. 
 	
 		\begin{equation}
 			P(o|s_j)=b_j(o) = \sum_{m=1}^N c_{j,m} N_{j,m}(o)
@@ -366,14 +366,18 @@
 			N_{j,m}(o)=\frac{1}{(2\pi)^{\frac{D}{2}}||\Sigma_{j,m}|^{\frac{1}{2}}}\exp\bigg( -\frac{1}{2}(o-\mu_{j,m})^T\Sigma_{j,m}^{-1}(o-\mu_{j,m}) \bigg)
 			\label{eqn:normal_distribution}
 		\end{equation}	
+		\begin{equation}
+			N_{j,m}(o)\simeq\frac{1}{(2\pi)^{\frac{D}{2}}(\prod_{i=1}^D\sigma_{j,m,i})^{\frac{1}{2}}}\exp\bigg( -\frac{1}{2}\sum_{i=1}^D(o_i-\mu_{j,m,i})^2\sigma_{j,m,i} \bigg)
+			\label{eqn:normal_distribution_simple}
+		\end{equation}
 	
 	\subsection{Przeszukiwanie grafu}
 		W poprzednich etapach, wczytaliśmy sygnał akustyczny, podzieliliśmy go na ramki i dla każdej ramki wyznaczyliśmy prawdopodobieństwo każdego ze stanów, zatem mamy $P(o|s), o \in O, s \in S$. W tym etapie szukać będziemy sekwencji stanów (i skojarzonego z nimi ciągu słów), która maksymalizuje  prawdopodobieństwo obserwacji i daje rozwiązanie problemu optymalizacyjnego z równania \ref{equation:ASR_definicja}. Łańcuchy dla wszystkich słów ze słownika łączone są w jeden spójny graf. Na rysunku \ref{fig:Graph_simple} znajduje się przykładowy graf, powstały dla słów \textit{kot}, \textit{kos}, \textit{kasa}, \textit{masa} oraz \textit{ma}. Widać na nim dwa dodatkowe stany \textit{start} oraz \textit{stop}, które odpowiadają stanom $q_0$ oraz $q_F$ z definicji \ref{equation:HMM_def}. Przejście \textit{stop} $\longrightarrow$ \textit{start} umożliwia powrót na początek grafu w celu rozpoczęcia kolejnego słowa. Graf przejść pomiędzy stanami można zmodyfikować, tak, aby słowa dzieliły wspólne prefiksy, zmniejsza to ilość pamięci oraz czas obliczeń potrzebne przy rozpoznawaniu. Problem znalezienie najlepszego rozpoznania, odpowiadający optymalnej ścieżce, można rozwiązać stosując dynamiczny \textit{algorytm Viterbiego}. Warto zauważyć, że przejścia o niezerowym prawdopodobieństwie (przejścia oznaczone strzałkami na rysunku \ref{fig:Graph_simple}) znajdują się pomiędzy bardzo niewielką liczbą par stanów. W związku z tym, przy szukaniu optymalnej ścieżki, znacznie lepiej spisuje się algorytm \textit{token passing}. 
 		\\
-		W algorytmie \textit{token passing} mamy żetony znajdujące się w wierzchołkach grafu, początkowo jedyny żeton ustawiony jest w stanie \textit{start}. Każdy żeton ma przypisaną oceną będącą prawdopodobieństwem łańcucha Markowa jaki przebył. Wraz z odczytaniem ramki, żetony są przesuwane do sąsiednich stanów, zgodnie z kierunkiem przejść. Jeśli z jakiegoś stanu wychodzi wiele krawędzi, żeton jest rozmnażany. Oceny żetonów są aktualizowane. Ponadto przechodząc na początek grafu, rozpoczynając rozpoznawanie nowego słowa, uwzględnia się prawdopodobieństwo z modelu językowego (opisanego w rozdziale \ref{sec:model_jezykowy}). Całkowita ocena żetony opisane jest wzorem \ref{eqn:h_score}, w którym $h$ jest hipotezą składającą się ze słów $w_1,w_2,\cdots, w_n$ przy obserwacji  $O=\overline{o_1,o_2,\cdots o_T}$ i przypisanym ciągu stanów $s_1,s_2,\cdots,s_T$. Po przeczytaniu wszystkich ramek, wybierany jest żeton o najwyższej ocenie, słowa jakie odwiedził są uznawane za końcowe rozpoznanie.
+		W algorytmie \textit{token passing} mamy żetony znajdujące się w wierzchołkach grafu, początkowo jedyny żeton ustawiony jest w stanie \textit{start}. Każdy żeton ma przypisaną oceną będącą prawdopodobieństwem łańcucha Markowa jaki przebył. Wraz z odczytaniem ramki, żetony są przesuwane do sąsiednich stanów, zgodnie z kierunkiem przejść. Jeśli z jakiegoś stanu wychodzi wiele krawędzi, żeton jest rozmnażany. Oceny żetonów są aktualizowane. Ponadto przechodząc na początek grafu, rozpoczynając rozpoznawanie nowego słowa, uwzględnia się prawdopodobieństwo z modelu językowego (opisanego w rozdziale \ref{sec:model_jezykowy}). Całkowita ocena żetonu opisana jest wzorem \ref{eqn:h_score}, w którym $h$ jest hipotezą składającą się ze słów $w_1,w_2,\cdots, w_n$ przy obserwacji  $O=\overline{o_1,o_2,\cdots o_T}$ i przypisanym ciągu stanów $s_1,s_2,\cdots,s_T$. Po przeczytaniu wszystkich ramek, wybierany jest żeton o najwyższej ocenie, słowa jakie odwiedził są uznawane za końcowe rozpoznanie.
 		
 		\begin{equation}
-			P_{acc}(h) = P(o_1|s_1) \prod_{i=2}^T P(o_i|s_i) \cdot a_{s_{i-1},s_i}
+			P_{acc}(h) = P(o_1|s_1) \prod_{i=2}^T \bigg( P(o_i|s_i) \cdot a_{s_{i-1},s_i} \bigg)
 		\end{equation}
 		\begin{equation}
 			P_{lng}(h) = P(w_1)P(w_2|w_1)\prod_{i=3}^nP(w_i|w_{i-1},w_{i-2})
@@ -383,7 +387,7 @@
 			\label{eqn:h_score}
 		\end{equation}
 		\\
-		Na rysunku \ref{fig:token_passing_example} znajduje się przykład działania algorytmu \textit{token passing} dla dwóch kolejnych momentów czasowych. Początkowo w momencie $t$ (lewy graf), mamy pojedynczy żeton zaznaczony na czerwono, z oceną $1.0$, na wierzchołku $k_3$. W wyniku działania klasyfikatora otrzymaliśmy prawdopodobieństwa stanów: $P(0_{t+1}|k_3)=0.1$, $P(0_{t+1}|a_1)=0.5$ oraz $P(0_{t+1}|u_1)=0.1$. Ze stanu $k_3$ są trzy przejścia: do $a_1$, $u_1$ oraz zwrotne do $k_3$, zatem żeton rozmnaża się na trzy i przechodzi do każdego z możliwych stanów. Nowe oceny wynoszą odpowiednio: 
+		Na rysunku \ref{fig:token_passing_example} znajduje się przykład działania algorytmu \textit{token passing} dla dwóch kolejnych momentów czasowych. Początkowo w momencie $t$ (lewy graf), mamy pojedynczy żeton zaznaczony na czerwono, z oceną $1.0$, na wierzchołku $k_3$. Załóżmy, że w wyniku działania klasyfikatora otrzymaliśmy prawdopodobieństwa stanów: $P(0_{t+1}|k_3)=0.1$, $P(0_{t+1}|a_1)=0.5$ oraz $P(0_{t+1}|u_1)=0.1$. Ze stanu $k_3$ są trzy przejścia: do $a_1$, $u_1$ oraz zwrotne do $k_3$, zatem żeton rozmnaża się na trzy i przechodzi do każdego z możliwych stanów. Nowe oceny wynoszą odpowiednio: 
 		
 		$k_3 \longrightarrow$ $1.0 \cdot 0.3 \cdot 0.1 = 0.03$
 		
@@ -663,5 +667,4 @@
 		\caption{Przykład działania algorytmu \textit{token passing}}
 		\label{fig:token_passing_example}
 	\end{figure}
-
 \end{document}
