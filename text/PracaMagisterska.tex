@@ -56,7 +56,7 @@
 	Oba tryby wymagają możliwie najlepszej skuteczności rozpoznawania, jednak tryb online jest szczególnie wymagający, gdyż dodatkowo wymaga szybkiego działania. Rozpoznawanie w trybie online powinno się odbywać w czasie zbliżony do rzeczywistego. 
 	
 	Rozwój kart graficznych wraz z pojawieniem się technologii CUDA oraz nowe rozwiązania z dziedziny sieci neuronowych zaowocowały w ostatnich latach pojawieniem się klasyfikatorów radzących sobie znacznie lepiej niż wcześniej stosowane algorytmy. W związku z tym coraz więcej badaczy próbuje stosować sieci neuronowe w celu poprawy jakości systemów rozpoznających mowę. Można spotkać wiele różnych konfiguracji, zarówno łączących konwencjonalne systemy, jaki i autonomiczne sieci rekurencyjne.
-	Jedną z pierwszych skutecznych prób zastosowania sieci neuronowych przy rozpoznawaniu mowy zaprezentowano w artykule \cite{NN_ASR_monophones}. Autorzy wykorzystują w nim klasyczną sieć typy \textit{feed-forward} do estymacji prawdopodobieństw unifonów. W kolejnych latach zaproponowano zastąpienie klasycznych sieci architekturą splotową oraz zamianę szeroko stosowanych cech \textit{MFCC} na \textit{MFSC}. W artykule \cite{article1} zaprezentowano właśnie takie podejście. Autorzy inspirując się wykorzystaniem głębokich, splotowych sieci neuronowych przy rozpoznawaniu obrazów, proponują przeniesie tej samej architektury do systemów rozpoznających mowę.
+	Jedną z pierwszych skutecznych prób zastosowania sieci neuronowych przy rozpoznawaniu mowy zaprezentowano w artykule \cite{NN_ASR_monophones}. Autorzy wykorzystują w nim klasyczną sieć typy \textit{feed-forward} do estymacji prawdopodobieństw unifonów. W kolejnych latach zaproponowano zastąpienie klasycznych sieci architekturą splotową oraz zamianę szeroko stosowanych cech \textit{MFCC} na \textit{MFSC}. W artykule \cite{article1} zaprezentowano właśnie takie podejście. Autorzy, inspirując się wykorzystaniem głębokich, splotowych sieci neuronowych przy rozpoznawaniu obrazów, proponują przeniesie tej samej architektury do systemów rozpoznających mowę.
 	
 	Celem niniejszej pracy magisterskiej jest przetestowanie możliwości wykorzystania sieci neuronowych w procesie rozpoznawania mowy. Duży nacisk położony jest na możliwość rozpoznawanie trifonów, co jest rozwinięciem podejścia proponowanego w publikacji \cite{NN_ASR_monophones}. Przeprowadzono szereg eksperymentów w celu sprawdzenia możliwości poprawy skuteczności rozpoznawania mowy, poprzez zastosowanie sieci neuronowych rozpoznających ograniczony zbiór trifonów. Pokazano, jak liczba trifonów wpływa na skuteczność oraz porównano otrzymane wyniki z klasycznymi modelami gaussowskimi oraz sieciami neuronowymi rozpoznającymi unifony.
 
@@ -96,24 +96,25 @@
 		\label{fig:ARM_schemat}
 	\end{figure}
 
-	\textbf{Automatyczne rozpoznawanie mowy} możemy formalnie zdefiniować, jako znajdowanie ciągu słów $\hat{W}$ z pewnego zbiory $V$, o maksymalnym prawdopodobieństwie, pod warunkiem obserwacji $O$. Zbiór $V$ odpowiada blokowi \refBlock{slownik} z rysunku \ref{fig:ARM_schemat}.
+	Niniejszy rozdział bazuje na podejściu do rozpoznawania mowy przedstawionym w \cite{book1}. \\
+	\textbf{Automatyczne rozpoznawanie mowy} możemy formalnie zdefiniować, jako znajdowanie ciągu słów $\hat{W}$ z pewnego zbioru $V$, o maksymalnym prawdopodobieństwie, pod warunkiem obserwacji $O$. Zbiór $V$ odpowiada blokowi \refBlock{slownik} z rysunku \ref{fig:ARM_schemat}.
 	
 	\begin{equation}
 		\hat{W}=\argmax_{W \in V^{*}}{P(W \mid O)}
 		\label{equation:ASR_definicja1}
 	\end{equation}
 	
-	Niestety wyliczanie formuły \ref{equation:ASR_definicja1} okazuję się niewygodne, ale korzystając ze wzory Bayesa możemy dojść do postaci \ref{equation:ASR_definicja2}, która jest już wygoda do obliczenia.
+	Niestety wyliczanie formuły \ref{equation:ASR_definicja1} okazuję się niewygodne, ale korzystając ze wzory Bayesa możemy dojść do postaci \ref{equation:ASR_definicja2}, która jest już wygodny do obliczenia.
 	
 	\begin{equation}
 		\hat{W}=\argmax_{W \in \Sigma^{*}}{P(W \mid O)} = \argmax_{W \in \Sigma^{*}}{\frac{P(O \mid W)P(W)}{P(O)}} = \argmax_{W \in \Sigma^{*}}{P(O \mid W)P(W)}
 		\label{equation:ASR_definicja2}
 	\end{equation}
 	
-	Ostatnie przejście wynika, z faktu, że $P(O)$ nie zależy od $W$, zatem możne jest pominąć.
+	Ostatnie przejście wynika z faktu, że $P(O)$ nie zależy od $W$, zatem możne je pominąć.
 	Implementując formułę \ref{equation:ASR_definicja2} możemy wydzielić 5 kluczowych etapów, są one zilustrowane na rysunku \ref{fig:ARM_schemat}. Opis poszczególnych bloków ze schematu znajduje się w kolejnych podrozdziałach.
 	\\
-	Pierwszy etap, określony jako \textit{Zbieranie sygnału akustycznego} (blok \refBlock{zbieranie_sygnalu} na rysunku \ref{fig:ARM_schemat} ), jest realizowany sprzętowo poprzez peryferyjne urządzenia. Obejmuje analogowe przetwarzanie sygnału, cyfryzację oraz opcjonalny post-processing wykonywany przez kartę dźwiękową. Na tym etapie ważne jest, aby dostroić poziom dźwięku, tak aby uniknąć przesterowań, dobrać częstotliwość próbkowania i zakres częstotliwości. Niepoprawna konfiguracja tego etapu, może skutkować zakłóceniami oraz wycięciem informacji, które mogą być istotne na kolejnych etapach przetwarzania, a w konsekwencji obniżeniem skuteczności rozpoznawania. W niniejszej pracy wykorzystany był gotowy, powszechnie dostępny korpus nagrań (patrz rozdział \ref{sec:opis_danych}), dlatego nie będę się skupiał na tym etapie.
+	Pierwszy etap, określony jako \textit{Zbieranie sygnału akustycznego} (blok \refBlock{zbieranie_sygnalu} na rysunku \ref{fig:ARM_schemat}), jest realizowany sprzętowo poprzez peryferyjne urządzenia. Obejmuje analogowe przetwarzanie sygnału, cyfryzację oraz opcjonalny post-processing wykonywany przez kartę dźwiękową. Na tym etapie ważne jest, aby dostroić poziom dźwięku, tak aby uniknąć przesterowań, dobrać częstotliwość próbkowania i zakres częstotliwości\footnote{W testowym korpusie \textit{Clarin} częstotliwość próbkowania wynosiła 16 kHz, częstotliwości powyżej 8 kHz były wycięte.}. Niepoprawna konfiguracja tego etapu może skutkować zakłóceniami oraz wycięciem informacji, które mogą być istotne na kolejnych etapach przetwarzania, a w konsekwencji obniżeniem skuteczności rozpoznawania. W niniejszej pracy wykorzystany był gotowy, powszechnie dostępny korpus nagrań (patrz rozdział \ref{sec:opis_danych}), dlatego nie będę się skupiał na tym etapie.
 
 	\section{ Fonemy }
 	\label{sec:Phones}
@@ -143,7 +144,7 @@
 			
 		\end{figure}
 
-		\textit{Fonemy} są podstawową koncepcją przy modelowaniu dźwięków w mowie. Typowo rozróżniają wypowiadane dźwięki, takie jak miedzy innymi głoski dźwięczne, bezdźwięczne, nosowe czy nieme. Jednak w niniejszych rozważaniach rozszerzymy definicję fonemu o dodatkowy symbol \textit{ciszy}, oznaczony jako \textit{sil}. W tabeli \ref{tab:phone_list} znajduje się lista fonów zamodelowanych w wykorzystywanych przez system \textit{Magic Scribe} modelach akustycznych, łącznie jest ich 40. Należy podkreślić, że wpisy z tabeli \ref{tab:phone_list} nie są literami, lecz identyfikatorami fonemów. Każdy zamodelowany fonem ma swój zestaw parametrów, które go opisują. Parametry te tworzą \textit{model akustyczny} odpowiadający blokowi \ref{model_akustyczny} z rysunku \ref{fig:ARM_schemat}. Słowa, które mają być rozpoznawane przez system, muszą mieć przypisaną transkrypcję na fonemy. Lista słów wraz z transkrypcją znajduje się w \textit{słowniku}, który odpowiada blokowi \refBlock{slownik} na rysunku \ref{fig:ARM_schemat}. Aby umożliwić poprawne rozpoznawanie, każda forma gramatyczne danego słowa musi się znaleźć w słowniku, gdyż jest traktowana jak niezależne słowo. Konsekwencją tego jest bardzo duża liczba wpisów w słownikach dla języków o rozbudowanej fleksji, takich jak język polski. 
+		\textit{Fonemy} są podstawową koncepcją przy modelowaniu dźwięków w mowie. Typowo rozróżniają wypowiadane dźwięki, takie jak miedzy innymi głoski dźwięczne, bezdźwięczne, nosowe czy nieme. Jednak w niniejszych rozważaniach rozszerzymy definicję fonemu o dodatkowy symbol \textit{ciszy}, oznaczony jako \textit{sil}. W tabeli \ref{tab:phone_list} znajduje się lista fonemów zamodelowanych w wykorzystywanych przez system \textit{Magic Scribe} modelach akustycznych, łącznie jest ich 40. Należy podkreślić, że wpisy z tabeli \ref{tab:phone_list} nie są literami, lecz identyfikatorami fonemów. Każdy zamodelowany fonem ma swój zestaw parametrów, które go opisują. Parametry te tworzą \textit{model akustyczny} odpowiadający blokowi \ref{model_akustyczny} z rysunku \ref{fig:ARM_schemat}. Słowa, które mają być rozpoznawane przez system, muszą mieć przypisaną transkrypcję na fonemy. Lista słów wraz z transkrypcją znajduje się w \textit{słowniku}, który odpowiada blokowi \refBlock{slownik} na rysunku \ref{fig:ARM_schemat}. Aby umożliwić poprawne rozpoznawanie, każda forma gramatyczne danego słowa musi się znaleźć w słowniku, gdyż jest traktowana jak niezależne słowo. Konsekwencją tego jest bardzo duża liczba wpisów w słownikach dla języków o rozbudowanej fleksji, takich jak język polski. 
 		W wykorzystanym słowniku, zawierającym $1209017$ wpisów, transkrypcje zostały zbudowane na podstawie zasad sformułowanych przez Marię Steffen-Batogową w książce \textit{Automatyzacja transkrypcji fonematycznej tekstów polskich} \cite{transkrypcja}. Zasady te nie są jednak jednoznaczne i w sytuacji, gdy dla jednego słowa można wyprowadzić wiele różnych transkrypcji, wszystkie zostają umieszczone w słowniku. Przykładem wyrazu o wielu transkrypcjach jest słowo \textit{wystrzygł}, które zgodnie z regułami można zapisać między innymi jako \textit{v y s t sz y k} lub \text{\textit{v y s t sz y k ł}}.  
 
 		\begin{figure}
@@ -166,13 +167,13 @@
 		
 		Przy modelowaniu fonemów wyróżnia się trzy fazy:
 		\begin{itemize}
-			\item początkową, podczas której aparat mowy zmienia swój kształt
-			\item środkową, podczas której aparat mowy jest już w ustabilizowanej pozycji
+			\item początkową, podczas której aparat mowy zmienia swój kształt,
+			\item środkową, podczas której aparat mowy jest już w ustabilizowanej pozycji,
 			\item końcową, podczas której aparat mowy przechodzi do układu dla kolejnego fonemu, ale dźwięk jaki wydaje jest jeszcze bliższy aktualnemu fonemowi. 
 		\end{itemize}
 		Uwzględniając powyższe spostrzeżenia, w systemie \textit{HTK}, wszystkie fonemy modeluje się za pomocą trzech stanów, tak jak na rysunku \ref{fig:fon_hmm}. Ze stanu można przejść jedynie do następnego stanu lub powrócić do samego siebie. Dzięki przejściu zwrotnemu, możliwe jest modelowanie dźwięków o różnej długości. 
 		\\
-		Rozwinięciem fonemów są \textbf{trifony}, uwzględniają one lewy i prawy kontekst poprzez dodanie informacji o fonemach stojących obok. Typowo trifony zapisuje się zgodnie z notacją na rysunku \ref{fig:tri-fony_notacja}, gdzie \textit{a} jest poprzednim fonemem, \textit{b} aktualnym, natomiast \textit{c} następnym. W praktyce nie występują wszystkie kombinacje trójek fonemów, takich jak przykładowo \textit{o-o+a}, niemniej jednak wiele z nich można spotkać. W modelach wykorzystanych podczas eksperymentów występuje $27005$ uni, bi oraz trifonów.
+		Rozwinięciem fonemów są \textbf{trifony}, uwzględniają one lewy i prawy kontekst poprzez dodanie informacji o fonemach stojących obok. Typowo trifony zapisuje się zgodnie z notacją na rysunku \ref{fig:tri-fony_notacja}, gdzie \textit{a} jest poprzednim fonemem, \textit{b} aktualnym, natomiast \textit{c} następnym. W praktyce nie występują wszystkie kombinacje trójek fonemów, takich jak przykładowo \textit{o-o+a}, niemniej jednak prawie połowę z nich można spotkać. W modelach wykorzystanych podczas eksperymentów występuje $27005$ fonemów, z czego około $26000$ to trifony, a pozostałe to uni oraz bifony.
 		
 		\begin{figure}[H]
 			\begin{center}
@@ -201,11 +202,11 @@
 	 	\item Dyskretna transformata kosinusowa.
 	 \end{itemize}
  
-	 Pierwszym etapem ekstrakcji jest podzielenie sygnału na fragmenty zwane \textit{ramkami}. Typowo ramki mają $25ms$ i są przesunięte co $10ms$, przez co nachodzą na siebie. Ramki o takiej długości zawierają wystarczająco dużo informacji, a jednocześnie można założyć, że są stochastycznie stacjonarne. 
+	 Pierwszym etapem ekstrakcji jest podzielenie sygnału na fragmenty zwane \textit{ramkami}. Typowo ramki mają $25$ ms i są przesunięte co $10$ ms, przez co nachodzą na siebie. Ramki o takiej długości zawierają wystarczająco dużo informacji, a jednocześnie można założyć, że są stochastycznie stacjonarne. 
 	 
-	 W drugim etapie każdą ramkę poddaje się transformacie Fouriera. W efekcie tej operacji, otrzymuje się widmo sygnału akustycznego, opisujące ilość energii w zależności o częstotliwości.
+	 W drugim etapie każdą ramkę poddaje się transformacie Fouriera. W efekcie tej operacji, otrzymuje się widmo sygnału akustycznego, opisujące ilość energii w zależności od częstotliwości.
 	 
-	 W trzecim etapie na widmo nakłada się zestaw filtrów trójkątnych, zwanych \textit{MEL-owym zestawem filtrów}. Filtry te są przesunięte względem siebie, każdy kolejny filer jest coraz szerszy, co odpowiada ludzkiej percepcji. Ludzie dobrze rozróżniają sygnały o małej częstotliwości, natomiast te o wysokiej są podobnie odbierane przez ludzkie ucho. Aby określić zestaw filtrów należy podać ich liczbę, niech będzie nią $N$ oraz zdefiniować $N+1$ częstotliwości, które wyznaczają zakresy filtrów. Załóżmy, że częstotliwości sa zapisane w ciągu $f(1), f(2), \ldots f(N+1)$, wtedy $m$-ty filtr jest zdefiniowany równaniem \ref{eqn:filter}. Na rysunku \ref{fig:filter_bank} zwizualizowano $4$ kolejne filtry. Efektem nałożenia filtrów jest nowy ciąg wartości $v_1, v_2, \ldots v_N$, które stanowy wejście do kolejnego etapu przetwarzania.
+	 W trzecim etapie na widmo nakłada się zestaw filtrów trójkątnych, zwanych \textit{MEL-owym zestawem filtrów}. Filtry te są przesunięte względem siebie, każdy kolejny filtr jest coraz szerszy, co odpowiada ludzkiej percepcji. Ludzie dobrze rozróżniają sygnały o małej częstotliwości, natomiast te o wysokiej są podobnie odbierane przez ludzkie ucho. Aby określić zestaw filtrów należy podać ich liczbę, niech będzie nią $N$ oraz zdefiniować $N+1$ częstotliwości, które wyznaczają zakresy filtrów. Załóżmy, że częstotliwości sa zapisane w ciągu $f(1), f(2), \ldots f(N+1)$, wtedy $m$-ty filtr jest zdefiniowany równaniem \ref{eqn:filter}. Na rysunku \ref{fig:filter_bank} zwizualizowano $4$ kolejne filtry. Efektem nałożenia filtrów jest nowy ciąg wartości $v_1, v_2, \ldots v_N$, które stanowy wejście do kolejnego etapu przetwarzania.
 	 
 	 \begin{equation}
 		 H_m(x)= 
@@ -295,7 +296,7 @@
 	 	\label{eqn:energy}
 	 \end{equation}
 	 
-	 Ostatecznie, wektor cech jest składany z $M$ pierwszych wartości ciągu $W$, całkowitej energii sygnału akustycznego $\epsilon$ liczonej według wzory \ref{eqn:energy} oraz pierwszej i drugiej pochodnej wspomnianych wartości liczonych według wzorów \ref{eqn:d1} oraz \ref{eqn:d2}. Łącznie otrzymuje się wektor cech o $3(M+1)$ elementach. Rysunek \ref{fig:feature_vector} pokazuje ostateczną formę wektora cech dla $t$-tej ramki.
+	 Ostatecznie, wektor cech jest składany z $M$ pierwszych wartości ciągu $W$, całkowitej energii sygnału akustycznego $\epsilon$ liczonej według wzory \ref{eqn:energy} oraz pierwszej i drugiej pochodnej wspomnianych wartości liczonych według wzorów \ref{eqn:d1} oraz \ref{eqn:d2}. Łącznie otrzymuje się wektor cech o $3(M+1)$ elementach\footnote{Typowo w przypadku cech \textit{MFSC} $M=12$}. Rysunek \ref{fig:feature_vector} pokazuje ostateczną formę wektora cech dla $t$-tej ramki.
 	 
 	\begin{figure}[H]
 		\begin{center}
@@ -309,7 +310,7 @@
 		\end{center}
 	\end{figure}
 
-	Ponadto, opcjonalnie, wektory cech mogą zostać poddane normalizacji, co uniezależnia je od niektórych czynników zewnętrznych, takich jak przykładowo głośność wypowiedzi. Normalizacji dokonuje się poprzez odjęcie średniej i podzielenie przez wariancję zgodnie ze wzorem \ref{eqn:norm}, gdzie $W$ jest zbiorem wektorów, a $W_i$ $i$-tym wektorem ze zbioru. Każdy z parametrów wektora jest normalizowany względem odpowiadających mu parametrów w innych wektorach cech ze zbiory $W$. Typowo normalizacji dokonuje się dla pojedynczej frazy, co oznacza ze zbiór $W$ zawiera jedynie wektory z jednej wypowiedzi.
+	Ponadto, opcjonalnie, wektory cech mogą zostać poddane normalizacji, co uniezależnia je od niektórych czynników zewnętrznych, takich jak przykładowo głośność wypowiedzi. Normalizacji dokonuje się poprzez odjęcie średniej i podzielenie przez wariancję zgodnie ze wzorem \ref{eqn:norm}, gdzie $W$ jest zbiorem wektorów, a $W_i$ $i$-tym wektorem ze zbioru. Każdy z parametrów wektora jest normalizowany względem odpowiadających mu parametrów w innych wektorach cech ze zbioru $W$. Typowo normalizacji dokonuje się dla pojedynczej frazy, co oznacza ze zbiór $W$ zawiera jedynie wektory z jednej wypowiedzi.
 	
 	\begin{equation}
 		\hat{W_i} = \frac{W_i - mean(W)}{var(W)}
@@ -376,17 +377,17 @@
 		   Algorytmy Viterbiego sa dynamicznymi algorytmami do znajdowania najbardziej prawdopodobnej ścieżki w automacie oraz prawdopodobieństwa stanu $s_i$ po $t$ krokach. Znajdują zastosowanie w algorytmie \textit{Bauma-Welcha} służącym estymacji parametrów modelu, opisanym w rozdziale \ref{sec:Baum_Welch}.
 		   
 		   \begin{itemize}
-			   	\item Aby znaleźć najbardziej prawdopodobną ścieżkę, należy skorzystać z rekurencyjnego równania \ref{equation:viterbi_path}.
-			   	\item Aby znaleźć prawdopodobieństwo stanu po $k$ krokach, należy skorzystać z rekurencyjnego równania \ref{equation:viterbi_node}.
+			   	\item Aby znaleźć najbardziej prawdopodobną ścieżkę kończącą się w stanie $w$, należy skorzystać z rekurencyjnego równania \ref{equation:viterbi_path}.
+			   	\item Aby znaleźć prawdopodobieństwo stanu $w$ po $k$ krokach, należy skorzystać z rekurencyjnego równania \ref{equation:viterbi_node}.
 		   \end{itemize}
 	   	   
 		   \begin{equation}
-		   P_t^q=\max_{q \in Q} \bigg( P_{t-1}^q\cdot a_{q,w}\cdot b_q(o) \bigg)
+		   P_t^w=\max_{q \in Q} \bigg( P_{t-1}^q\cdot a_{q,w}\cdot b_w(o) \bigg)
 		   \label{equation:viterbi_path}
 		   \end{equation}
 		   
 		   \begin{equation}
-		   Q_t^q=\sum_{q \in Q} \bigg( P_{t-1}^q\cdot a_{q,w}\cdot b_q(o) \bigg)
+		   Q_t^w=\sum_{q \in Q} \bigg( P_{t-1}^q\cdot a_{q,w}\cdot b_w(o) \bigg)
 		   \label{equation:viterbi_node}
 		   \end{equation}
 		   
@@ -495,7 +496,7 @@
 		   
 	   \subsection{Algorytm Bauma-Welcha}
 	   \label{sec:Baum_Welch}
-	   Algorytm \textit{Bauma-Welcha} jest techniką klasy \textit{Expectation-Maximization} służącą estymacji prawdopodobieństw przejścia pomiędzy stanami $A$ oraz funkcji emisji $b$. Został on zaproponowany przez Leonarda E. Bauma, szczegółowy opis teorii dotyczącej algorytmu znajduje się w artykule \cite{BaumWelch_tutorial}. Koncepcyjnie, podczas treningu wykorzystującego \textit{algorytm Bauma-Welcha}, w $i-tej$ iteracji, rozpoznaje się zbiór treningowy z wykorzystaniem modelu $M_i$, otrzymując w efekcie dopasowanie stanów do obserwacji. Następnie buduje się nowy model $M_{i+1}$, maksymalizujący prawdopodobieństwo wcześniej dopasowanych obserwacji. Wraz z kolejnymi iteracjami parametry modelu powinny zbiegać do sub-optymalnych wartości.
+	   Algorytm \textit{Bauma-Welcha} jest techniką klasy \textit{Expectation-Maximization} służącą estymacji prawdopodobieństw przejścia pomiędzy stanami $A$ oraz funkcji emisji $b$. Został on zaproponowany przez Leonarda E. Bauma, szczegółowy opis teorii dotyczącej algorytmu znajduje się w artykule \cite{BaumWelch_tutorial}. Koncepcyjnie, podczas treningu wykorzystującego \textit{algorytm Bauma-Welcha}, w $i-tej$ iteracji, rozpoznaje się zbiór treningowy z wykorzystaniem modelu $M_i$, otrzymując w efekcie dopasowanie stanów do obserwacji. Następnie buduje się nowy model $M_{i+1}$, maksymalizujący prawdopodobieństwo wcześniej dopasowanych obserwacji. Wraz z kolejnymi iteracjami parametry modelu powinny zbiegać do lokalnego maksimum.
 	   
 	   Chcą wyznaczyć prawdopodobieństwo przejścia $q_i \rightarrow q_j$ należy policzyć:
 	   \begin{equation}
@@ -508,7 +509,7 @@
 			\label{eqn:ksi}
 	   \end{equation}
 	   \begin{equation}
-	   	    \beta_t(i)=P(o_{t+1}, \ldots, o_T|q_{i,t}|M)
+	   	    \beta_t(i)=P(o_{t+1}, \ldots, o_T|q_{i,t},M)
 	   	    \label{eqn:beta}
 	   \end{equation}
 	   \begin{equation}
@@ -539,7 +540,7 @@
 			\hat{\xi_t}(i,j) = \alpha_t(i) a_{i,j} b_j(o_{t+1}) \beta_{t+1}(j)
 		\end{equation}
 		
-		Powyższe równości pozwalają nam skutecznie wyznaczać prawdopodobieństwo przejścia $q_i \rightarrow q_j$ ze wzory \ref{eqn:qi_qj}. Kolejną rzeczą potrzebną w \textit{algorytmie Bauma-Welcha} jest prawdopodobieństwo bycia w stanie $j$ w momencie $t$, opisane wzorem \ref{eqn:gamma}. Jest ono potrzebne do wyznaczenia funkcji emisji obserwacji. Na potrzeby tego rozdziału posłużymy się uproszczeniem, w którym występuje jedynie ograniczona liczba różnych obserwacji. Pozwala nam to na wyznaczenie funkcji $b$ ze pomocą wzoru \ref{eqn:b}. Bardziej uogólnione podejście, w którym funkcja $b$ nie ma ograniczeń, przedstawione jest w kolejnym rozdziale.
+		Powyższe równości pozwalają nam skutecznie wyznaczać prawdopodobieństwo przejścia $q_i \rightarrow q_j$ ze wzoru \ref{eqn:qi_qj}. Kolejną rzeczą potrzebną w \textit{algorytmie Bauma-Welcha} jest prawdopodobieństwo bycia w stanie $j$ w momencie $t$, opisane wzorem \ref{eqn:gamma}. Jest ono potrzebne do wyznaczenia funkcji emisji obserwacji. Na potrzeby tego rozdziału posłużymy się uproszczeniem, w którym występuje jedynie ograniczona liczba różnych obserwacji. Pozwala nam to na wyznaczenie funkcji $b$ ze pomocą wzoru \ref{eqn:b}. Bardziej uogólnione podejście, w którym funkcja $b$ nie ma ograniczeń, przedstawione jest w kolejnym rozdziale.
 		\begin{equation}
 			\gamma_t(j) = P(q_{t,j}|O,M) = \frac{P(q_{t,j},O|M)}{P(O|M)} = \frac{\aleph_t(j)\beta_t(j)}{P(O|M)}
 			\label{eqn:gamma}
@@ -614,7 +615,7 @@
 	\end{figure}
 	   
 	   \label{sec:gmm_estimation}
-	   W rozdziale \ref{sec:Baum_Welch} posłużono się uproszczeniem zakładającym, że zbiór obserwacji jest skończony i dyskretny. W rzeczywistości przy rozpoznawaniu mowy do określania $b_i(o)$ wykorzystuje się \textit{wielowymiarowe mikstury Gaussowkie} będące sumą kilku rozkładów normalnych. Mikstura opisane jest wzorem \ref{eqn:GMM}, w którym $D$ oznacza liczbę wymiarów wektora cech, $\mu$ jest wektorem średnich, natomiast $\Sigma$ macierzą kowariancji. Rysunek \ref{fig:gmm} pokazuje przykład jednowymiarowej mikstury Gaussowskiej składającej się z trzech komponentów. Korzystając z nisko skorelowanych cech \textit{MFCC} opisanych w rozdziale \ref{sec:Feature_vec_mfcc}, można założyć, że macierz kowariancji $\Sigma$ jest diagonalna. Uproszczenie to znacząco przyśpiesza obliczenia, które nie wymagają kosztownego odwracania macierzy oraz liczenie jej wyznacznika. Ponadto wzór na rozkład normalny upraszcza się do postaci \ref{eqn:normal_distribution_simple}
+	   W rozdziale \ref{sec:Baum_Welch} posłużono się uproszczeniem zakładającym, że zbiór obserwacji jest skończony i dyskretny. W rzeczywistości przy rozpoznawaniu mowy do określania $b_i(o)$ wykorzystuje się \textit{wielowymiarowe mikstury Gaussowkie} będące sumą kilku rozkładów normalnych. Mikstura opisane jest wzorem \ref{eqn:GMM}, w którym $D$ oznacza liczbę wymiarów wektora cech, $\mu$ jest wektorem średnich, natomiast $\Sigma$ macierzą kowariancji. Rysunek \ref{fig:gmm} pokazuje przykład jednowymiarowej mikstury Gaussowskiej składającej się z trzech komponentów. Korzystając z nisko skorelowanych cech \textit{MFCC} opisanych w rozdziale \ref{sec:Feature_vec_mfcc}, można założyć, że macierz kowariancji $\Sigma$ jest diagonalna. Uproszczenie to znacząco przyśpiesza obliczenia, które nie wymagają kosztownego odwracania macierzy oraz liczenie jej wyznacznika. Ponadto wzór na rozkład normalny upraszcza się do postaci \ref{eqn:normal_distribution_simple} zawierającej znacznie mniej parametrów, które dzięki temu mogą być precyzyjniej wyznaczone.
 	   
 	   \begin{equation}
 		   	b_j(o) = \sum_{m=1}^N c_{j,m} N_{j,m}(o)
@@ -802,7 +803,7 @@
     \end{figure}
 
     Przy generowaniu automatu dla wielu słów, w najprostszej implementacji, dla każdego słowa ze słownika, można stworzyć osobny ciąg stanów. Rysunek \ref{fig:Graph_simple} pokazuje przykład prostego grafu przejść dla słów: \textit{kot, kos, kasa, masa, ma}. Widać na nim dwa dodatkowe stany \textit{start} oraz \textit{stop}, z którymi nie wiąże się emisja żadnej obserwacji. Funkcją tych stanów jest połączenie wielu łańcuchów odpowiadających słowom w jeden graf, są  one równoważne stanom \textit{$q_0$} oraz \textit{$q_F$} z definicji \ref{equation:HMM_def}. Dodane jest również jeszcze jedno techniczne przejście, ze stanu \textit{stop} do stanu \textit{start}, jego zadaniem jest umożliwienie przejścia na początek automatu w celu rozpoznawania kolejnego słowa. \\
-    Opisany powyżej automat dobrze oddaje koncepcję ukrytego modelu Markowa, który jest wykorzystywany przy rozpoznawaniu mowy, jednak jest bardzo nieefektywny. Nieefektywność wynika z wielokrotnego powtarzania tych samych obliczeń, dla słów o wspólnym prefiksie. Naturalną optymalizacją jest więc połączenie wspólnych prefiksów. Rysunek \ref{fig:Graph_complex} ilustruje zoptymalizowany automat \ref{fig:Graph_simple}. Widać, że dzięki optymalizacji otrzymujemy znacznie mniejszy graf o bardziej zwięzłej strukturze. 
+    Opisany powyżej automat dobrze oddaje koncepcję ukrytego modelu Markowa, który jest wykorzystywany przy rozpoznawaniu mowy, jednak jest bardzo nieefektywny. Nieefektywność wynika z wielokrotnego powtarzania tych samych obliczeń, dla słów o wspólnym prefiksie. Naturalną optymalizacją jest więc połączenie wspólnych prefiksów. Rysunek \ref{fig:Graph_complex} ilustruje zoptymalizowany automat \ref{fig:Graph_simple}. Widać, że dzięki optymalizacji otrzymujemy znacznie mniejszy graf o bardziej zwięzłej strukturze. Warto podkreślić, że nie można połączyć stanów będących sufiksami słów, gdyż dochodząc co stanu \textit{stop} chcemy wiedzieć jakie słowo zostało rozpoznane.
     
 	\begin{figure}
 	   	\centering
@@ -1200,10 +1201,10 @@
     
 	   \subsection{ Rozpoznawanie}
 		   \label{sec:recognition}
-		   Mając zamodelowany słownik, za pomocą ukrytych modeli Markowa, zgodnie z opisem w rozdziale \ref{sec:hmm_in_asr}, można przejść do rozpoznawania mowy. Proces rozpoznawania jest w rzeczywistości wyszukiwaniem najbardziej prawdopodobnej ścieżki, zwanej \textit{hipotezą}. Ze ścieżką wiąże się sekwencja wypowiedzianych słów. Ten etap rozpoznawania mowy odpowiada blokowi \refBlock{lancuch_markova} z rysunku \ref{fig:ARM_schemat}. W rozdziale \ref{sec:Viterbi} opisano algorytm \ref{alg:viterbi}, który wylicza szukaną ścieżkę. Chcąc go wykorzystać do rozpoznawania, należy zmodyfikować algorytm o uwzględnianie prawdopodobieństwa słów z modelu językowego, które wyznaczamy za pomocą n-gramów, tak jak opisano w rozdziale \ref{sec:ngramm}. Ponadto należy dodać fragment kodu zapamiętującego słowa przez, które prowadzi ścieżka w celu ich późniejszego wypisania.\\
+		   Mając zamodelowany słownik, za pomocą ukrytych modeli Markowa, zgodnie z opisem w rozdziale \ref{sec:hmm_in_asr}, można przejść do rozpoznawania mowy. Proces rozpoznawania jest w rzeczywistości wyszukiwaniem najbardziej prawdopodobnej ścieżki, zwanej \textit{hipotezą}. Ze ścieżką wiąże się sekwencja wypowiedzianych słów. Ten etap rozpoznawania mowy odpowiada blokowi \refBlock{lancuch_markova} z rysunku \ref{fig:ARM_schemat}. W rozdziale \ref{sec:Viterbi} opisano algorytm \ref{alg:viterbi}, który wylicza szukaną ścieżkę. Chcąc go wykorzystać do rozpoznawania, należy zmodyfikować algorytm o uwzględnianie prawdopodobieństwa słów z modelu językowego, które wyznaczamy za pomocą n-gramów, tak jak opisano w rozdziale \ref{sec:ngramm}. Ponadto należy dodać fragment kodu zapamiętującego słowa, przez które prowadzi ścieżka, w celu ich późniejszego wypisania.\\
 		   Model językowy uwzględnia się poprzez pomnożenie prawdopodobieństwa ścieżki przez prawdopodobieństwo rozpoznanego słowa, przy przechodzeniu do stany \textit{stop}.\\
-		   W rzeczywistości wiele systemów rozpoznawania mowy, w szczególności \textit{Julius}, wykorzystują algorytm \textit{token passing} (\ref{alg:token_passing}), który jest wariancją algorytmu Viterbiego. Czas działania algorytmu \ref{fig:viterbi} to $O(T\cdot |Q|^2)$, co przy słowniku zawierającym kilkaset tysięcy słów przekłada się na bardzo wolny czas działania. W algorytmie \textit{token passing} uwzględnia się jedynie stany do których jest bezpośrednie przejście, czyli dla stanu $q_i$ rozpatrzony będzie jedynie zbiór $\{q_j |  A_{i,j}>0 \}$. Takie podejście znacząco przyśpiesza procedurę wyznaczania ścieżki. \\
-		   Ponadto w algorytmie \ref{alg:token_passing} można zastosować heurystyczną metodę przyśpieszania, polegającą na przycinaniu zbiory $Q2$ do zadanej wielkości, zwanej \textit{szerokością wiązki}. Podczas przycinania pozostawia się jedynie $n$ par o największym prawdopodobieństwie, gdzie $n$ jest empirycznie wyznaczanym parametrem. W praktyce, znaczące przyśpieszenie przy jednoczesnym znikomym spadku skuteczności rozpoznawania otrzymuje się dla $n \in [500, 8000]$.
+		   W rzeczywistości wiele systemów rozpoznawania mowy, w szczególności \textit{Julius}, wykorzystują algorytm \textit{token passing} (\ref{alg:token_passing}), który jest wariancją algorytmu Viterbiego. Czas działania algorytmu \ref{fig:viterbi} to $O(T\cdot |Q|^2)$, co przy słowniku zawierającym kilkaset tysięcy słów przekłada się na bardzo wolny czas działania. W algorytmie \textit{token passing} uwzględnia się jedynie stany, do których jest bezpośrednie przejście, czyli dla stanu $q_i$ rozpatrzony będzie jedynie zbiór $\{q_j |  A_{i,j}>0 \}$. Takie podejście znacząco przyśpiesza procedurę wyznaczania ścieżki. \\
+		   Ponadto w algorytmie \ref{alg:token_passing} można zastosować heurystyczną metodę przyśpieszania, polegającą na przycinaniu zbioru $Q2$ do zadanej wielkości, zwanej \textit{szerokością wiązki}. Podczas przycinania pozostawia się jedynie $n$ par o największym prawdopodobieństwie, gdzie $n$ jest empirycznie wyznaczanym parametrem. W praktyce, znaczące przyśpieszenie przy jednoczesnym znikomym spadku skuteczności rozpoznawania otrzymuje się dla $n \in [500, 8000]$.
 		    
 		    \begin{figure}
 		    	\begin{algorithmic}[1]
@@ -1229,7 +1230,7 @@
 		    		\RETURN $\argmax_{(q,p)\in Q1}(p)$;
 		    	\end{algorithmic}
 	    	
-		    	Zbiory $Q1$, $Q2$ przechowują pary $(stan, parwdopodobieństwo)$ 
+		    	Zbiory $Q1$, $Q2$ przechowują pary $(stan, \textit{\text{prawdopodobieństwo}})$ 
 		    	
 		    	\caption{Algorytmy token passing}
 		    	\label{alg:token_passing}
@@ -1253,7 +1254,11 @@
 	
 \section{N-gramowy model językowy}
 	\label{sec:ngramm}
-	\textit{N-gramowy model językowy}, odpowiadający blokowi \refBlock{n_gramy} z rysunku \ref{fig:ARM_schemat}, zawiera prawdopodobieństwa słów ze słownika \refBlock{slownik}. Model o stopniu $n$ opisuje szansę wystąpienia słowa $w$ poprzedzonego $n-1$ słowami, co można zapisać jako: $P(w|w_{n-1},w_{n-2},\cdots,w_1)$. Oczywiście N-gramowy model zawiera w sobie również modele o niższy stopniu, które są wykorzystywane na początku zdania. Modele językowe buduje się przez zliczanie wystąpień kombinacji słów w pewnym korpusie treningowym. Wraz ze wzrostem $n$ znacząco rośnie ilość tekstu potrzebnego do precyzyjnej estymacji prawdopodobieństw oraz liczba kombinacji słów $w, w_1, \cdots, w_{n-1}$ jakie mogą wystąpić w języku naturalnym. W konsekwencji, przy ograniczonej liczbie wypowiedzi, niektóre kombinacje z warunkowego członu prawdopodobieństwa  $P(w|w_{n-1},w_{n-2},\cdots,w_1)$ nie występują w korpusie treningowym. Aby umożliwić rozpoznanie takiego słowa $w$, poprzedzonego słowami $w_{n-1},w_{n-2},\cdots,w_1$ stosuje się techniki \textit{wygładzania} (ang: \textit{smoothing}) takie jak przykładowo \textit{Add-one} czy \textit{Katz smoothing}. Ideą tych algorytmów jest przypisanie niewystępującym kombinacjom niezerowego prawdopodobieństwa. Wykorzystane w eksperymentach modele językowe miały stopień $3$.
+	\textit{N-gramowy model językowy}, odpowiadający blokowi \refBlock{n_gramy} z rysunku \ref{fig:ARM_schemat}, zawiera prawdopodobieństwa słów ze słownika \refBlock{slownik}. Model o stopniu $n$ opisuje szansę wystąpienia słowa $w$ poprzedzonego $n$ słowami, co można zapisać jako: 
+	\begin{center}
+		 $P(w_i|w_{i-1},w_{i-2},\cdots,w_{i-n})$.
+	\end{center}
+	 Oczywiście N-gramowy model zawiera w sobie również modele o niższym stopniu, które są wykorzystywane na początku zdania. Modele językowe buduje się przez zliczanie wystąpień kombinacji słów w pewnym korpusie treningowym. Wraz ze wzrostem $n$ znacząco rośnie ilość tekstu potrzebnego do precyzyjnej estymacji prawdopodobieństw oraz liczba kombinacji słów $w_i, w_{i-1}, \cdots, w_{i-n}$ jakie mogą wystąpić w języku naturalnym. W konsekwencji, przy ograniczonej liczbie wypowiedzi, niektóre kombinacje z warunkowego członu prawdopodobieństwa  $P(w_i|w_{i-1},w_{i-2},\cdots,w_{i-n})$ nie występują w korpusie treningowym. Aby umożliwić rozpoznanie takiego słowa $w_i$, poprzedzonego słowami $w_{i-1},w_{i-2},\cdots,w_{i-n}$ stosuje się techniki \textit{wygładzania} (ang: \textit{smoothing}) takie jak przykładowo \textit{Add-one} czy \textit{Katz smoothing}. Ideą tych algorytmów jest przypisanie niewystępującym kombinacjom niezerowego prawdopodobieństwa. W algorytmie \textit{Katz smoothing} rezerwuje się pewną masę prawdopodobieństwa w modelu stopnia $n$, które służ do przeskalowania prawdopodobieństwa modelu stopnia $n-1$ dla brakujących kombinacji słów. Procedurę przeskalowywania powtarza się rekurencyjnie, aż do napotkania pożądanej kombinacji słów.  Wykorzystane w eksperymentach modele językowe miały stopień $3$ i korzystały z wygładzania \textit{Katz smoothing}.
 
 \chapter{Neuronowy system rozpoznający mowę}
 \section{Rozpoznawanie mowy z wykorzystaniem sieci neuronowych}
@@ -1270,7 +1275,7 @@
 			\label{eqn:nn_std}
 		\end{equation}
 		
-		Warstwa splotowa składa z zadanej parametrem $n$ liczby filtrów, o ustalonym kształcie $a\times b$. Podczas treningu wyznaczane są współczynniki filtrów. Wejściem warstwy jest macierzy trójwymiarowa o wymiarach $x \times y \times k$, natomiast wyjściem jest macierz trójwymiarowa o wymiarach $x - a + 1 \times y - b + 1 \times n$. Podobnie jak przy klasycznych warstwach, tutaj również na wyjście nakłada się funkcje aktywacji $f$. Pojedyncze wyjście $Output_{p,q,m}$ opisane jest wzorem \ref{eqn:nn_conv}, gdzie $Input[p:p+a, q:q+b, i]$ jest podmacierzą natomiast $W_m$ współczynnikami $m$-tego filtra. Operacja splotu $\ast$ dla macierzy $W$, $M$ o wymiarach $a\times b\times c$ zdefiniowana jest wzorem \ref{eqn:conv}.
+		Warstwa splotowa składa z zadanej parametrem $n$ liczby filtrów, o ustalonym kształcie prostokąta o wymiarach $a\times b$. Podczas treningu wyznaczane są współczynniki filtrów. Wejściem warstwy jest macierzy trójwymiarowa o wymiarach $x \times y \times k$, natomiast wyjściem jest macierz trójwymiarowa o wymiarach $\big(x - a + 1 \big)\times \big(y - b + 1\big) \times n$. Podobnie jak przy klasycznych warstwach, tutaj również na wyjście nakłada się funkcje aktywacji $f$. Pojedyncze wyjście $Output_{p,q,m}$ opisane jest wzorem \ref{eqn:nn_conv}, gdzie $Input[p:p+a, q:q+b, i]$ jest podmacierzą natomiast $W_m$ współczynnikami $m$-tego filtra. Operacja splotu $\ast$ dla macierzy $W$, $M$ o wymiarach $a\times b\times c$ zdefiniowana jest wzorem \ref{eqn:conv}.
 		
 		\begin{equation}
 		Output_{p,q,m} = f\bigg(\sum_{i=1}^k Input[p:p+a, q:q+b, i] \ast W_m\bigg)
@@ -1278,7 +1283,7 @@
 		\end{equation}
 		
 		\begin{equation}
-			W \ast M = \sum_{i=1}^a \sum_{j=1}^b \sum_{k=1}^c \bigg( W[a,b,c] \cdot M[a,b,c] \bigg)
+			W \ast M = \sum_{i=1}^a \sum_{j=1}^b \sum_{k=1}^c \bigg( W[i,j,k] \cdot M[i,j,k] \bigg)
 			\label{eqn:conv}
 		\end{equation}
 		
@@ -1304,14 +1309,14 @@
 		 W proponowanym podejściu zastosowania sieci neuronowej przy rozpoznawaniu mowy, wejściem sieci jest $k$ $123$-elementowych wektorów cech, wyznaczanych zgodnie z opisem w rozdziale \ref{sec:Feature_vec_mfsc}. Parametr $k$ określa liczbę kolejnych ramek dostarczanych sieci w wektorze wejściowym. Poprzez \textit{szerokość kontekstu} rozumieć będziemy liczbę ramek na prawo i lewo od rozpoznawanej obserwacji, zatem $k = 2 \cdot kontekst + 1$. Zwiększanie kontekstu wiąże się ze zmniejszeniem liczby obserwacji, gdyż pierwsza obserwacja może wystąpić dopiero po liczbie ramek równej $kontekst + 1$. Rysunek \ref{fig:nn_context} pokazuje, jak kolejne ramki są agregowane przy tworzeniu obserwacji. W przykładzie z rysunku szerokość kontekstu wynosi $2$, zatem każda obserwacja jest tworzona z $5$ kolejnych ramek. Wyjściem sieci jest wektor o szerokości równej liczbie stanów modelu Markowa. Uwzględniając równanie \ref{eqn:softmax2}, wartość funkcji $b_q(o_t)$ z \ref{line:b_q}. linii algorytmu \ref{alg:token_passing} odpowiada wyrażeniu:
 		 
 		 \begin{equation}
-			 b_q(O_t) = NN(O_t) \cdot P(w_q),			 
+			 b_q(O_t) \simeq NN(O_t) \cdot P(w_q),			 
 		 \end{equation}
 		 gdzie NN to sieć neuronowa rozumiana jako funkcja.
 		
 	\subsection{Prawdopodobieństwo stanów \textit{a priori} }
 		\label{sec:ppb_apriori}
 		W rozdziale \ref{sec:nn_estymator} opisano, jak wykorzystać sieć neuronową do wyznaczania prawdopodobieństw stanów, jednak wymaga to wcześniejszego wyznaczenia prawdopodobieństw stanów a priori, czyli $P(w_i)$ ze wzoru \ref{eqn:softmax2}. 
-		$P(w_i)$ może być łatwo wyznaczone podczas przygotowywani danych do uczenia sieci neuronowej. Na etapie generowania wektorów wyjściowych do treningu, możliwe jest zliczanie wystąpień stanu $q_i$.
+		$P(w_i)$ może być łatwo wyznaczone podczas przygotowywani danych do uczenia sieci neuronowej. Na etapie generowania wektorów wyjściowych\footnote{Wektory wyjściowe kodują numer stanu, jaki ma zostać rozpoznany, stosują kodowanie \textit{1-hot}.} do treningu, możliwe jest zliczanie wystąpień stanu $q_i$.
 		Następnie wystarczy dla każdego stanu obliczyć:
 		
 		\begin{equation}
@@ -1525,7 +1530,7 @@
 	\end{figure}
 
 \section{ Zastosowanie modelowania fonemów z ograniczonym kontekstem w ASR }	
-	Wykorzystując ukryte modele Markowa, tak jak opisano w rozdziale \ref{sec:ASR_HMM}, wymaga się policzenia, dla każdej ramki, prawdopodobieństwa obserwacji pod warunkiem każdego ze zdefiniowanych stanów. Wykorzystując trifony przy rozpoznawaniu mowy, trzeba zdefiniować $O(\sigma^3)$ stanów. Jednak tylko niektóre z trifonów o wspólnym środkowym fonemie różnią się w istotny sposób. Oczywiście wraz ze wzrostem liczby fonemów, rośnie liczba obliczeń, które trzeba wykonać, co ma negatywny wpływ na szybkość rozpoznawania. Ponadto, przy wykorzystaniu sieci neuronowych zgodnie z podejściem opisanym w rozdziale \ref{sec:ASR_NN} trzeba wytrenować więcej parametrów, co z kolei utrudnia lub wręcz uniemożliwia proces uczenia. Aby ograniczyć negatywny wpływ dużej liczby fonemów, zastosowano technikę opisaną w rozdziale \ref{sec:tri-fone_mapping}. Dzięki niej możliwe jest znaczne ograniczenie liczby stanów, a w konsekwencji szerokości warstwy wyjściowej w sieci neuronowej.
+	Wykorzystując ukryte modele Markowa, tak jak opisano w rozdziale \ref{sec:ASR_HMM}, wymaga się policzenia dla każdej ramki prawdopodobieństwa obserwacji pod warunkiem każdego ze zdefiniowanych stanów. Wykorzystując trifony przy rozpoznawaniu mowy, trzeba zdefiniować $O(\sigma^3)$ stanów. Jednak tylko niektóre z trifonów o wspólnym środkowym fonemie różnią się w istotny sposób. Oczywiście wraz ze wzrostem liczby fonemów, rośnie liczba obliczeń, które trzeba wykonać, co ma negatywny wpływ na szybkość rozpoznawania. Ponadto, przy wykorzystaniu sieci neuronowych zgodnie z podejściem opisanym w rozdziale \ref{sec:ASR_NN} trzeba wytrenować więcej parametrów, co z kolei utrudnia lub wręcz uniemożliwia proces uczenia. Aby ograniczyć negatywny wpływ dużej liczby trifonów, zastosowano technikę opisaną w rozdziale \ref{sec:tri-fone_mapping}. Dzięki niej możliwe jest znaczne ograniczenie liczby stanów, a w konsekwencji szerokości warstwy wyjściowej w sieci neuronowej.
 	
 	\subsection{ Definicja modelu z ograniczonym kontekstem }
 		\label{sec:tri-fone_mapping}
@@ -1599,7 +1604,7 @@
 	
 	\subsection{Metody ograniczania kontekstu}
 	\label{sec:state_red}
-	Wykorzystany do budowy modeli akustycznych pakiet \textit{HTK} oferuje dwie metody ograniczania liczby stanów. Pierwsza metoda o nazwie \textit{Data driven clustering} zakłada, że na wejściu dostaje się zbiór triów. Każdy z trifonów ma przypisane trzy stany, zgodnie z opisem w rozdziale \ref{sec:Phones}. Następnie porównuje się zróżnicowanie w obrębie pierwszych, drugich i trzecich stanów. Jeśli dwa stany są podobne, łączy się je. W efekcie, wraz z każdą iteracją algorytmu, otrzymuje się mniejszy zbiór stanów wykorzystywanych przez zbiór trifonów. Jako miarę podobieństwa pomiędzy stanami wykorzystuje się odległość Euklidesową średnich z rozkładów normalnych modelujących stan. Wadą tej metody jest niemożność obsłużenia trifonów, które nie wystąpiły w zbiorze treningowym.
+	Wykorzystany do budowy modeli akustycznych pakiet \textit{HTK} oferuje dwie metody ograniczania liczby stanów. Pierwsza metoda o nazwie \textit{Data driven clustering} zakłada, że na wejściu dostaje się zbiór trifonów. Każdy z trifonów ma przypisane trzy stany, zgodnie z opisem w rozdziale \ref{sec:Phones}. Następnie porównuje się zróżnicowanie w obrębie pierwszych, drugich i trzecich stanów. Jeśli dwa stany są podobne, łączy się je. W efekcie, wraz z każdą iteracją algorytmu, otrzymuje się mniejszy zbiór stanów wykorzystywanych przez zbiór trifonów. Jako miarę podobieństwa pomiędzy stanami wykorzystuje się odległość Euklidesową średnich z rozkładów normalnych modelujących stan. Wadą tej metody jest niemożność obsłużenia trifonów, które nie wystąpiły w zbiorze treningowym.
 	
 	Drugą metodą z pakietu \textit{HTK}, która została wykorzystana podczas eksperymentów, jest \textit{Tree- based clustering}. Twórcy \textit{Tree- based clustering} opisali swój algorytm w artykule \cite{tree_based_clustring}. W przeciwieństwie do \textit{Data driven clustering}, ta metoda obsługuje również trifony, które nie pojawiły się w zbiorze treningowym. Metoda ta wymaga wczytania zbioru \textit{pytań}, opisujących zależności pomiędzy fonemami. \textit{Pytania} powinny odzwierciedlać fizyczne podobieństwa w wymowie fonemów. Zapisuje się je poprzez zbiory, odpowiedz na \textit{pytanie} jest twierdząca jeśli fonem należy do zbiory, negatywna w przeciwnym wypadku. Dzięki temu każde z pytań dzieli cały zbiór zdefiniowanych fonemów na dwa podzbiory. Przykładowymi pytaniami są:
 	\begin{itemize}
@@ -1665,7 +1670,7 @@
 			\ENDWHILE
 		\end{algorithmic}
 		
-		Zbiory $X$ przechowują pary $(parwdopodobieństwo, reguła, dzielony stan)$ 
+		Zbiory $X$ przechowują pary $(\textit{\text{prawdopodobieństwo}}, \textit{\text{reguła}}, dzielony stan)$ 
 		
 		\caption{Algorytmy tree-based clustering zastosowany w pakiecie HTK}
 		\label{alg:tree_based_clustering}
@@ -1984,20 +1989,20 @@
 	\caption{Wytrenowane modele akustyczne}
 	\end{figure}
 
-	Wiele badań i publikacji pokazało, że stosując \textit{trifonowe modele akustyczne} można znacząco poprawić skuteczność rozpoznawania. Niestety przejście z modeli \textit{unifonowych} do \textit{trifonowych} wiąże się ze zwiększeniem stopnia skomplikowania całego systemu, procesu uczenia, jak i wydłużeniem samego czasu rozpoznawania. Ponadto, w przypadku zastosowania sieci neuronowej, duża liczba stanów modelu trifonowego wymaga jednoczesnej estymacji wielu prawdopodobieństw, co z kolei może utrudnić proces trenowania sieć. Kompromisem pomiędzy modelami czysto trifonowymi, które modelują wszystkie występujące trifony, a unifonowymi oferującymi przeciętną jakość rozpoznawania, są właśnie \textit{modele trifonowe z ograniczonym kontekstem} budowane zgodnie z koncepcją opisane w rozdziale \ref{sec:state_red}. Modele te łączą zwiększoną zdolność gromadzenia wiedzy klasycznych modeli trifonowych ze zmniejszoną liczbą parametrów, które trzeba wyuczyć w klasycznym modelu unifonowym. Ponadto w przeciągu kilku ostatnich lat, pojawiło się wiele publikacji na temat zastosowania sieci neuronowych, jako estymatorów prawdopodobieństwa stanów model Markowa, tak jak w artykule \cite{article1}. Chcąc sprawdzić możliwości połączenia obu wspomnianych podejść, \textit{modeli z ograniczonym kontekstem} oraz \textit{sieci neuronowych} estymujących prawdopodobieństwa stanów, zgodnie z opisem w rozdziale \ref{sec:ASR_NN}, przeprowadzono szereg eksperymentów, mających sprawdzić wpływ ograniczania kontekstu na skuteczność sieci neuronowej. Dodatkowo porównano skuteczność klasycznego podejścia opisanego w rozdziale \ref{sec:ASR_HMM} z proponowanym podejściem. Przeprowadzone eksperymenty dały możliwość zweryfikowania głównej tezy niniejszej pracy, zgodnie z która: \textbf{Trifonowe, neuronowe modele o ograniczonym kontekście umożliwiają poprawę skuteczności rozpoznawania, względem klasycznych Gaussowkich modeli akustycznych.}
+	Wiele badań i publikacji pokazało, że stosując \textit{trifonowe modele akustyczne} można znacząco poprawić skuteczność rozpoznawania. Niestety przejście z modeli \textit{unifonowych} do \textit{trifonowych} wiąże się ze zwiększeniem stopnia skomplikowania całego systemu, procesu uczenia, jak i wydłużeniem samego czasu rozpoznawania. Ponadto, w przypadku zastosowania sieci neuronowej, duża liczba stanów modelu trifonowego wymaga jednoczesnej estymacji wielu prawdopodobieństw, co z kolei może utrudnić proces trenowania sieć. Kompromisem pomiędzy modelami czysto trifonowymi, które modelują wszystkie występujące trifony, a unifonowymi oferującymi przeciętną jakość rozpoznawania, są właśnie \textit{modele trifonowe z ograniczonym kontekstem} budowane zgodnie z koncepcją opisane w rozdziale \ref{sec:state_red}. Modele te łączą zwiększoną zdolność gromadzenia wiedzy klasycznych modeli trifonowych ze zmniejszoną liczbą parametrów, które trzeba wyuczyć w klasycznym modelu unifonowym. Ponadto w przeciągu kilku ostatnich lat, pojawiło się wiele publikacji na temat zastosowania sieci neuronowych, jako estymatorów prawdopodobieństwa stanów model Markowa, tak jak w artykule \cite{article1}. Chcąc sprawdzić możliwości połączenia obu wspomnianych podejść, \textit{modeli z ograniczonym kontekstem} oraz \textit{sieci neuronowych} estymujących prawdopodobieństwa stanów, zgodnie z opisem w rozdziale \ref{sec:ASR_NN}, przeprowadzono szereg eksperymentów, mających sprawdzić wpływ ograniczania kontekstu na skuteczność sieci neuronowej. Dodatkowo porównano skuteczność klasycznego podejścia opisanego w rozdziale \ref{sec:ASR_HMM} z proponowanym podejściem. Przeprowadzone eksperymenty dały możliwość zweryfikowania głównej tezy niniejszej pracy, zgodnie z którą: \textbf{Trifonowe, neuronowe modele o ograniczonym kontekście umożliwiają poprawę skuteczności rozpoznawania, względem klasycznych Gaussowkich modeli akustycznych.}
 	
 	\section{ Opis danych}
 	\label{sec:opis_danych}
 	
-	W celu przetestowania proponowanych metod wykorzystano studyjny korpus Clarin\footnote{http://mowa.clarin-pl.eu/korpusy/}. Składa się on z 56 godzin polskich nagrań o różnej tematyce, nagranych przez 554 różnych mówców. Każdy mówca nagrał 20 lub 30 wypowiedzi o długości od 6 do 22 sekund. Korpus nie jest zbalansowany pod względem płci. Wypowiedzi mają przypisane transkrypcje, jednak znajduje się w nich wiele błędów i artefaktów, takich jak zająknięcia (4. wypowiedz 191. mówcy), seplenienie (200. mówca) czy błędne odczytanie tekstu (18. wypowiedz 294. mówcy) skutkujące różnicą pomiędzy transkrypcją a faktycznie wypowiedzianymi słowami. Artefakty utrudniają lub wręcz uniemożliwiają wykorzystanie niektórych nagrań do uczenia modelu akustycznego. Dźwięk został nagrany z próbkowaniem 16 kHz i jakością 16 bitów na próbkę, a następnie zapisany w niekompresowanym formacie wav. Wypowiedzi zaczynają się i kończą ciszą. 
+	W celu przetestowania proponowanych metod wykorzystano studyjny korpus Clarin\footnote{http://mowa.clarin-pl.eu/korpusy/}. Składa się on z 56 godzin polskich nagrań o różnej tematyce, nagranych przez 554 różnych mówców. Każdy mówca nagrał 20 lub 30 wypowiedzi o długości od 6 do 22 sekund. Korpus nie jest zbalansowany pod względem płci. Wypowiedzi mają przypisane transkrypcje, jednak znajduje się w nich wiele błędów i artefaktów, takich jak zająknięcia (4. wypowiedz 191. mówcy), seplenienie (200. mówca) czy błędne odczytanie tekstu (18. wypowiedz 294. mówcy) skutkujące różnicą pomiędzy transkrypcją a faktycznie wypowiedzianymi słowami. Artefakty utrudniają lub wręcz uniemożliwiają wykorzystanie niektórych nagrań do uczenia modelu akustycznego\footnote{Niektóre nagrania zawierają powtórzenia, które nie są zadeklarowane w transkrypcji.}. Dźwięk został nagrany z próbkowaniem 16 kHz i jakością 16 bitów na próbkę, a następnie zapisany w niekompresowanym formacie wav. Wypowiedzi zaczynają się i kończą ciszą. 
 	\\
-	W fazie wstępnego przetwarzania danych, nagrania zostały poddane następującym procesom:
+	W fazie wstępnego przetwarzania danych, na potrzeby przeprowadzonych eksperymentów, nagrania poddano następującym procesom:
 	\begin{itemize}
 		\item automatyczne wyrównanie poziomu nagrań to stałego poziomu -6dB (1/2 maksymalnego możliwego do osiągnięcia poziomu) dla najgłośniejszych miejsc całego nagrania
 		\item odrzucenie fragmentów ciszy/szumów tła o długości przekraczającej 0.7 sek,
-		\item odrzucenie tych nagrań dla których faktycznie wypowiedziana fraza różniła się od frazy zadeklarowanej w dostarczonej transkrypcji.
+		\item odrzucenie tych nagrań, dla których faktycznie wypowiedziana fraza różniła się od frazy zadeklarowanej w dostarczonej transkrypcji.
 	\end{itemize}
-	W celu wykonania ostatniego kroku, służącego automatycznemu oczyszczeniu nagrań, zbudowano model akustyczny i językowy na wszystkich nagraniach z korpusu Clarin. Tak otrzymane modele dają bardzo wysoką skuteczność rozpoznawania zbioru treningowego na podstawie którego je zbudowano. Następnie wykorzystując zbudowany model, rozpoznano nagrania z korpusu. Wypowiedzi o idealnym rozpoznaniu uznano za poprawne, natomiast te o niepoprawnym odrzucono. Odrzucone nagrania nie były wykorzystywane do budowy żadnych późniejszych modeli. 
+	W celu wykonania ostatniego kroku, służącego automatycznemu oczyszczeniu nagrań, zbudowano klasyczny model akustyczny i językowy na wszystkich nagraniach z korpusu Clarin. Tak otrzymane modele dają bardzo wysoką skuteczność rozpoznawania zbioru treningowego, na podstawie którego je zbudowano. Następnie wykorzystując zbudowany model, rozpoznano nagrania z korpusu. Wypowiedzi o idealnym rozpoznaniu uznano za poprawne, natomiast te o niepoprawnym odrzucono. Odrzucone nagrania nie były wykorzystywane do budowy żadnych późniejszych modeli. 
 	Ostatecznie, oczyszczony korpus został podzielony na trzy zbiory: treningowy, walidacyjny oraz testowy w stosunku 27:2:1. Zbiory są rozłączne pod względem mówców. Tabele na rysunku \ref{fig:czyszczenie} pokazuje jak proces automatycznego czyszczenia wpłynął na rozmiar zbiory treningowego. W przypadku większości z odrzuconych wypowiedzi deklarowana transkrypcja nie pokrywa się z rzeczywiście wypowiedzianą frazą.
 	
 	\begin{figure}
@@ -2019,16 +2024,16 @@
 	\section{Środowisko sprzętowo-programisytyczne }
 	\label{sec:env}
 	
-	W celu przeprowadzenia eksperymentów wykorzystany został szereg ogólnodostępnych pakietów i bibliotek oraz komercyjny system do rozpoznawania mowy \textit{Magic Scribe} firmy \textit{Radcomp Integral} (\url{http://radcomp.eu}) z Wrocławia. W skład ogólnodostępnych, wykorzystanych pakietów wchodzi \textit{HTK} (\url{http://htk.eng.cam.ac.uk/}) oferujący zestaw narzędzi do budowy klasycznych modeli akustycznych oraz językowych. Kolejnym wykorzystanym narzędziem jest \textit{Julius} (\url{http://julius.osdn.jp/en_index.php}) będący dekoderem w pełni kompatybilnym z pakietem HTK. Julius jest jednym z kilku open-sourcowych dekoderów. Pomimo, że nie oferuje on najwyższej skuteczności rozpoznawania, o czym można przeczytać w artykule \cite{asr_toolkit_cmp}, zdecydowałem się na to narzędzie, ponieważ mam doświadczenie w pracy z nim. Ponadto Julius uchodzi za szybki dekoder, działający w czasie zbliżonym do rzeczywistego, co też jest istotne z punktu widzenia użytkownika systemu rozpoznającego mowę. Stanowi to dużą zaletę względem dekodera z pakietu \textit{HTK}, który jest relatywnie wolny i ze względu na dwubajtowe adresowanie \textit{słownika} nie jest w stanie wczytać wszystkich słów z modelu językowego. W artykule \cite{julius} twórcy \textit{Juliusa} opisują swój system oraz zastosowane algorytmy i struktury danych umożliwiające osiągnięcie wysokiej szybkości rozpoznawania. Do budowy sieci neuronowych wykorzystano bibliotekę \textit{Lasagne} \url{http://lasagne.readthedocs.io/en/latest/}, napisaną w języku Python. Zapewnia ona wygodny interfejs do środowiska \textit{Theano}. Lasagne oferuje zestaw metod do budowy sieci składających się z warstw klasycznych, splotowych, dropout, max-pull itd. \textit{Theano} (\url{http://deeplearning.net/software/theano/}) jest z kolei biblioteką umożliwiającą definiowanie oraz optymalizację równań matematycznych, które mogą być następnie skompilowane i wykonane na CPU lub współlegle na karcie graficznej. Z wykorzystaniem tej biblioteki oraz GPU udało się znacząco przyśpieszyć trening sieci neuronowych w stosunku do treningu na CPU. Schemat zależności pomiędzy użytymi komponentami oraz budowanymi w trakcie eksperymentów modelami, znajduje się na rysunku \ref{fig:arch}. Poniżej zamieszczono opis kolejnych kroków wykonanych przy eksperymentach.
+	W celu przeprowadzenia eksperymentów wykorzystany został szereg ogólnodostępnych pakietów i bibliotek oraz komercyjny system do rozpoznawania mowy \textit{Magic Scribe} firmy \textit{Radcomp Integral} (\url{http://radcomp.eu}) z Wrocławia. System \textit{Magic Scribe} wykorzystano do zarządzania korpusem \textit{Clarin} oraz do przeprowadzenia testów skuteczności. W skład ogólnodostępnych, wykorzystanych pakietów wchodzi \textit{HTK} (\url{http://htk.eng.cam.ac.uk/}) oferujący zestaw narzędzi do budowy klasycznych modeli akustycznych oraz językowych. Kolejnym wykorzystanym narzędziem jest \textit{Julius} (\url{http://julius.osdn.jp/en_index.php}) będący dekoderem w pełni kompatybilnym z pakietem HTK. Julius jest jednym z kilku open-sourcowych dekoderów. Pomimo, że nie oferuje on najwyższej skuteczności rozpoznawania, o czym można przeczytać w artykule \cite{asr_toolkit_cmp}, zdecydowałem się na to narzędzie, ponieważ mam doświadczenie w pracy z nim. Ponadto Julius uchodzi za szybki dekoder, działający w czasie zbliżonym do rzeczywistego, co też jest istotne z punktu widzenia użytkownika systemu rozpoznającego mowę. Stanowi to dużą zaletę względem dekodera z pakietu \textit{HTK}, który jest relatywnie wolny i ze względu na dwubajtowe adresowanie \textit{słownika} nie jest w stanie wczytać wszystkich słów z modelu językowego. W artykule \cite{julius} twórcy \textit{Juliusa} opisują swój system oraz zastosowane algorytmy i struktury danych umożliwiające osiągnięcie wysokiej szybkości rozpoznawania. Do budowy sieci neuronowych wykorzystano bibliotekę \textit{Lasagne} \url{http://lasagne.readthedocs.io/en/latest/}, napisaną w języku Python. Zapewnia ona wygodny interfejs do środowiska \textit{Theano}. Lasagne oferuje zestaw metod do budowy sieci składających się z warstw klasycznych, splotowych, dropout, max-pull itd. \textit{Theano} (\url{http://deeplearning.net/software/theano/}) jest z kolei biblioteką umożliwiającą definiowanie oraz optymalizację równań matematycznych, które mogą być następnie skompilowane i wykonane na CPU lub wielowątkowo na karcie graficznej. Z wykorzystaniem tej biblioteki oraz GPU udało się znacząco przyśpieszyć trening sieci neuronowych w stosunku do treningu na CPU. Schemat zależności pomiędzy użytymi komponentami oraz budowanymi w trakcie eksperymentów modelami, znajduje się na rysunku \ref{fig:arch}. Poniżej zamieszczono opis kolejnych kroków wykonanych przy eksperymentach.
 	
 	\begin{itemize}
 		\item Punktem wyjścia stworzonej architektury jest korpus językowy \textit{Clarin} przedstawiony w rozdziale \ref{sec:opis_danych}, na schemacie \ref{fig:arch} odpowiada mu blok \refBlock{clarin_wav}.
 		
 		\item Na podstawie transkrypcji zawartych w korpusie, zbudowano model akustyczny oraz językowy wraz ze słownikiem \refBlock{lang_model_clarin}, wykorzystując do tego pakiet HTK oraz system Magic Scribe z bloku \refBlock{htk_ms}. Do budowy obu modeli oraz słownika \refBlock{lang_model_clarin} wykorzystano wszystkie wypowiedzi ze zbioru treningowego, walidacyjnego i testowego.
 		
-		\item  Powstałe w poprzednim kroku modele zostały wykorzystane do rozpoznania wypowiedzi z korpusu \refBlock{clarin_wav} i stworzenia plików \textit{mfc} oraz \textit{out} tworzących korpus \refBlock{clarin_mfc}. Każdej z oryginalnych wypowiedzi znajdujących się w korpusie \refBlock{clarin_wav} przypisano w zbiorze \refBlock{clarin_mfc}, plik \textit{mfc} zawierający kolejne wektory cech oraz plik \textit{out} z zapisanym mapowaniem ramek na trifony wraz z numerami stanu. Pliki \textit{out} wygenerował dekoder \refBlock{julius} podczas procesu rozpoznawania. Uzyskano bardzo wysoką skuteczność rozpoznawania wynoszącą $99.3\%$, dzięki czemu dopasowanie ramek do stanów w korpusie \refBlock{clarin_mfc} jest bardzo precyzyjne. Wysoka skuteczność jest efektem budowy modelu akustycznego oraz językowego \refBlock{lang_model_clarin} na zbiorze, który został nimi później rozpoznany.  Słownik z modelu \refBlock{lang_model_clarin} zawiera jedynie słowa, które mają się pojawić w wyniku rozpoznawania.
+		\item  Powstałe w poprzednim kroku modele zostały wykorzystane do rozpoznania wypowiedzi z korpusu \refBlock{clarin_wav} i stworzenia plików \textit{mfsc}\footnote{Pliki zawierające wektory cech \textit{MFSC}, zbudowane zgodnie z opisem w rozdziale \ref{sec:Feature_vec_mfsc}.} oraz \textit{out}\footnote{Pliki zawierające dopasowanie stanów do ramek.} tworzących korpus \refBlock{clarin_mfc}. Każdej z oryginalnych wypowiedzi znajdujących się w korpusie \refBlock{clarin_wav} przypisano w zbiorze \refBlock{clarin_mfc}, plik \textit{mfc} zawierający kolejne wektory cech oraz plik \textit{out} z zapisanym mapowaniem ramek na trifony wraz z numerami stanu. Pliki \textit{out} wygenerował dekoder \refBlock{julius} podczas procesu rozpoznawania. Uzyskano bardzo wysoką skuteczność rozpoznawania wynoszącą $99.3\%$, dzięki czemu dopasowanie ramek do stanów w korpusie \refBlock{clarin_mfc} jest bardzo precyzyjne. Wysoka skuteczność jest efektem budowy modelu akustycznego oraz językowego \refBlock{lang_model_clarin} na zbiorze, który został nimi później rozpoznany.  Słownik z modelu \refBlock{lang_model_clarin} zawiera jedynie słowa, które mają się pojawić w wyniku rozpoznawania.
 		
-		\item  Na podstawie korpusu \refBlock{clarin_mfc} przygotowano narzędziem \refBlock{data_processor} dane do treningu sieci neuronowej. Efektem działania narzędzia \refBlock{data_processor} jest plik z mapowaniem \textit{wektor cech} $\longrightarrow$ \textit{stan modelu Markowa}. Podczas tego etapu dokonana została normalizacja wektorów cech dla każdej frazy zgodnie z opisem w rozdziale \ref{sec:Feature_vec_mfcc}.
+		\item  Na podstawie korpusu \refBlock{clarin_mfc} przygotowano za pomocą narzędzia \refBlock{data_processor} dane do treningu sieci neuronowej. Efektem działania narzędzia \refBlock{data_processor} jest plik z mapowaniem \textit{wektor cech} $\longrightarrow$ \textit{stan modelu Markowa}. Podczas tego etapu dokonana została normalizacja wektorów cech dla każdej frazy zgodnie z opisem w rozdziale \ref{sec:Feature_vec_mfcc}.
 		
 		\item  Wykorzystując stworzone mapowanie oraz wspomnianą powyżej bibliotekę \textit{Lasagne} i \textit{Theano} w kroku \refBlock{net_build} wytrenowano szereg sieci neuronowych \refBlock{net}.
 		
@@ -2053,6 +2058,8 @@
 			
 			\begin{scope}
 			\tikzstyle{arch_part} = [rectangle, draw, text width=8em, text centered, rounded corners, minimum height=3em]
+			\tikzstyle{arch_part_data} = [rectangle, draw,  fill=blue!20, text width=8em, text centered, rounded corners, minimum height=3em]
+			\tikzstyle{arch_part_results} = [rectangle, draw,  fill=green!20, text width=8em, text centered, rounded corners, minimum height=3em]
 			
 			\def\l{-2.5}
 			\def\r{6.7}
@@ -2060,7 +2067,7 @@
 			\def\x{10.5}
 			\def\j{4.0}
 			
-			\draw  [rounded corners, text centered] (0,0) rectangle (4,1.2);
+			\draw  [rounded corners, text centered, fill=blue!20] (0,0) rectangle (4,1.2);
 			
 			\path [line, dashed] (1.0, 0.75) -- (1.0, 1.5) node[above, xshift=-10pt] {Zbiór treningowy};
 			\path [line, dashed] (2.5, 0.75) -- (2.5, 2.0) node[above, xshift=-20pt] {Zbiór testowy};
@@ -2072,17 +2079,17 @@
 			\node [arch_part] (htk) at (\l, 0.6) {\labelBlock{htk_ms}HTK, Magic Scribe};
 			\path [line] (0,0.6) -- (htk);
 			
-			\node [arch_part] (model_lang) at (\l, -3) {\labelBlock{lang_model_clarin}Model akustyczny oraz językowy ze slownikiem};
+			\node [arch_part_data] (model_lang) at (\l, -3) {\labelBlock{lang_model_clarin}Model akustyczny oraz językowy ze slownikiem};
 			\path [line] (htk) -- (model_lang);
 			
-			\node [arch_part] (model_acc) at (\c, 5) {\labelBlock{model_acc4}Model akustyczny};
+			\node [arch_part_data] (model_acc) at (\c, 5) {\labelBlock{model_acc4}Model akustyczny};
 			\path [line] (htk) |- (model_acc);
 			
 			\node [arch_part] (julius2) at (\r, 2.5) {\labelBlock{julius2}Julius};
 			\path [line] (4,0.6) -| (julius2);
 			\path [line] (model_acc) -| (julius2);
 			
-			\node [arch_part] (results) at (\x, 2.5) {\labelBlock{results1}Skuteczność modelu klasycznego};
+			\node [arch_part_results] (results) at (\x, 2.5) {\labelBlock{results1}Skuteczność modelu klasycznego};
 			\path [line] (julius2) -- (results);
 						
 			\node [arch_part] (julius) at (\c, -3) {\labelBlock{julius} Julius};
@@ -2090,7 +2097,7 @@
 			\path [line] (2, 0) -- (julius);
 			\path [line] (julius) -- (2, -4.8);
 			
-			\draw  [rounded corners, text centered] (0,-6) rectangle (4,-4.8);
+			\draw  [rounded corners, text centered, fill=blue!20] (0,-6) rectangle (4,-4.8);
 			\draw [gray!80, dashed] (2,-5.6) -- (2,-4.8)  node [black,below, yshift=-20pt] {\labelBlock{clarin_mfc}CLARIN : mfc, out};
 			\draw [gray!80, dashed] (3,-5.6) -- (3,-4.8)  node [black,midway,below] {};
 			
@@ -2100,17 +2107,17 @@
 			\node [arch_part] (siec_builder) at (\l, -7.5) {\labelBlock{net_build}Budowa sieci};
 			\path [line] (data_processor) -- (siec_builder);
 			
-			\node [arch_part] (siec) at (\c, -7.5) {\labelBlock{net}Sieć neuronowa};
+			\node [arch_part_data] (siec) at (\c, -7.5) {\labelBlock{net}Sieć neuronowa};
 			\path [line] (siec_builder) -- (siec);
 			
 			\node [arch_part] (julius3) at (\r, -3) {\labelBlock{julius3}Julius + modul sieci neuronowej};
 			\path [line] (siec) -| (julius3);
 			\path [line] (4,0.6) -| (julius3);
 			
-			\node [arch_part] (model_acc2) at (\x, -3) {\labelBlock{results2}Skuteczność modelu neuronowego};
+			\node [arch_part_results] (model_acc2) at (\x, -3) {\labelBlock{results2}Skuteczność modelu neuronowego};
 			\path [line] (julius3) -- (model_acc2);
 			
-			\node [arch_part] (model_lang2) at (\x, 0.6) {\labelBlock{lang_model2}Zewnętrzny model językowy};
+			\node [arch_part_data] (model_lang2) at (\x, 0.6) {\labelBlock{lang_model2}Zewnętrzny model językowy};
 			\path [line] (model_lang2) -| (7.5, 1.9);
 			\path [line] (model_lang2) -| (7.5, -2.2);
 			
@@ -2119,12 +2126,12 @@
 			\end{scope}
 		
 		\end{tikzpicture}
-		\caption{Zależności pomiędzy wykorzystanymi komponentami.}
+		\caption{Zależności pomiędzy wykorzystanymi komponentami. Na fioletowo zaznaczono dane oraz modele, białe są programy i skrypty, kolorem zielonym oznaczono pomiary skuteczności.}
 		\label{fig:arch}	
 	\end{figure}
 
 	\section{Budowa modeli klasycznych}
-		Klasyczne modele Gaussowkie, zaznaczone w bloku \refBlock{model_acc4} na schemacie \ref{fig:arch}, zostały zbudowane z wykorzystaniem pakietu \textit{HTK} oraz opakowującego go systemu \textit{Magic Scribe}. Do treningu użyto zbioru treningowego z korpusu \textit{Clarin}. Model akustyczny uczony był zgodnie z zaleceniami opisanymi w \textit{HTK Book}\cite{htkbook}, procedurę uczenia zapisano w pseudokodzie na rysunku \ref{alg:acc_model_training}. Pierwszym krokiem procedury jest zainicjalizowanie parametrów prostego modelu unifonowego, w którym mikstury gaussowskie, zgodne z opisem w rozdziale \ref{sec:gmm_estimation}, składają się z jednego komponentu. Następnie w pierwszej pętli wykonuje się po trzy iteracje re-estymacji parametrów, która przebiega zgodnie z algorytmem Bauma-Welcha opisanym w rozdziale \ref{sec:Baum_Welch} oraz \ref{sec:gmm_estimation}. Podczas re-estymacji przechodzi się przez wszystkie dane treningowe ze zbioru $S$. Podczas przechodzenia wyliczany jest \textit{Force alignment}, a następnie na jego podstawie estymowane są nowe parametry. \textit{Force alignment} polega na dopasowaniu ramek do zadanego ciągu stanów. Ciąg ten odpowiada transkrypcji, którą dostaje się podczas treningu razem z nagraniem. W praktyce \textit{Force alignment} polega na wymuszeniu przejścia, w fazie E algorytmu \textit{Buma-Welcha}, przez automat odpowiadający transkrypcji nagrania. Schemat \ref{fig:AutomatExampleForFA} pokazuje przykład automatu dla zdania \textit{Ola ma kota} wymuszającego przejście przez odpowiednie stany. Automat ten jest jednym łańcuchem i w przeciwieństwie do automatu ze schematu \ref{fig:Graph_complex}, wykorzystywanego przez dekoder, uniemożliwia swobodny wybór kolejnych słów. Kolejne re-estymacje powodują zbieganie modelu do wytrenowanej postaci. Po trzech iteracjach, kiedy model ma już pewną wiedzę, rozbudowuje się mikstury Gaussowskie o nowe komponenty. Po zakończeniu pierwszej pętli następuje przekształcenie modelu unifonowego w trifonowy. Początkowo trifony o wspólnym centralnym fonemie współdzielą te same stany. Dopiero w następnym kroku wykonuje się algorytm \textit{Tree-based clustering} z rozdziału \ref{sec:state_red}, w wyniku którego zwiększa się liczba stanów modelu akustycznego. W kolejnych krokach ponownie re-estymuje się parametry i rozbudowuje mikstury Gaussowskie. Łącznie wykonuje się $36$ iteracji re-estymacji parametrów. Na koniec zwracany jest wytrenowany model. Wszystkie modele trifonowe z tabeli \ref{tab:acustic_models} zostały zbudowane zgodnie z procedurą \ref{alg:acc_model_training}. Wyjątek stanowi \textit{M\_UNI}, które jest modelem unifonowym, budowanym według uproszczonej procedury. \textit{M\_TRI} oraz \textit{M\_TRI\_OPT} to te same modele, ale $M\_TRI\_OPT$ odpowiada wynikowi otrzymanemu dla najlepszych, znalezionych parametrów dekodowania, które wynoszą 20 -15 20 -15. Opis parametrów dekodowania znajduje się w rozdziale \ref{sec:meta_params}.
+		Klasyczne modele Gaussowkie, zaznaczone w bloku \refBlock{model_acc4} na schemacie \ref{fig:arch}, zostały zbudowane z wykorzystaniem pakietu \textit{HTK} oraz opakowującego go systemu \textit{Magic Scribe}. Do treningu użyto zbioru treningowego z korpusu \textit{Clarin}. Model akustyczny uczony był zgodnie z zaleceniami opisanymi w \textit{HTK Book}\cite{htkbook}, procedurę uczenia zapisano w pseudokodzie na rysunku \ref{alg:acc_model_training}. Pierwszym krokiem procedury jest zainicjalizowanie parametrów prostego modelu unifonowego, w którym mikstury gaussowskie, zgodne z opisem w rozdziale \ref{sec:gmm_estimation}, składają się z jednego komponentu. Następnie w pierwszej pętli wykonuje się po trzy iteracje re-estymacji parametrów, która przebiega zgodnie z algorytmem Bauma-Welcha opisanym w rozdziale \ref{sec:Baum_Welch} oraz \ref{sec:gmm_estimation}. Podczas re-estymacji przechodzi się przez wszystkie dane treningowe ze zbioru $S$. Podczas przechodzenia wyliczany jest \textit{Force alignment}, a następnie na jego podstawie estymowane są nowe parametry. \textit{Force alignment} polega na dopasowaniu ramek do zadanego ciągu stanów. Ciąg ten odpowiada transkrypcji, którą dostaje się podczas treningu razem z nagraniem. W praktyce \textit{Force alignment} polega na wymuszeniu przejścia, w fazie E algorytmu \textit{Buma-Welcha}, przez automat odpowiadający transkrypcji nagrania. Schemat \ref{fig:AutomatExampleForFA} pokazuje przykład automatu dla zdania \textit{Ola ma kota} wymuszającego przejście przez odpowiednie stany. Automat ten jest jednym łańcuchem i w przeciwieństwie do automatu ze schematu \ref{fig:Graph_complex}, wykorzystywanego przez dekoder, uniemożliwia swobodny wybór kolejnych słów. Kolejne re-estymacje powodują zbieganie modelu do wytrenowanej postaci. Po trzech iteracjach, kiedy model ma już pewną wiedzę, rozbudowuje się mikstury Gaussowskie o nowe komponenty. Po zakończeniu pierwszej pętli następuje przekształcenie modelu unifonowego w trifonowy. Początkowo trifony o wspólnym centralnym fonemie współdzielą te same stany. Dopiero w następnym kroku wykonuje się algorytm \textit{Tree-based clustering} z rozdziału \ref{sec:state_red}, w wyniku którego zwiększa się liczba stanów modelu akustycznego. W kolejnych krokach ponownie re-estymuje się parametry i rozbudowuje mikstury Gaussowskie. Łącznie wykonuje się $36$ iteracji reestymacji parametrów. Na koniec zwracany jest wytrenowany model. Wszystkie modele trifonowe z tabeli \ref{tab:acustic_models} zostały zbudowane zgodnie z procedurą \ref{alg:acc_model_training}. Wyjątek stanowi \textit{M\_UNI}, które jest modelem unifonowym, budowanym według uproszczonej procedury. \textit{M\_TRI} oraz \textit{M\_TRI\_OPT} to dokładnie te same modele, ale $M\_TRI\_OPT$ odpowiada wynikowi otrzymanemu dla najlepszych, znalezionych parametrów dekodowania, które wynoszą 20 -15 20 -15. Opis parametrów dekodowania znajduje się w rozdziale \ref{sec:meta_params}.
 		
 		\begin{figure}[H]
 			\centering
@@ -2427,7 +2434,7 @@
 					18 -7 & 16 -12 & 79.90 \\
 					&& 12 -7 & 15 -9  & 83.37 \\
 					&& 12 -7 & 15 -9  & 83.40 \\
-					&& \textbf{12 -10}& \textbf{15 -10} & \textbf{83.48} \\
+					&& \textbf{12 -10}& \textbf{15 -10} & \textbf{83.48*} \\
 					&& 13 -10& 15 -10 & 83.37 \\
 					&& 7 -8  & 7 -8   & 74.63 \\
 					&& 12 -7 & 12 -7  & 80.68 \\
@@ -2453,7 +2460,7 @@
 	\section{Wpływ liczby stanów na skuteczność rozpoznawania }
 		\label{sec:q-num_impact}
 	
-		W celu zweryfikowania głównej tezy niniejszej pracy przeprowadzono porównanie modeli o różnym stopniu zdławienia, dokonanym zgodnie z opisem w rozdziale \ref{sec:state_red}. Manipulując liczba obserwacji wymaganych do podziału trifonu zbudowano serię klasycznych modeli akustycznych o różnej liczbie stanów. Następnie dla każdego z nich wytrenowano sieć neuronową zgodnie z filozofią opisaną w rozdziale \ref{sec:ASR_NN}. Wszystkie wykorzystane w tym eksperymencie siec neuronowe miały taką samą architekturę. Składały się z jednej warstwy splotowej zbudowanej z $64$ filtrów, filtry były trzy kanałowe i miały wymiary $11\times6$, co było związane w szerokością kontekstu i odpowiada $kontekst \cdot 2 + 1\times6$. Następnie dodano jedną klasyczną warstwę ukrytą, składającą się z $2400$ neuronów oraz warstwę wyjściową, której szerokość była równa liczbie stanów danego modelu akustycznego. Warstwa środkowa miała dodatkowo dropout w współczynniku $0.5$. Funkcją aktywacji było \textit{rectify} opisane wzorem $\max(x,0)$, ostatnia warstwa miała funkcję \textit{softmax}, aby nadać wyjściu sieci charakter prawdopodobieństwa. Każda ze zbudowanych sieci neuronowych jest kompatybilna z jednym modelem klasycznym, zgodnie z opisem w rozdziale \ref{sec:nn_model_details}. Schemat \ref{fig:arch_q_num_impact} obrazuje architekturę sieci. Powstałe pary modeli akustycznych przebadano na testowym podzbiorze korpusu językowego \textit{Clarin}. Podczas procesu dekodowania wykorzystano wartości \textit{wagi} oraz \textit{kary} równe optymalnym parametrom z eksperymentu opisanego w rozdziale \ref{sec:metadata_impact}. Otrzymane wyniki zamieszczono w tabeli \ref{fig:tab_q_num_impact}. Wykres \ref{fig:fig_q_num_impact} obrazuje, w sposób graficzny, wpływ liczby stanów na skuteczność rozpoznawania dla modeli neuronowych oraz klasycznych.
+		W celu zweryfikowania głównej tezy niniejszej pracy przeprowadzono porównanie modeli o różnym stopniu zdławienia, dokonanym zgodnie z opisem w rozdziale \ref{sec:state_red}. Manipulując liczbą obserwacji wymaganych do podziału trifonu, zbudowano serię klasycznych modeli akustycznych o różnej liczbie stanów. Następnie dla każdego z nich wytrenowano sieć neuronową zgodnie z filozofią opisaną w rozdziale \ref{sec:ASR_NN}. Wszystkie wykorzystane w tym eksperymencie siec neuronowe miały taką samą architekturę. Składały się z jednej warstwy splotowej zbudowanej z $64$ filtrów, filtry były trzykanałowe i miały wymiary $11\times6$, co było związane w szerokością kontekstu i odpowiada wartości $kontekst \cdot 2 + 1\times6$. Następnie dodano jedną klasyczną warstwę ukrytą, składającą się z $2400$ neuronów oraz warstwę wyjściową, której szerokość była równa liczbie stanów danego modelu akustycznego. Warstwa środkowa miała dodatkowo dropout w współczynniku $0.5$. Funkcją aktywacji było \textit{rectify} opisane wzorem $\max(x,0)$, ostatnia warstwa miała funkcję \textit{softmax}, aby nadać wyjściu sieci charakter prawdopodobieństwa. Każda ze zbudowanych sieci neuronowych jest kompatybilna z jednym modelem klasycznym, zgodnie z opisem w rozdziale \ref{sec:nn_model_details}. Schemat \ref{fig:arch_q_num_impact} obrazuje architekturę sieci. Powstałe pary modeli akustycznych przebadano na testowym podzbiorze korpusu językowego \textit{Clarin}. Podczas procesu dekodowania wykorzystano wartości \textit{wagi} oraz \textit{kary} równe optymalnym parametrom z eksperymentu opisanego w rozdziale \ref{sec:metadata_impact}. Otrzymane wyniki zamieszczono w tabeli \ref{fig:tab_q_num_impact}. Wykres \ref{fig:fig_q_num_impact} obrazuje, w sposób graficzny, wpływ liczby stanów na skuteczność rozpoznawania dla modeli neuronowych oraz klasycznych.
 		
 		Przeprowadzony eksperyment pokazał, że rzeczywiście zwiększenie liczby wyjść sieci neuronowej pozytywnie wpływa na skuteczność rozpoznawania. Zaskakujące jednak okazało się, że dla modeli o ponad 231 neuronach obserwuje się gwałtowny spadek skuteczności. Niemniej jednak, model o 231 neuronach uzyskał  $83.48\%$ skuteczności, co daje $1.9\%$ punktu procentowego poprawy względem najlepszego standardowego modelu (\textit{M\_TRI}) i $0.05\%$ punktu procentowego poprawy względem modelu o zoptymalizowanych parametrach dekodowania (\textit{M\_TRI\_OPT}). 
 		
@@ -2555,7 +2562,7 @@
 				122 & 180000 & TRI & 75.17 & 81.69 \\				
 				147 & 70000  & TRI & 75.91 & 83.24 \\
 				214 & 37000  & TRI & 77.13 & 83.39 \\
-				231 & 33000  & TRI & 77.23 & 83.48 \\
+				\textbf{231} & \textbf{33000}  & \textbf{TRI} & \textbf{77.23} & \textbf{83.48} \\
 				269 & 29000  & TRI & 77.75 & 72.07 \\
 				304 & 25000  & TRI & 78.06 & 57.42 \\
 				\hline
@@ -2573,14 +2580,14 @@
 		
 		\begin{figure}
 			\centering
-			\begin{tabular}{|c|c|c|c|c|} \hline
+			\begin{tabular}{|c|c|c|c|} \hline
 				\vtop{\hbox{\strut Liczba neuronów}\hbox{\strut w warstwie ukrytej}}  & 
-				\vtop{\hbox{\strut Liczba }\hbox{\strut filtrów}} & \vtop{\hbox{\strut Skuteczność}\hbox{\strut corr}} & \vtop{\hbox{\strut Skuteczność}\hbox{\strut acc}} \\
+				\vtop{\hbox{\strut Liczba }\hbox{\strut filtrów}} & Skuteczność \\
 				\hline
-				2400 & 32 & 88.36 & 83.02 \\
-				1200 & 32 & 88.54 & 83.10 \\
-				600 & 32 & 87.52 & 82.01 \\
-				300 & 32 & 86.90 & 81.36 \\
+				2400 & 32 & 83.02 \\
+				\textbf{1200} & \textbf{32} & \textbf{83.10} \\
+				600 & 32 & 82.01 \\
+				300 & 32 & 81.36 \\
 				\hline
 				
 			\end{tabular}
@@ -2786,7 +2793,7 @@
 \section{ Podsumowanie }
 	Na podstawie przeprowadzonych eksperymentów, można jednoznacznie potwierdzić tezę niniejszej pracy magisterskiej. \textbf{Wykorzystując splotowe sieci neuronowe rozpoznające \textit{trifony}, jako estymator prawdopodobieństw stanów modelu Markowa, można uzyskać poprawę skuteczności, względem analogicznego podejścia wykorzystującego \textit{unifony}.} W eksperymencie \ref{sec:q-num_impact} uzyskano $1.93\%$ punktu procentowego poprawy względem sieci neuronowej unifonowej, co odpowiada $10.46\%$ względnej redukcji błędu. Ponadto, w eksperymencie \ref{sec:impact_other} udało się zbudować sieć uzyskującą $2.31$ punktu procentowego poprawy ($13.95\%$ względnej redukcji błędu) względem najlepszego klasycznego modelu \textit{M\_TRI\_OPT}. Nieoczekiwany okazał się gwałtowny spadek skuteczności dla modeli neuronowych o więcej niż $231$ stanach. Efekt ten można uzasadnić tym, że mając ograniczony i stosunkowo mały zbiór treningowy, sieć nie uzyskuje zdolności uogólniania wiedzy powyżej pewnej liczby wyjść. Zaskakujące również się okazało, że skuteczność pogarsza uwzględnianie prawdopodobieństwa a priori, dzięki któremu sieć zwracała takie prawdopodobieństwo, jakiego spodziewa się ukryty model Markowa. W przeprowadzonych eksperymentach nie uzyskano poprawy, przy zwiększaniu liczby warstw względem proponowanej architektury ze schematu \ref{fig:arch_q_num_impact}.
 	
-	Wyniki przeprowadzonych eksperymentów dały pozytywne rezultaty zachęcająca do dalszych badań. W przyszłości warto by było skupić się na budowie sieci uczonej na znacznie większym korpusie. Ponadto mają więcej danych treningowych można powtórzyć próbę budowy sieci o głębszej architekturze lub sieci o większej liczbie wyjść.
+	Wyniki przeprowadzonych eksperymentów dały pozytywne rezultaty zachęcająca do dalszych badań. W przyszłości warto by było skupić się na budowie sieci uczonej na znacznie większym korpusie, jednak wymaga to odpowiednich zasobów sprzętowych. Uczenia jednego modelu neuronowego na korpusie \textit{Clarin} trwało 2-3 dni. W przypadku większych zbiorów treningowych czas ten może się parokrotnie wydłużyć. Jednak mają więcej danych treningowych można powtórzyć próbę budowy sieci o głębszej architekturze lub sieci o większej liczbie wyjść. Można tez spróbować budowy modeli neuronowych na sztucznie powiększonym zbiorze, stosując metody augmentacji.
    
 \chapter{Podziękowania}
 	Autor wyraża podziękowania Panu Piotrowi Radlińskiemu, prezesowi firmy \textit{Radcomp Integral Sp z o.o.}, za udostępnienie oprogramowania \textit{Magic Scribe} przy pomocy, którego zgromadzono dane do wykonania eksperymentów przedstawionych w niniejszej pracy.

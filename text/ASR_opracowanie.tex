@@ -50,7 +50,14 @@
 	\maketitle
 	\newpage
 	
-	Automatyczne rozpoznawanie mowy jest techniką coraz częściej wykorzystywaną w przemyśle i zastosowaniach komercyjnych takich jak diagnostyka medyczna, motoryzacja, wspomaganie urządzeń mobilnych czy transkrypcja obrad. Proces ten polega na rozpoznaniu i zapisaniu w języku naturalnym wypowiedzi, zarejestrowanej jako sygnał akustyczny.
+	Automatyczne rozpoznawanie mowy jest techniką coraz częściej wykorzystywaną w przemyśle i zastosowaniach komercyjnych takich jak diagnostyka medyczna, motoryzacja, wspomaganie urządzeń mobilnych czy transkrypcja obrad. Proces ten polega na rozpoznaniu i zapisaniu w języku naturalnym wypowiedzi, zarejestrowanej jako sygnał akustyczny. Może się odbywać w dwóch trybach:
+	\begin{itemize}
+		\item Online, w którym rozpoznawanie odbywa się na bieżąco z wykorzystaniem mikrofonu.
+		\item Offline, w którym rozpoznawany jest zapisany wcześniej plik.
+	\end{itemize}
+	Pierwszy tryb jest oczywiście trudniejszy, ze względu na wymagany czas działania zbliżony do rzeczywistego. 
+	\\
+	Badania nad rozpoznawnaiem mowy rozpoczęto już w latach 50., jednak ówczesne systemy były w stanie rozpoznawać jedynie pojedyncze wyrazy, na przykład cyfry. Dopiero w latach 70. pojawiła się koncepcja wykorzystania \textit{Ukrytych modeli Markowa} przy rozpoznawaniu mowy. Pomysł ten, skutecznie wykorzystywany do dzisiaj, dał możliwość rozpoznawania wielkich słowników oraz mowy ciągłej. W artykule \cite{BaumWelch_tutorial} opisano szczegółowo algorytm \textit{Bauma-Wlecha} umożliwiający skuteczne nienadzorowane uczenie modeli Markowa. W kolejnych latach dopracowywano tę koncepcję i budowano coraz sprawniejsze i szybsze dekodery. W artykuł \cite{asr_toolkit_cmp} porównano kilka współczesnych open-sourcowych dekoderów. Jest wśród nich między innymi \textit{Julius}, jeden z najszybszych i najbardziej zoptymalizowanych systemów, o którym można przeczytać w artykule \cite{julius}. Ponadto jest to dekoder w pełni kompatybilny z powszechnie stosowanym pakietem \textit{HTK}\cite{juliusbook} umożliwiającym budowanie modeli akustycznych i językowych. Równocześnie pracowano nad przetwarzaniem sygnałów i związanymi z tą tematyką wektorami cech, które umożliwiałyby skuteczne rozróżnianie dźwięków. Artykuł \cite{feature_comparision} zawiera opis powszechnie stosowanych obecnie wektorów cech. Kolejnym krokiem milowych było wpięcie sieci neuronowych do systemów rozpoznających mowę. Typowo pracują one jako klasyfikatory stanów, tak jak w artykule \cite{article1}, ale były też próby wykorzystanie rekurencyjnych sieci zastępujących \textit{n-gramowe modele językowe}.
 	
 	\section{Formalne definicje}
 	Formalnie \textbf{automatyczne rozpoznawanie mowy} można przedstawić jako problem optymalizacyjny, w którym maksymalizujemy prawdopodobieństwo ciągu słów $\hat{W}$ nad pewnym alfabetem $\Sigma$, pod warunkiem obserwacji $O$. Okazuje się jednak, że w praktyce znacznie wygodniej jest wyliczać $P(O|W)$ niż $P(W|O)$, dlatego korzystając ze wzoru Bayesa możemy przekształcić oryginalny problem zgodnie ze wzór \ref{equation:ASR_definicja}.
@@ -667,4 +674,10 @@
 		\caption{Przykład działania algorytmu \textit{token passing}}
 		\label{fig:token_passing_example}
 	\end{figure}
+
+	\section{Podsumowanie}
+	Przestawione w niniejszej pracy klasyczne podejście do rozpoznawania mowy wykorzystujące \textit{Ukryte modele Markowa} przeszło długą drogę na przestrzeni ostatnich 40-stu lat. Od systemów umożliwiających jedynie rozpoznawanie pojedynczych słów, do szybkiego rozpoznawania ciągłej spontanicznej mowy ze skutecznością na poziomie 90-ciu kilku procent. Oczywiście nie zaprezentowano w niniejszym opracowaniu pełnego stanu wiedzy z tej dziedziny. Badacze włożyli dużo wysiłku w poprawę skuteczności zaszumionej mowy, która sprawia spore trudności. Pracowano również nad wycinaniem dźwięków nie będących mową (\textit{ang. Voice activity detection}). Ponadto badano inne funkcje celu, między innymi modele dyskryminacyjne, w których nie maksymalizuje się prawdopodobieństwa obserwacji, leczy stara się, aby poprawna hipoteza miała najwyższe prawdopodobieństwo. W ostatnich 10-ciu latach prym wiodą prace z zakresu wykorzystania sieci neuronowych. Jest to obszar, w którym wciąż wiele można poprawić i daje szerokie pole do popisu przyszłym badaczom.
+
+	\bibliographystyle{plain}
+	\bibliography{bibliografia_opracowanie}
 \end{document}
