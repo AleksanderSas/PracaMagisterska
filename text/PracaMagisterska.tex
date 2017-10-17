@@ -349,7 +349,7 @@
     \subsection{Ukryte modele Markowa - definicja}
 	    \label{sec:hmm_def}
     
-	    \textbf{Ukryte modele Markowa}, w skrócie \textbf{HMM}, to automat, który przechodzi pomiędzy stanami z pewnym prawdopodobieństwem $p1$ i wraz z każdym przejściem, emituje obserwację z prawdopodobieństwem $p2$. Formalnie HMM można zdefiniować jako krotkę \ref{equation:HMM_def}.
+	    \textbf{Ukryty model Markowa}, w skrócie \textbf{HMM}, to automat, który przechodzi pomiędzy stanami z pewnym prawdopodobieństwem $p1$ i wraz z każdym przejściem, emituje obserwację z prawdopodobieństwem $p2$. Formalnie HMM można zdefiniować jako krotkę \ref{equation:HMM_def}.
 	    
 	    \begin{equation}
 		    HMM = (Q, O, A, B, q_0, q_F)
@@ -1299,7 +1299,7 @@
 			\label{eqn:softmax}
 		\end{equation}
 		
-		Zgodnie z równaniem \ref{equation:ASR_definicja2} do rozpoznawania mowy potrzeba $P(O|W)$, co oznacza, że klasyfikator musi wyznaczać $P(v|w_i)$. Korzystając ze wzoru Bayes i obserwacji, że $P(v)$ nie ma wpływu na rozpoznawanie, gdyż jest takie samo dla wszystkich hipotez, otrzymujemy:
+		Zgodnie z równaniem \ref{equation:ASR_definicja2} do rozpoznawania mowy potrzeba $P(O|W)$, co oznacza, że klasyfikator musi wyznaczać $P(v|w_i)$. Korzystając ze wzoru Bayesa i obserwacji, że $P(v)$ nie ma wpływu na rozpoznawanie, gdyż jest takie samo dla wszystkich hipotez, otrzymujemy:
 		
 		\begin{equation}
 			P(v|w_i) = \frac{P(w_i|v) \cdot P(w_i)}{P(v)}\simeq P(w_i|v) \cdot P(w_i)

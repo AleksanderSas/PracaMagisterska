@@ -1,0 +1,311 @@
+\documentclass[mathserif, serif]{beamer}
+
+%\documentclass[a4paper,11pt,onecolumn,twoside,openright,titlepage]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{changepage}
+\usepackage{pdflscape}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{algorithmic}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usetikzlibrary{arrows}
+\usetikzlibrary{shapes}
+\usepackage{pgfplots}
+\usetikzlibrary{decorations.pathreplacing}
+\selectlanguage{polish}
+
+\author{Aleksander Sas}
+\title{Sieci neuronowe rozpoznające trifony w procesie analizy mowy}
+\usetheme{Warsaw}
+
+\DeclareMathOperator*{\argmax}{\arg\max}   % rbp
+\tikzstyle{hmm0}=[circle,thick,draw=gray!50,fill=gray!13,minimum size=4mm]
+\tikzstyle{hmm}=[circle,thick,draw=gray!75,fill=gray!20,minimum size=6mm]
+\tikzstyle{line} = [draw, -latex']
+
+
+\begin{document}
+	\begin{frame}
+		\titlepage
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{Plan seminarium}
+		\tableofcontents
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{Formalnie o rozpoznawaniu mowy} %Tresc slajdu
+		Rozpoznawanie mowy można potraktować jako problem optymalizacyjny, szukamy sekwencji słów $\hat{W}$ (hipotezy) maksymalizującej prawdopodobieństwo sygnału akustycznego(obserwacji).
+		\begin{exampleblock}{}
+			\scriptsize
+			\begin{equation}
+				\hat{W}=\argmax_{W \in \Sigma^{*}}{P(W \mid O)} = \argmax_{W \in \Sigma^{*}}{\frac{P(O \mid W)P(W)}{P(O)}} = \argmax_{W \in \Sigma^{*}}{P(O \mid W)P(W)}
+			\end{equation}
+		\end{exampleblock}
+		
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{Etapy rozpoznawania mowy}
+		
+		\begin{figure}
+			\scalebox{.65}{
+				\begin{tikzpicture}[node distance = 1.7cm, auto]
+				
+				\tikzstyle{ArmBlok} = [rectangle, draw, fill=blue!20, text width=12em, text centered, rounded corners, minimum height=3em]
+				\tikzstyle{model} = [ellipse, draw, fill=blue!20, text width=7em, text centered, rounded corners, minimum height=3em, node distance=5cm]
+				\tikzstyle{data} = [draw, ellipse,fill=red!20, node distance=2cm,minimum height=2em]
+				
+				% Place nodes
+				\node [data] (etap0) {Mowa};
+				\node [ArmBlok,  below of=etap0] (etap1) {Zbieranie sygnału akustycznego};
+				\node [ArmBlok,  below of=etap1] (etap2) { Ekstrakcja cech};
+				\node [ArmBlok,  below of=etap2, fill=blue!40] (etap3) {Klasyfikacja stanów};
+				\node [ArmBlok,  below of=etap3] (etap4) { Wyszukiwanie najlepszej ścieżki w modelu Markowa};
+				\node [model, right of=etap3] (etap5) { Model językowy};
+				\node [model,    left  of=etap2, fill=blue!40] (model_akustyczny) { Model akustyczny};
+				\node [data,     below of=etap4] (etap6) {Rozpoznanie};
+				\node [model,   right  of=etap6] (slownik) {Słownik};
+				
+				\path [line] (etap0) -- (etap1);
+				\path [line] (etap1) -- (etap2);
+				\path [line] (etap2) -- (etap3);
+				\path [line] (etap3) -- (etap4);
+				\path [line, dashed] (etap5) |- (etap4);
+				\path [line] (etap4) -- (etap6);
+				\path [line, dashed] (slownik) |- (etap4);
+				\path [line, dashed] (model_akustyczny) |- (etap3);
+				\path [line, dashed] (model_akustyczny) |- (etap4);
+				
+				\end{tikzpicture}
+			}
+		\end{figure}
+	\end{frame}	
+
+	\begin{frame}
+		\frametitle{Model fonemu}
+		
+			\begin{itemize}
+				\item Fonemy reprezentują dźwięki.
+				\item Modelujemy je trzema stanami modelu Markowa.
+				\item Dźwięki mogą mieć różną długość.
+				\item Trifony są rozwinięciem koncepcji fonów.
+			\end{itemize}		
+		
+			\begin{figure}[H]
+			\scalebox{.8}{
+				\begin{tikzpicture}[node distance=1.7cm]
+				
+				\begin{scope}
+				\node [hmm] (hmm1) {$s_1$};
+				\node [hmm, right of=hmm1] (hmm2) {$s_2$};
+				\node [hmm, right of=hmm2] (hmm3) {$s_2$};
+				
+				\draw[thick,->,shorten >=1pt] (hmm1) to [out=0,in=180] (hmm2);
+				\draw[thick,->,shorten >=1pt] (hmm2) to [out=0,in=180] (hmm3);
+				
+				\draw[thick,->] (hmm1.70) arc (-60:245:4mm);
+				\draw[thick,->] (hmm2.70) arc (-60:245:4mm);
+				\draw[thick,->] (hmm3.70) arc (-60:245:4mm);
+				
+				\draw[thick,<-,shorten <=1pt] (hmm1) -- +(180:1cm);
+				\draw[thick,->,shorten <=1pt] (hmm3) -- +(0:1cm);
+				\end{scope}
+				
+				\end{tikzpicture}
+			}
+		\end{figure}
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{Fonemy modelowane w systemie}
+		
+		\begin{itemize}
+			\item Zamodelowano 40 fonemów.
+			\item $40\times40\times40=64000$ możliwych trifonów.
+			\item W praktyce wystąpiło 27005 różnych trifonów.
+		\end{itemize}		
+		
+		\begin{table}
+			\begin{tabular}{|c c c c c c c c|}
+				\hline
+				a  & o\~ & b & c & cz & ć & d & dz \\ 
+				dź & dż & e & e\~ & f & g & g\^ & h \\
+				i & j & k & k\^ & l & ł & m & n \\
+				nn & ń & o & p  & r & s & sz & ś \\
+				t & u & v & y & z & ź & ż & sil \\
+				\hline
+			\end{tabular}
+		\end{table}
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{Słowa jako ciąg fonemów}
+		
+		\begin{itemize}
+			\item Transkrypcja słów na fonemy wykorzystuje zasady lingwistyki.
+			\item Każde słowo tworzy "łańcuszek".
+			\item "Łańcuszki" łączymy w jeden spójny graf przejść.
+		\end{itemize}		
+		
+		\begin{figure}[H]
+			\scalebox{.8}{
+				\begin{tikzpicture}[node distance=1.7cm]
+				
+				\begin{scope}
+				
+				\def\x{0.65}
+				\def\y{1.0}
+				\def\z{2.5}
+				
+				\node [hmm0] (hmm1) {};
+				\node [below] at (hmm1.south) {$j_1$};
+				
+				\node [hmm0, right = \x cm of hmm1] (hmm2) {};
+				\node [below] at (hmm2.south) {$j_2$};
+				
+				\node [hmm0, right = \x cm of hmm2] (hmm3) {};
+				\node [below] at (hmm3.south) {$j_3$};
+				
+				
+				\node [hmm0, right = \y cm of hmm3] (hmm4) {};
+				\node [below] at (hmm4.south) {$a_1$};
+				
+				\node [hmm0, right = \x cm of hmm4] (hmm5) {};
+				\node [below] at (hmm5.south) {$a_2$};
+				
+				\node [hmm0, right = \x cm of hmm5] (hmm6) {};
+				\node [below] at (hmm6.south) {$a_3$};
+				
+				
+				\node [hmm0, right = \y cm of hmm6] (hmm7) {};
+				\node [below] at (hmm7.south) {$p_1$};
+				
+				\node [hmm0, right = \x cm of hmm7] (hmm8) {};
+				\node [below] at (hmm8.south) {$p_2$};
+				
+				\node [hmm0, right = \x cm of hmm8] (hmm9) {};
+				\node [below] at (hmm9.south) {$p_3$};
+				
+				
+				
+				
+				\node [hmm0, below = \z cm of hmm9] (hmm10) {};
+				\node [below] at (hmm10.south) {$ł_1$};
+				
+				\node [hmm0, left = \x cm of hmm10] (hmm11) {};
+				\node [below] at (hmm11.south) {$ł_2$};
+				
+				\node [hmm0, left = \x cm of hmm11] (hmm12) {};
+				\node [below] at (hmm12.south) {$ł_3$};
+				
+				
+				\node [hmm0, left = \y cm of hmm12] (hmm13) {};
+				\node [below] at (hmm13.south) {$k_1$};
+				
+				\node [hmm0, left = \x cm of hmm13] (hmm14) {};
+				\node [below] at (hmm14.south) {$k_2$};
+				
+				\node [hmm0, left = \x cm of hmm14] (hmm15) {};
+				\node [below] at (hmm15.south) {$k_3$};
+				
+				
+				\node [hmm0, left = \y cm of hmm15] (hmm16) {};
+				\node [below] at (hmm16.south) {$o_1$};
+				
+				\node [hmm0, left = \x cm of hmm16] (hmm17) {};
+				\node [below] at (hmm17.south) {$o_2$};
+				
+				\node [hmm0, left = \x cm of hmm17] (hmm18) {};
+				\node [below] at (hmm18.south) {$o_3$};
+				
+				
+				
+				\draw[thick,->,shorten >=1pt] (hmm1) to [out=0,in=180] (hmm2);
+				\draw[thick,->,shorten >=1pt] (hmm2) to [out=0,in=180] (hmm3);
+				
+				\draw[thick,->,shorten >=1pt] (hmm3) to [out=0,in=180] (hmm4);
+				
+				\draw[thick,->,shorten >=1pt] (hmm4) to [out=0,in=180] (hmm5);
+				\draw[thick,->,shorten >=1pt] (hmm5) to [out=0,in=180] (hmm6);
+				
+				\draw[thick,->,shorten >=1pt] (hmm6) to [out=0,in=180] (hmm7);
+				
+				\draw[thick,->,shorten >=1pt] (hmm7) to [out=0,in=180] (hmm8);
+				\draw[thick,->,shorten >=1pt] (hmm8) to [out=0,in=180] (hmm9);
+				
+				\draw[thick,->,shorten >=1pt] (hmm9) to [out=0,in=0,looseness=1.1] (hmm10);
+				
+				\draw[thick,->,shorten >=1pt] (hmm10) to [out=180,in=0] (hmm11);
+				\draw[thick,->,shorten >=1pt] (hmm11) to [out=180,in=0] (hmm12);
+				
+				\draw[thick,->,shorten >=1pt] (hmm12) to [out=180,in=0] (hmm13);
+				
+				\draw[thick,->,shorten >=1pt] (hmm13) to [out=180,in=0] (hmm14);
+				\draw[thick,->,shorten >=1pt] (hmm14) to [out=180,in=0] (hmm15);
+				
+				\draw[thick,->,shorten >=1pt] (hmm15) to [out=180,in=0] (hmm16);
+				
+				\draw[thick,->,shorten >=1pt] (hmm16) to [out=180,in=0] (hmm17);
+				\draw[thick,->,shorten >=1pt] (hmm17) to [out=180,in=0] (hmm18);
+				
+				
+				\draw[thick,->] (hmm1.70) arc (-60:245:4mm);
+				\draw[thick,->] (hmm2.70) arc (-60:245:4mm);
+				\draw[thick,->] (hmm3.70) arc (-60:245:4mm);
+				
+				\draw[thick,->] (hmm4.70) arc (-60:245:4mm);
+				\draw[thick,->] (hmm5.70) arc (-60:245:4mm);
+				\draw[thick,->] (hmm6.70) arc (-60:245:4mm);
+				
+				\draw[thick,->] (hmm7.70) arc (-60:245:4mm);
+				\draw[thick,->] (hmm8.70) arc (-60:245:4mm);
+				\draw[thick,->] (hmm9.70) arc (-60:245:4mm);
+				
+				
+				
+				\draw[thick,->] (hmm10.110) arc (240:-65:4mm);
+				\draw[thick,->] (hmm11.110) arc (240:-65:4mm);
+				\draw[thick,->] (hmm12.110) arc (240:-65:4mm);
+				
+				\draw[thick,->] (hmm13.110) arc (240:-65:4mm);
+				\draw[thick,->] (hmm14.110) arc (240:-65:4mm);
+				\draw[thick,->] (hmm15.110) arc (240:-65:4mm);
+				
+				\draw[thick,->] (hmm16.110) arc (240:-65:4mm);
+				\draw[thick,->] (hmm17.110) arc (240:-65:4mm);
+				\draw[thick,->] (hmm18.110) arc (240:-65:4mm);
+				
+				\draw[thick,<-,shorten <=1pt] (hmm1) -- +(180:1cm);
+				\draw[thick,->,shorten <=1pt] (hmm18) -- +(180:1cm);
+				\end{scope}			
+				\end{tikzpicture}
+			}
+		\end{figure}
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{Etapy rozpoznawania mowy}
+			\begin{columns}[t]
+			% wyrownanie do gory
+			\column{.5\textwidth}
+			Tresc pierwszej kolumny
+			\column{.5\textwidth}
+			jakis tekst
+		\end{columns}
+	\end{frame}
+\end{document}
