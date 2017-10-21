@@ -26,6 +26,7 @@
 \usepackage{pgfplots}
 \usetikzlibrary{decorations.pathreplacing}
 \selectlanguage{polish}
+\usetikzlibrary{arrows.meta}
 
 \author{Aleksander Sas}
 \title{Sieci neuronowe rozpoznające trifony w procesie analizy mowy}
@@ -43,8 +44,13 @@
 	\end{frame}
 
 	\begin{frame}
-		\frametitle{Plan seminarium}
-		\tableofcontents
+		Cele bronionej pracy magisterskiej:
+		\begin{itemize}
+			\item sprawdzenie możliwości wyuczenia sieci neuronowej rozpoznającej trifony,
+			\item porównanie powyższej sieci z siecią rozpoznającą unifony,
+			\item porównanie systemu wykorzystującego sieć neuronową z klasycznym systemem
+			\item uzyskanie możliwie najwyższej skuteczności rozpoznawania.
+		\end{itemize}
 	\end{frame}
 
 	\begin{frame}
@@ -103,10 +109,10 @@
 				\item Fonemy reprezentują dźwięki.
 				\item Modelujemy je trzema stanami modelu Markowa.
 				\item Dźwięki mogą mieć różną długość.
-				\item Trifony są rozwinięciem koncepcji fonów.
+				\item Trifony są rozwinięciem koncepcji fonów, przykładowo $a-g+r$.
 			\end{itemize}		
 		
-			\begin{figure}[H]
+		\begin{figure}
 			\scalebox{.8}{
 				\begin{tikzpicture}[node distance=1.7cm]
 				
@@ -298,14 +304,792 @@
 		\end{figure}
 	\end{frame}
 
+	\frame[plain]{
+	\begin{figure}
+		\hspace*{-1cm}  
+		\scalebox{.55}{				
+			\begin{tikzpicture}[node distance=1.13cm]
+			
+			\begin{scope} 		
+			\def \h{1.5}
+			\def \t{3.2}
+			\def \d{0.7}
+			
+			\node [hmm] (hmm1) {$k_1$};
+			\node [hmm, right of=hmm1] (hmm2) {$k_2$};
+			\node [hmm, right of=hmm2] (hmm3) {$k_2$};
+			
+			\node [hmm, right = \d cm of hmm3] (hmm4) {$o_1$};
+			\node [hmm, right of=hmm4] (hmm5) {$o_2$};
+			\node [hmm, right of=hmm5] (hmm6) {$o_3$};
+			
+			\node [hmm, right = \d cm of hmm6] (hmm7) {$t_1$};
+			\node [hmm, right of=hmm7] (hmm8) {$t_2$};
+			\node [hmm, right of=hmm8] (hmm9) {$t_3$};
+			
+			
+			
+			\node [hmm, above = \h cm of hmm1] (hmm10) {$k_1$};
+			\node [hmm, right of=hmm10] (hmm11) {$k_2$};
+			\node [hmm, right of=hmm11] (hmm12) {$k_3$};
+			
+			\node [hmm, right = \d cm of hmm12] (hmm13) {$o_1$};
+			\node [hmm, right of=hmm13] (hmm14) {$o_2$};
+			\node [hmm, right of=hmm14] (hmm15) {$o_3$};
+			
+			\node [hmm, right = \d cm of hmm15] (hmm16) {$s_1$};
+			\node [hmm, right of=hmm16] (hmm17) {$s_2$};
+			\node [hmm, right of=hmm17] (hmm18) {$s_3$};
+			
+			
+			
+			\node [hmm, below = \h cm of hmm1] (hmm19) {$k_1$};
+			\node [hmm, right of=hmm19] (hmm20) {$k_2$};
+			\node [hmm, right of=hmm20] (hmm21) {$k_3$};
+			
+			\node [hmm, right = \d cm of hmm21] (hmm22) {$a_1$};
+			\node [hmm, right of=hmm22] (hmm23) {$a_2$};
+			\node [hmm, right of=hmm23] (hmm24) {$a_3$};
+			
+			\node [hmm, right = \d cm of hmm24] (hmm25) {$s_1$};
+			\node [hmm, right of=hmm25] (hmm26) {$s_2$};
+			\node [hmm, right of=hmm26] (hmm27) {$s_3$};
+			
+			\node [hmm, right = \d cm of hmm27] (hmm28) {$a_1$};
+			\node [hmm, right of=hmm28] (hmm29) {$a_2$};
+			\node [hmm, right of=hmm29] (hmm30) {$a_3$};
+			
+			
+			\node [hmm, below = \h cm of hmm19] (hmm31) {$m_1$};
+			\node [hmm, right of=hmm31] (hmm32) {$m_2$};
+			\node [hmm, right of=hmm32] (hmm33) {$m_3$};
+			
+			\node [hmm, right = \d cm of hmm33] (hmm34) {$a_1$};
+			\node [hmm, right of=hmm34] (hmm35) {$a_2$};
+			\node [hmm, right of=hmm35] (hmm36) {$a_3$};
+			
+			\node [hmm, right = \d cm of hmm36] (hmm37) {$s_1$};
+			\node [hmm, right of=hmm37] (hmm38) {$s_2$};
+			\node [hmm, right of=hmm38] (hmm39) {$s_3$};
+			
+			\node [hmm, right = \d cm of hmm39] (hmm40) {$a_1$};
+			\node [hmm, right of=hmm40] (hmm41) {$a_2$};
+			\node [hmm, right of=hmm41] (hmm42) {$a_3$};
+			
+			
+			\node [hmm, below = \h cm of hmm31] (hmm43) {$m_1$};
+			\node [hmm, right of=hmm43] (hmm44) {$m_2$};
+			\node [hmm, right of=hmm44] (hmm45) {$m_3$};
+			
+			\node [hmm, right = \d cm of hmm45] (hmm46) {$a_1$};
+			\node [hmm, right of=hmm46] (hmm47) {$a_2$};
+			\node [hmm, right of=hmm47] (hmm48) {$a_3$};
+			
+			
+			\node [hmm, left = 1.3 cm of hmm19] (start) {$start$};
+			\node [hmm, right = 1.3 cm of hmm30] (stop) {$stop$};
+			
+			\coordinate [below = \t cm of hmm42] (P1);
+			\coordinate [below of = hmm43] (P2);
+			\coordinate [below = 2.0 cm of hmm42] (P3);
+			\coordinate [above = 2.0 cm of hmm30] (P4);
+			\coordinate [above = 2.4 cm of P4] (P5);
+			%\coordinate [below of=hmm25] (P4);
+			
+			\draw[thick,->,shorten >=1pt] (hmm1) to [out=0,in=180] (hmm2);
+			\draw[thick,->,shorten >=1pt] (hmm2) to [out=0,in=180] (hmm3);
+			\draw[thick,->,shorten >=1pt] (hmm3) to [out=0,in=180] (hmm4);
+			\draw[thick,->,shorten >=1pt] (hmm4) to [out=0,in=180] (hmm5);
+			\draw[thick,->,shorten >=1pt] (hmm5) to [out=0,in=180] (hmm6);
+			\draw[thick,->,shorten >=1pt] (hmm6) to [out=0,in=180] (hmm7);
+			\draw[thick,->,shorten >=1pt] (hmm7) to [out=0,in=180] (hmm8);
+			\draw[thick,->,shorten >=1pt] (hmm8) to [out=0,in=180] (hmm9);
+			
+			\draw[thick,->,shorten >=1pt] (hmm10) to [out=0,in=180] (hmm11);
+			\draw[thick,->,shorten >=1pt] (hmm11) to [out=0,in=180] (hmm12);
+			\draw[thick,->,shorten >=1pt] (hmm12) to [out=0,in=180] (hmm13);
+			\draw[thick,->,shorten >=1pt] (hmm13) to [out=0,in=180] (hmm14);
+			\draw[thick,->,shorten >=1pt] (hmm14) to [out=0,in=180] (hmm15);
+			\draw[thick,->,shorten >=1pt] (hmm15) to [out=0,in=180] (hmm16);
+			\draw[thick,->,shorten >=1pt] (hmm16) to [out=0,in=180] (hmm17);
+			\draw[thick,->,shorten >=1pt] (hmm17) to [out=0,in=180] (hmm18);
+			
+			\draw[thick,->,shorten >=1pt] (hmm19) to [out=0,in=180] (hmm20);
+			\draw[thick,->,shorten >=1pt] (hmm20) to [out=0,in=180] (hmm21);
+			\draw[thick,->,shorten >=1pt] (hmm21) to [out=0,in=180] (hmm22);
+			\draw[thick,->,shorten >=1pt] (hmm22) to [out=0,in=180] (hmm23);
+			\draw[thick,->,shorten >=1pt] (hmm23) to [out=0,in=180] (hmm24);
+			\draw[thick,->,shorten >=1pt] (hmm24) to [out=0,in=180] (hmm25);
+			\draw[thick,->,shorten >=1pt] (hmm25) to [out=0,in=180] (hmm26);
+			\draw[thick,->,shorten >=1pt] (hmm26) to [out=0,in=180] (hmm27);
+			\draw[thick,->,shorten >=1pt] (hmm27) to [out=0,in=180] (hmm28);
+			\draw[thick,->,shorten >=1pt] (hmm28) to [out=0,in=180] (hmm29);
+			\draw[thick,->,shorten >=1pt] (hmm29) to [out=0,in=180] (hmm30);
+			
+			\draw[thick,->,shorten >=1pt] (hmm31) to [out=0,in=180] (hmm32);
+			\draw[thick,->,shorten >=1pt] (hmm32) to [out=0,in=180] (hmm33);
+			\draw[thick,->,shorten >=1pt] (hmm33) to [out=0,in=180] (hmm34);
+			\draw[thick,->,shorten >=1pt] (hmm34) to [out=0,in=180] (hmm35);
+			\draw[thick,->,shorten >=1pt] (hmm35) to [out=0,in=180] (hmm36);
+			\draw[thick,->,shorten >=1pt] (hmm36) to [out=0,in=180] (hmm37);
+			\draw[thick,->,shorten >=1pt] (hmm37) to [out=0,in=180] (hmm38);
+			\draw[thick,->,shorten >=1pt] (hmm38) to [out=0,in=180] (hmm39);
+			\draw[thick,->,shorten >=1pt] (hmm39) to [out=0,in=180] (hmm40);
+			\draw[thick,->,shorten >=1pt] (hmm40) to [out=0,in=180] (hmm41);
+			\draw[thick,->,shorten >=1pt] (hmm41) to [out=0,in=180] (hmm42);
+			
+			\draw[thick,->,shorten >=1pt] (hmm43) to [out=0,in=180] (hmm44);
+			\draw[thick,->,shorten >=1pt] (hmm44) to [out=0,in=180] (hmm45);
+			\draw[thick,->,shorten >=1pt] (hmm45) to [out=0,in=180] (hmm46);
+			\draw[thick,->,shorten >=1pt] (hmm46) to [out=0,in=180] (hmm47);				
+			\draw[thick,->,shorten >=1pt] (hmm47) to [out=0,in=180] (hmm48);
+			
+			\draw[thick,->] (hmm1.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm2.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm3.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm4.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm5.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm6.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm7.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm8.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm9.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm10.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm11.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm12.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm13.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm14.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm15.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm16.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm17.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm18.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm19.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm20.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm21.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm22.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm23.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm24.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm25.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm26.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm27.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm28.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm29.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm30.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm31.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm32.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm33.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm34.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm35.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm36.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm37.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm38.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm39.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm40.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm41.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm42.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm43.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm44.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm45.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm46.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm47.70) arc (-60:245:4mm);
+			\draw[thick,->] (hmm48.70) arc (-60:245:4mm);
+			
+			\draw[thick,->,shorten >=1pt] (start) to [out=45,in=180] (hmm10);
+			\draw[thick,->,shorten >=1pt] (start) to [out=20,in=180] (hmm1);
+			\draw[thick,->,shorten >=1pt] (start) to [out=0,in=180] (hmm19);
+			\draw[thick,->,shorten >=1pt] (start) to [out=-20,in=180] (hmm31);
+			\draw[thick,->,shorten >=1pt] (start) to [out=-45,in=180] (hmm43);
+			
+			\draw[thick,->,shorten >=1pt] (hmm18) to [out=0,in=180] (P5);
+			\draw[thick,->,shorten >=1pt] (P5) to [out=0,in=135] (stop);
+			\draw[thick,->,shorten >=1pt] (hmm9) to [out=0,in=180] (P4);
+			\draw[thick,->,shorten >=1pt] (P4) to [out=0,in=160] (stop);
+			\draw[thick,->,shorten >=1pt] (hmm30) to [out=0,in=180] (stop);
+			\draw[thick,->,shorten >=1pt] (hmm42) to [out=0,in=230] (stop);
+			
+			\draw[thick,->,shorten >=1pt] (stop) to [out=-45,in=0] (P1);
+			\draw[thick,->,shorten >=1pt] (P1) to [out=180,in=0] (P2);
+			\draw[thick,->,shorten >=1pt] (P2) to [out=180,in=225] (start);
+			
+			\draw[thick,->,shorten >=1pt] (hmm48) to [out=0,in=180] (P3);
+			\draw[thick,->,shorten >=1pt] (P3) to [out=0,in=-110] (stop);
+			%\draw[thick,->,shorten >=1pt] (P3) to [out=0,in=240] (stop);
+			
+			\end{scope}			
+			\end{tikzpicture}
+	}
+	\end{figure}
+}
+
 	\begin{frame}
-		\frametitle{Etapy rozpoznawania mowy}
-			\begin{columns}[t]
-			% wyrownanie do gory
-			\column{.5\textwidth}
-			Tresc pierwszej kolumny
-			\column{.5\textwidth}
-			jakis tekst
-		\end{columns}
+		\frametitle{Znajdowanie hipotezy}
+		\begin{itemize}
+			\item Zaczynamy w stanie \textit{start}.
+			\item Z każdą ramką przechodzimy jedna krawędzią.
+			\item Szukamy najkrótszej ścieżki w grafie.
+			\item Po ostatniej ramce chcemy być w stanie \textit{stop}. 
+			\item Realizacja algorytmu Viterbiego.
+		\end{itemize}
+	
+	
+	\begin{exampleblock}{}
+		\scriptsize
+		\begin{equation}
+		H_i(t+1)=H_i(t) \cdot a_{S(prev,t),S(i,t+1)} \cdot P(o_{t+1}|S(prev,t))
+		\end{equation}
+	\end{exampleblock}
+	,gdzie: 
+	\textit{prev} jest poprzednim stanem hipotezy $H_i$
+		
 	\end{frame}
+	
+	\begin{frame}
+		\frametitle{Cechy MFCC/MFSC}
+		
+		\begin{exampleblock}{}
+			\textit{Ramka} jest fragmentem nagrania o ustalonej długości (typowo 25ms). Całe nagranie składa się z ciągu ramek .
+		\end{exampleblock}
+		
+		\begin{itemize}
+			\item Potrzebujemy wektora liczb, opisującego ramkę.
+			\item Różne dźwięki (stany) powinny dawać charakterystyczne wektory.
+			\item Najczęściej używane są cechy \textit{MFCC} o 39 elementach na wektor.
+		\end{itemize}
+		
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{Mikstury Gaussowskie}
+		\footnotesize
+		\begin{itemize}
+			\item Dla każdej ramki (wektora cech) potrzebujemy $P(o|s)$.
+			\item W przyrodzie wszystko ma rozkład Gaussowski.
+			\item Budowa rodziny modeli klasycznych $M$ o ograniczonej liczbie stanów.
+			\item Wyuczenie sieci neuronowych dla każdego modelu z rodziny $M$.
+			\item Porównanie skuteczności zbudowanych modeli.
+		\end{itemize}
+		
+		\begin{figure}
+			\scalebox{.8}{
+				\begin{tikzpicture}
+				\begin{axis}[
+				axis lines = left
+				]
+				%Below the red parabola is defined
+				\addplot [
+				domain=0:20, 
+				samples=100, 
+				color=red,
+				]
+				{0.3 * 1/(2.5 * 2) * e ^ (-(x - 5)^2 / (2 * 2 ^ 2))};
+				
+				\addplot [
+				domain=0:20, 
+				samples=100, 
+				color=blue,
+				]
+				{0.3 * 1/(2.5 * 4) * e ^ (-(x - 17)^2 / (2 * 4 ^ 2))};
+				
+				\addplot [
+				domain=0:20, 
+				samples=100, 
+				color=yellow,
+				]
+				{0.4 * 1/(2.5 * 1.5) * e ^ (-(x - 10)^2 / (2 * 1.5 ^ 2))};
+				
+				\addplot [
+				domain=0:20, 
+				samples=100, 
+				color=black,
+				]
+				{0.3 * 1/(2.5 * 2) * e ^ (-(x - 5)^2 / (2 * 2 ^ 2)) + 0.3 * 1/(2.5 * 4) * e ^ (-(x - 17)^2 / (2 * 4 ^ 2)) + 0.4 * 1/(2.5 * 1.5) * e ^ (-(x - 10)^2 / (2 * 1.5 ^ 2))};
+				
+				\end{axis}
+				\end{tikzpicture}
+			}
+		\end{figure}
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{Sieci neuronowe przy rozpoznawaniu mowy}
+		
+	\begin{figure}
+		\hspace*{-0.6cm}  
+		\scalebox{.65}{
+			\begin{tikzpicture}
+			\tikzstyle{conv_layer} = [fill=black,fill=gray!20,draw=black, text centered]
+			
+			
+			\begin{axis}[
+			axis lines = left
+			]
+			%Below the red parabola is defined
+			\addplot [
+			domain=0:20, 
+			samples=100, 
+			color=red,
+			]
+			{0.3 * 1/(2.5 * 2) * e ^ (-(x - 5)^2 / (2 * 2 ^ 2))};
+			
+			\addplot [
+			domain=0:20, 
+			samples=100, 
+			color=blue,
+			]
+			{0.3 * 1/(2.5 * 4) * e ^ (-(x - 17)^2 / (2 * 4 ^ 2))};
+			
+			\addplot [
+			domain=0:20, 
+			samples=100, 
+			color=yellow,
+			]
+			{0.4 * 1/(2.5 * 1.5) * e ^ (-(x - 10)^2 / (2 * 1.5 ^ 2))};
+			
+			\addplot [
+			domain=0:20, 
+			samples=100, 
+			color=black,
+			]
+			{0.3 * 1/(2.5 * 2) * e ^ (-(x - 5)^2 / (2 * 2 ^ 2)) + 0.3 * 1/(2.5 * 4) * e ^ (-(x - 17)^2 / (2 * 4 ^ 2)) + 0.4 * 1/(2.5 * 1.5) * e ^ (-(x - 10)^2 / (2 * 1.5 ^ 2))};
+			
+			\end{axis}
+			
+			%----------------------------------------------------------------------
+			
+			\draw[-{Latex[width=5mm]}] (7,3)--(9,3);
+			
+			%----------------------------------------------------------------------
+			
+			\def\w{1.5}		
+			
+			\def\x{10.0}	
+			\def\y{2.5}				
+			\pgfmathsetmacro{\X}{\x + \w};
+			\pgfmathsetmacro{\Y}{\y + \w};
+			\draw [fill=black,fill=gray!20,draw=black] (\x,\y) rectangle (\X,\Y);
+			
+			
+			\def\x{10.25}	
+			\def\y{2.25}				
+			\pgfmathsetmacro{\X}{\x + \w};
+			\pgfmathsetmacro{\Y}{\y + \w};
+			\draw [fill=black,fill=gray!20,draw=black] (\x,\y) rectangle (\X,\Y);
+			
+			\def\x{10.5}	
+			\def\y{2.0}				
+			\pgfmathsetmacro{\X}{\x + \w};
+			\pgfmathsetmacro{\Y}{\y + \w};
+			\draw [fill=black,fill=gray!20,draw=black] (\x,\y) rectangle (\X,\Y) node [black,midway] {$11\times6$};
+			
+			
+			\def\w{0.6}	
+			\def\h{2.0}	
+			\def\x{13.5}	
+			\def\y{2.0}				
+			\pgfmathsetmacro{\X}{\x + \w};
+			\pgfmathsetmacro{\Y}{\y + \h};
+			\draw [fill=black,fill=gray!20,draw=black] (\x,\y) rectangle (\X,\Y) node [black,midway, rotate=90] {$2400$};
+			
+			\draw (11.5,4.0) -- (13.5,3.0);
+			\draw (12.0,2.0) -- (13.5,3.0);
+			
+			\def\w{0.6}	
+			\def\h{1.5}	
+			\def\x{15.5}	
+			\def\y{2.25}				
+			\pgfmathsetmacro{\X}{\x + \w};
+			\pgfmathsetmacro{\Y}{\y + \h};
+			\draw [fill=black,fill=gray!20,draw=black] (\x,\y) rectangle (\X,\Y) node [black,midway, rotate=90] {$|Q|$};
+			
+			\draw (14.2,4.0) -- (15.5,3.0);
+			\draw (14.2,2.0) -- (15.5,3.0);
+			\end{tikzpicture}
+		}
+	\end{figure}
+		
+	\end{frame}	
+
+	\begin{frame}
+		\frametitle{Korpus \textit{Clarin}}
+		
+		\begin{itemize}
+			\item Powszechnie dostępny korpus wypowiedzi studyjnych.
+			\item Przygotowany prze Politechnikę Wrocławską (1http://mowa.clarin-pl.eu/korpusy/).
+			\item 56 godzin (wliczając ciszę).
+			\item 556 różnych mówców.
+			\item Niestety zawiera liczne błędy w transkrypcjach.
+		\end{itemize}
+		
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{Plan przeprowadzonych eksperymentów}
+		
+		\begin{itemize}
+			\item Przygotowanie korpusu treningowego dla sieci neuronowej.
+			\item Budowa pełnego modelu klasycznego (model referencyjny).
+			\item Budowa rodziny modeli klasycznych $M$ o ograniczonej liczbie stanów.
+			\item Wyuczenie sieci neuronowych dla każdego modelu z rodziny $M$.
+			\item Porównanie skuteczności zbudowanych modeli.
+		\end{itemize}
+	
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{Przygotowanie korpusu treningowego}
+		\small
+		\begin{itemize}
+			\item Wyznaczenie par $<wektor\_cech,stan\_modelu\_Markowa>$.
+			\item Wymagane jest precyzyjne dopasowanie wektorów do stanów.
+			\item Modele uczona są na danych treningowych ($99.3\%$ skuteczności)
+		\end{itemize}
+		
+		\begin{figure}
+			\scalebox{.8}{
+			\begin{tikzpicture}
+			
+			\begin{scope}
+			\tikzstyle{arch_part} = [rectangle, draw, text width=8em, text centered, rounded corners, minimum height=3em]
+			\tikzstyle{arch_part_data} = [rectangle, draw,  fill=blue!20, text width=8em, text centered, rounded corners, minimum height=3em]
+			\tikzstyle{arch_part_results} = [rectangle, draw,  fill=green!20, text width=8em, text centered, rounded corners, minimum height=3em]
+			
+			\def\l{-2.0}
+			\def\c{0,0}
+			\def\r{2.0}
+			\def\t{6.5}
+			
+			\def\u{1.7}
+			\def\d{-1.7}
+			
+			\node [arch_part_data] (clarin) at (\l, \c) {Korpus Clarin};
+			
+			\node [arch_part_data] (model_lang) at (\l, \u) {Model językowy};
+			\path [line] (clarin) -- (model_lang);
+			
+			\node [arch_part_data] (model_acc) at (\l, \d) {Model akustyczny};
+			\path [line] (clarin) -- (model_acc);
+			
+			\node [arch_part_data] (julius) at (\r, \c) {Julius};
+			\path [line] (clarin) -- (julius);
+			\path [line] (model_lang) -| (julius);
+			\path [line] (model_acc) -| (julius);
+			
+			\node [arch_part_data] (match) at (\t, \c) {Dopasowanie};
+			\path [line] (julius) -- (match);
+
+			\end{scope}
+			\end{tikzpicture}
+		}
+		\end{figure}
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{Budowa pełnego modelu klasycznego}
+		
+		\begin{itemize}
+			\item Klasyczny model korzystający z mikstur Gaussowskich.
+			\item 4192 stanów.
+			\item Połnadzorowany algorytm Bauma-Welcha (HTK).
+		\end{itemize}
+		
+		\begin{figure}
+			\scalebox{.65}{
+				\begin{tikzpicture}[node distance = 0.1cm, auto]
+				
+				\tikzstyle{model} = [ellipse, draw, fill=blue!20, text width=7em, text centered, rounded corners, minimum height=3em, node distance=5cm]
+				
+				\node [model] (Ini) {Inicjalizacja modelu};
+				\node [model,   below = 1.0 cm of Ini] (E) {Dopasowanie ramek};
+				\node [model,   below = 1.0 cm of E] (M) {Estymacja parametrów};
+				\node [model,   right = 1.0 cm of M] (R) {Gotowy model akustyczny};
+				
+				\draw[thick,->,shorten >=1pt] (E) to [out=185,in=180,looseness=1.1] (M);
+				\draw[thick,->,shorten >=1pt] (M) to [out=10,in=0,looseness=1.1] (E);
+				\draw[thick,->,shorten >=1pt] (Ini) to [out=180,in=175,looseness=1.1] (E);
+				\draw[thick,->,shorten >=1pt] (M) to [out=0,in=180,looseness=1.1] (R);
+
+				
+				\end{tikzpicture}
+			}
+		\end{figure}
+	
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{Procedura budowy klasycznych modeli}
+		\tiny
+		\begin{figure}
+			\begin{algorithmic}[1]
+				
+				\REQUIRE {$S =$ zbiór par $(wypowiedz, transkrypcja)$}
+				
+				\STATE $M_{acc} = Init(S)$				
+				\FOR{$i = 1 \text{ to }3$}
+				\STATE $M_{acc} = ReEstimate(M_{acc}, S)$
+				\STATE $M_{acc} = ReEstimate(M_{acc}, S)$
+				\STATE $M_{acc} = ReEstimate(M_{acc}, S)$
+				\STATE $M_{acc} = ExtendGMM(M_{acc})$
+				\ENDFOR			
+				\STATE $M_{acc} = CreateTriFones(M_{acc})$
+				\STATE $M_{acc} = TreeBasedClustering(M_{acc})$
+				\FOR{$i = 4 \text{ to }12$}
+				\STATE $M_{acc} = ReEstimate(M_{acc}, S)$
+				\STATE $M_{acc} = ReEstimate(M_{acc}, S)$
+				\STATE $M_{acc} = ReEstimate(M_{acc}, S)$
+				\STATE $M_{acc} = ExtendGMM(M_{acc})$
+				\ENDFOR			
+				\STATE $M_{acc} = ReEstimate(M_{acc}, S)$
+				\STATE $M_{acc} = ReEstimate(M_{acc}, S)$
+				\STATE $M_{acc} = ReEstimate(M_{acc}, S)$
+				\RETURN $M_{acc}$;
+			\end{algorithmic}	
+		\end{figure}
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{Budowa modeli o ograniczonej liczbie stanów}
+		\begin{itemize}
+			\item Rozbudowa modelu unifonowego do trifonowego.
+			\item \textit{Tree based clustering} ogranicza liczbę klas abstrakcji.
+			\item Przy pomocy zadanych parametrów sterujemy ograniczaniem modeli.
+		\end{itemize}
+	
+		\begin{figure}[H]
+			\scalebox{.65}{
+			\begin{tikzpicture}[node distance=1.2cm]
+			
+			\begin{scope}
+			
+			\def\x{0.8}
+			\def\w{\x * 5}
+			\def\z{\x * 2}
+			\def\y{1.4}
+			\def\j{2.0}
+			
+			\draw[dotted] (-1,-4) rectangle (3.2,1);
+			\draw[dotted] (4,-4) rectangle (6.3,1);
+			\draw[dotted] (6.75,-4) rectangle (10.85,1);
+			
+			\node [hmm] (p1) {d-b+e};
+			\node [hmm, right = \x cm of p1] (p2) {a-b+c};
+			\node [hmm, below = \y cm of p2] (p3) {c-b+d};
+			
+			\node [hmm, right = \z cm of p3] (p4) {k-l+m};
+			
+			\node [hmm, right = \w cm of p2] (p5) {x-y+z};
+			\node [hmm, right = \x cm of p5] (p6) {w-y+t};
+			\node [hmm, below = \y cm of p5] (p7) {u-y+t};
+			
+			
+			\draw [->] (p1) [out=270, in=140] to  (p3);
+			\draw [->] (p2) [out=280, in=80] to  (p3);
+			
+			\draw [->] (p6) [out=270, in=40] to  (p7);
+			\draw [->] (p5) [out=260, in=100] to  (p7);
+			
+			\node [hmm, below = \j cm of p3] (s1) {s1};
+			\node [hmm, right = \x cm of s1] (s2) {s2};
+			\node [hmm, right = \x cm of s2] (s3) {s3};
+			\node [hmm, right = \x cm of s3] (s4) {s4};
+			\node [hmm, right = \x cm of s4] (s5) {s5};
+			
+			\draw [->] (p3) [out=240, in=100] to (s1);
+			\draw [->] (p3) [out=270, in=90]  to (s2);
+			\draw [->] (p3) [out=300, in=130] to (s5);
+			
+			\draw [->] (p4) [out=240, in=80]  to (s1);
+			\draw [->] (p4) [out=270, in=90]  to (s3);
+			\draw [->] (p4) [out=300, in=100] to (s5);
+			
+			\draw [->] (p7) [out=240, in=50]  to (s1);
+			\draw [->] (p7) [out=270, in=90]  to (s4);
+			\draw [->] (p7) [out=300, in=80] to (s5);
+			\end{scope}
+			
+			\end{tikzpicture}
+		}
+		\end{figure}
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{Otrzymane modele}
+		\small
+		\begin{figure}
+			\begin{tabular}{|l|c|c|c|c|} \hline
+				
+				Nazwa modelu & \vtop{\hbox{\strut Min liczba}\hbox{\strut obserwacji}} &
+				\vtop{\hbox{\strut Próg}\hbox{\strut poprawy}}& Liczba stanów & Skuteczność \\ \hline
+				
+				M\_TRI\_OPT   & 100   & 350 & 4192 & 83.44 \\
+				M\_TRI         & 100   & 350 & 4192 & 81.58 \\
+				M\_25000       & 25000 & 350 & 304  & 76.90 \\
+				M\_29000       & 29000 & 350 & 269  & 77.75 \\
+				M\_33000       & 33000 & 350 & 231  & 77.23 \\
+				M\_37000       & 37000 & 350 & 214  & 77.13 \\
+				M\_70000       & 70000 & 350 & 147  & 75.91 \\
+				M\_180000     & 18000 & 350 & 122  & 75.17 \\
+				M\_UNI         &  N/A  & N/A & 120  & 76.86 \\
+				\hline
+			\end{tabular}
+		\end{figure}
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{Budowa sieci neuronowych}
+		\small
+		\begin{itemize}
+			\item Sieć jest ściśle dopasowana do modelu akustycznego.
+			\item Sieć dla każdej ramki z osobna wyznacz ppb wszystkich stanów.
+			\item Sieć zwraca $P(s|o)$, potrzebujemy $P(o|s)$, korzystamy znowu z Bayesa.
+		\end{itemize}
+	
+	\begin{figure}[H]
+		\centering
+		\begin{tikzpicture}
+		
+		\begin{scope}
+		
+		\tikzstyle{conv_layer} = [fill=black,fill=gray!20,draw=black, text centered]
+		
+		\node at (0.5,2.4){$64$ filtry};
+		\node at (3.4,2.9){warstwa pełna + dropout $0.5$};
+		\node at (6.8,2.4){warstwa pełna + softmax};
+		
+		\def\w{1.5}		
+		
+		\def\x{0.0}	
+		\def\y{0.5}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \w};
+		\draw [fill=black,fill=gray!20,draw=black] (\x,\y) rectangle (\X,\Y);
+		
+		
+		\def\x{0.25}	
+		\def\y{0.25}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \w};
+		\draw [fill=black,fill=gray!20,draw=black] (\x,\y) rectangle (\X,\Y);
+		
+		\def\x{0.5}	
+		\def\y{0.0}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \w};
+		\draw [fill=black,fill=gray!20,draw=black] (\x,\y) rectangle (\X,\Y) node [black,midway] {$11\times6$};
+		
+		
+		\def\w{0.6}	
+		\def\h{2.0}	
+		\def\x{3.5}	
+		\def\y{0.0}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \h};
+		\draw [fill=black,fill=gray!20,draw=black] (\x,\y) rectangle (\X,\Y) node [black,midway, rotate=90] {$2400$};
+		
+		\draw (1.5,2.0) -- (3.5,1.0);
+		\draw (2.0,0.0) -- (3.5,1.0);
+		
+		\def\w{0.6}	
+		\def\h{1.5}	
+		\def\x{5.5}	
+		\def\y{0.25}				
+		\pgfmathsetmacro{\X}{\x + \w};
+		\pgfmathsetmacro{\Y}{\y + \h};
+		\draw [fill=black,fill=gray!20,draw=black] (\x,\y) rectangle (\X,\Y) node [black,midway, rotate=90] {$|Q|$};
+		
+		\draw (4.2,2.0) -- (5.5,1.0);
+		\draw (4.2,0.0) -- (5.5,1.0);
+		
+		\end{scope}
+		
+		\end{tikzpicture}
+	\end{figure}
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{Wpływ liczby stanów na skuteczność}
+		
+		\begin{figure}[H]
+			\centering
+			\begin{tikzpicture}			
+			\begin{axis}[axis lines = left,	xlabel = Liczba stanów, ylabel = {1-WER [\%]},xmin=100,xmax=320,ymin=45,ymax=100,]
+			
+			\addplot[color=blue,mark=square,]
+			coordinates {
+				(122,81.55)(147,81.69)(214,83.34)(231,83.48)(269,72.07)(304, 57.42)
+			};
+			\addlegendentry{Modele neuronowe}
+			
+			\addplot[color=red,mark=square,]
+			coordinates {
+				(122,75.17)(147,75.91)(214,77.13)(231,77.23)(269,77.75)(304, 78.06)
+			};
+			\addlegendentry{Modele klasyczne}
+			
+			\end{axis}			
+			\end{tikzpicture}
+		\end{figure}
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{Wpływ liczby neuronów warstwy ukrytej na skuteczność}
+		
+		\begin{figure}[H]
+			\centering
+			\begin{tikzpicture}			
+			\begin{axis}[axis lines = left,	xlabel = {Liczba neuronów} , ylabel = {1-WER [\%]},xmin=0,xmax=2500,ymin=80,ymax=85,]
+			
+			\addplot[color=red,mark=square,]
+			coordinates {
+				(300,81.36)(600,82.01)(1200,83.10)(2400, 83.02)
+			};
+			
+			\end{axis}			
+			\end{tikzpicture}
+		\end{figure}
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{Wpływ innych czynników na skuteczność}
+		\footnotesize
+		\begin{tabular}{|l|c|c|c|c|c|} \hline
+			\vtop{\hbox{\strut Funkcja}\hbox{\strut nieliniowości}} & \vtop{\hbox{\strut Dane}\hbox{\strut przemieszane}} & \vtop{\hbox{\strut Ppb}\hbox{\strut a priori}} & \vtop{\hbox{\strut Liczba}\hbox{\strut filtrów}} & \vtop{\hbox{\strut Liczba}\hbox{\strut neuronów}} & Skuteczność \\
+			\hline
+			recify        &  nie & tak & 64 & 2400 & 83.50  \\
+			leaky rectify &  nie & tak & 64 & 2400 & 83.89 \\
+			\hline
+			leaky rectify &  nie & tak &32 & 1200 & 83.10 \\
+			leaky rectify &  tak & tak &32 & 1200 & 83.64\\
+			\hline
+			leaky rectify &  tak & tak & 64 & 2400 & 84.71\\
+			leaky rectify &  tak & nie & 64 & 2400 & 85.75\\
+			\hline				
+		\end{tabular}
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{Wnioski}
+		
+		\begin{itemize}
+			\item Poprawa o $2.31\%$ (względna poprawa o $13.95\%$).
+			\item Zwiększenie liczby rozpoznawanych stanów poprawiło skuteczność.
+			\item Powyżej pewnej $231$ stanów gwałtowny spadek skuteczności.
+			\item Dodanie prawdopodobieństwa a priori pogorszyło skuteczność.
+			\item Pogłębianie sieci pogorszyło skuteczność.
+		\end{itemize}
+	
+	\begin{exampleblock}{}
+		\textbf{Wyniki wydają się być obiecujące.}
+	\end{exampleblock}
+	
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{Możliwości dalszego rozwoju}
+		
+		\begin{itemize}
+			\item Budowa na większym korpusie.
+			\item Próby z innymi architekturami.
+			\item Uczenie warstw pojedynczo (klucz do prawdziwie głębokich sieci ?).
+		\end{itemize}
+	\end{frame}
+
 \end{document}
